@@ -59,4 +59,4 @@ Lọc Excel cột Platform = **Web** → đưa từng dòng (Mã MH / Thành ph�
 
 - API: [CrabSenseBE](https://github.com/CrabSense/CrabSenseBE)
 - Mobile: [CrabSenseApp](https://github.com/CrabSense/CrabSenseApp)
-- Kiosk: [CrabSenseKiosk](https://github.com/CrabSense/CrabSenseKiosk)
+- Edge HDF5 gateway: [CrabSenseKiosk](https://github.com/CrabSense/CrabSenseKiosk) *(không phải UI Desktop — wallboard/thu ngân làm fullscreen trên FE này)*
