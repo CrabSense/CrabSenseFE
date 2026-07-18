@@ -1,4 +1,77 @@
-# CrabSenseFE
+# CrabSense Frontend
+
+Hệ thống giám sát chất lượng nước cho nuôi trồng cua biển.
+
+## Tính năng
+
+- 📊 Dashboard hiển thị thông số chất lượng nước theo thời gian thực
+- 🔍 Giám sát các thông số: nhiệt độ, pH, oxy hòa tan, độ mặn
+- 📈 Phân tích và báo cáo dữ liệu lịch sử
+- ⚠️ Cảnh báo khi thông số vượt ngưỡng an toàn
+- ⚙️ Cài đặt tùy chỉnh giao diện và tần suất cập nhật
+
+## Công nghệ sử dụng
+
+- **React 18** - Thư viện UI
+- **Vite** - Build tool và dev server
+- **ESLint** - Linting
+- **CSS3** - Styling
+
+## Cài đặt
+
+1. Clone repository:
+```bash
+git clone <repository-url>
+cd CrabSenseFE
+```
+
+2. Cài đặt dependencies:
+```bash
+npm install
+```
+
+3. Tạo file `.env` từ `.env.example`:
+```bash
+cp .env.example .env
+```
+
+4. Chạy development server:
+```bash
+npm run dev
+```
+
+5. Mở trình duyệt tại `http://localhost:5173`
+
+## Scripts
+
+- `npm run dev` - Chạy development server
+- `npm run build` - Build production
+- `npm run preview` - Preview production build
+- `npm run lint` - Chạy ESLint
+
+## Cấu trúc thư mục
+
+```
+src/
+├── assets/          # Hình ảnh, icons, SVG
+├── components/      # React components tái sử dụng
+├── pages/          # Các trang chính
+├── services/       # API services và data fetching
+├── styles/         # CSS files
+└── utils/          # Utility functions và constants
+```
+
+## API Integration
+
+Ứng dụng kết nối với backend API để lấy dữ liệu chất lượng nước. Cấu hình URL API trong file `.env`:
+
+```
+VITE_API_BASE_URL=http://localhost:3000/api
+```
+
+## License
+
+MIT
 
 > Frontend **Web** (React) cho CrabSense — quản lý trại, giám sát, AI Decision Support, thu hoạch, kho đông, QR, bán hàng.
 
