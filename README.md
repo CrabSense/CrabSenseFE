@@ -37,13 +37,15 @@ Repo này triển khai **Member 2 (Web)** theo workbook (sheet `02_Man_hinh_UI` 
 - Video gallery + schedules
 - Review detections, Manual Inspection, Feedback, Recommendations, Dataset (YOLO)
 
-### Harvest / Frozen / Trace / Sales
+### Harvest / Frozen / Trace / Sales (văn phòng — không chạy trên Kiosk trại)
+
 - Harvest vouchers, Frozen lots, Trace lookup + public page `/p/{code}`
 - Customers, Price lists (M/L + live + frozen)
-- Sales orders (Quotation→…→Completed), Deliveries, Payments/Invoices
+- Sales orders (Quotation→…→Completed), Deliveries
+- **Payments / Invoices** (`payment_status`: unpaid|partial|paid|overdue — không cần cổng TT online)
+- Reports: Harvest, Inventory, Sales, Mortality, Water Quality, AI Accuracy
 
-### Reports
-- Harvest, Inventory, Sales, Mortality, Water Quality, AI Accuracy
+> Máy **Kiosk tại trại** chỉ edge HDF5 (IoT+AI → BE). Thanh toán/hóa đơn chỉ trên **FE (+ App bán nhanh nếu cần)**.
 
 ## Prompt gen UI (sheet 10_Ghi_chu)
 
@@ -59,4 +61,5 @@ Lọc Excel cột Platform = **Web** → đưa từng dòng (Mã MH / Thành ph�
 
 - API: [CrabSenseBE](https://github.com/CrabSense/CrabSenseBE)
 - Mobile: [CrabSenseApp](https://github.com/CrabSense/CrabSenseApp)
-- Edge HDF5 gateway: [CrabSenseKiosk](https://github.com/CrabSense/CrabSenseKiosk) *(không phải UI Desktop — wallboard/thu ngân làm fullscreen trên FE này)*
+- Edge HDF5 gateway (trại nuôi): [CrabSenseKiosk](https://github.com/CrabSense/CrabSenseKiosk) — **không** chứa UI thanh toán/hóa đơn
+- Wallboard / thu ngân / bán hàng PC: fullscreen trên **repo này (FE)**
