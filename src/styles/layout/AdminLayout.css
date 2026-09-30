@@ -1,0 +1,50 @@
+.admin-shell {
+    --sidebar-width: 250px;
+  
+    min-height: 100vh;
+  
+    display: flex;
+  
+    background: #070b08;
+  }
+  
+  .admin-shell.sidebar-collapsed {
+    --sidebar-width: 82px;
+  }
+  
+  .admin-workspace {
+    width: calc(100% - var(--sidebar-width));
+    min-height: 100vh;
+  
+    margin-left: var(--sidebar-width);
+  
+    transition:
+      width 0.25s ease,
+      margin-left 0.25s ease;
+  }
+  
+  .admin-content {
+    width: 100%;
+    min-height: calc(100vh - 74px);
+  
+    padding: 28px 30px 40px;
+  
+    background:
+      radial-gradient(
+        circle at 80% 0%,
+        rgba(77, 255, 0, 0.025),
+        transparent 25%
+      ),
+      #070b08;
+  }
+  
+  @media (max-width: 900px) {
+    .admin-workspace {
+      width: 100%;
+      margin-left: 0;
+    }
+  
+    .admin-content {
+      padding: 22px 18px 35px;
+    }
+  }
