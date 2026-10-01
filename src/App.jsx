@@ -15,6 +15,8 @@ import FarmManagement from './pages/FarmManagement.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import AdminLayout from './components/layout/AdminLayout.jsx'
 
+import AreaProvider from './context/AreaContext'
+
 function App() {
   return (
     <Routes>
@@ -30,8 +32,12 @@ function App() {
 
       <Route
         element={
-          <ProtectedRoute allowedRoles={['SystemAdmin']}>
-            <AdminLayout />
+          <ProtectedRoute
+            allowedRoles={['SystemAdmin']}
+          >
+            <AreaProvider>
+              <AdminLayout />
+            </AreaProvider>
           </ProtectedRoute>
         }
       >
@@ -51,13 +57,13 @@ function App() {
         />
 
         <Route
-          path="/settings"
-          element={<Settings />}
+          path="/farm-management"
+          element={<FarmManagement />}
         />
 
         <Route
-          path="/farm-management"
-          element={<FarmManagement />}
+          path="/settings"
+          element={<Settings />}
         />
       </Route>
 

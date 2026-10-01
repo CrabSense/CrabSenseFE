@@ -1,68 +1,145 @@
-import React, { useState } from 'react'
-import { calculateAverage, formatDate } from '../utils/helpers'
+import {
+  useState,
+} from 'react'
 
-const Analytics = () => {
-  const [dateRange, setDateRange] = useState({
-    start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
+import useAnalytics
+  from '../hooks/useAnalytics'
+
+import useSelectedArea
+  from '../hooks/useSelectedArea'
+
+import AnalyticsHeader
+  from '../components/analytics/AnalyticsHeader'
+
+import AnalyticsDateFilter
+  from '../components/analytics/filters/AnalyticsDateFilter'
+
+import AnalyticsKpiGrid
+  from '../components/analytics/kpi/AnalyticsKpiGrid'
+
+import HarvestTrendChart
+  from '../components/analytics/harvest/HarvestTrendChart'
+
+import SurvivalPanel
+  from '../components/analytics/survival/SurvivalPanel'
+
+import MoltingPanel
+  from '../components/analytics/molting/MoltingPanel'
+
+import EfficiencyPanel
+  from '../components/analytics/operations/EfficiencyPanel'
+
+import AnalyticsLoading
+  from '../components/analytics/AnalyticsLoading'
+
+import AnalyticsError
+  from '../components/analytics/AnalyticsError'
+
+import '../styles/analytics/Analytics.css'
+
+function getDefaultFromDate() {
+  const date = new Date()
+
+  date.setDate(
+    date.getDate() - 30
+  )
+
+  return date
+    .toISOString()
+    .slice(0, 10)
+}
+
+function getToday() {
+  return new Date()
+    .toISOString()
+    .slice(0, 10)
+}
+
+function Analytics() {
+  const {
+    selectedAreaId,
+  } = useSelectedArea()
+
+  const [fromDate, setFromDate] =
+    useState(getDefaultFromDate)
+
+  const [toDate, setToDate] =
+    useState(getToday)
+
+  const {
+    harvest,
+    survival,
+    molting,
+    efficiency,
+
+    loading,
+    refreshing,
+    error,
+    reload,
+  } = useAnalytics({
+    farmingAreaId: selectedAreaId,
+    fromDate,
+    toDate,
   })
 
-  const handleDateChange = (field, value) => {
-    setDateRange(prev => ({ ...prev, [field]: value }))
+  if (loading) {
+    return <AnalyticsLoading />
+  }
+
+  if (error) {
+    return (
+      <AnalyticsError
+        message={error}
+        onRetry={reload}
+      />
+    )
   }
 
   return (
-    <div className="analytics">
-      <h2>Phân tích dữ liệu</h2>
-      
-      <div className="date-range-selector">
-        <div className="input-group">
-          <label>Từ ngày:</label>
-          <input 
-            type="date" 
-            value={dateRange.start}
-            onChange={(e) => handleDateChange('start', e.target.value)}
-          />
-        </div>
-        <div className="input-group">
-          <label>Đến ngày:</label>
-          <input 
-            type="date" 
-            value={dateRange.end}
-            onChange={(e) => handleDateChange('end', e.target.value)}
-          />
-        </div>
-        <button className="btn-primary">Xem báo cáo</button>
+    <div className="analytics-page">
+      <AnalyticsHeader
+        refreshing={refreshing}
+        onRefresh={reload}
+      />
+
+      <div className="analytics-toolbar">
+        <AnalyticsDateFilter
+          fromDate={fromDate}
+          toDate={toDate}
+          onFromDateChange={setFromDate}
+          onToDateChange={setToDate}
+        />
+
+        <span className="analytics-filter-note">
+          Date range applies to Survival and
+          Operational Efficiency reports.
+        </span>
       </div>
 
-      <div className="analytics-content">
-        <div className="chart-placeholder">
-          <p>Biểu đồ phân tích sẽ được hiển thị ở đây</p>
-          <small>Khoảng thời gian: {formatDate(dateRange.start)} - {formatDate(dateRange.end)}</small>
-        </div>
+      <AnalyticsKpiGrid
+        survival={survival}
+        harvest={harvest}
+        molting={molting}
+        efficiency={efficiency}
+      />
 
-        <div className="statistics">
-          <h3>Thống kê tổng quan</h3>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <span className="stat-label">Tổng số mẫu</span>
-              <span className="stat-value">--</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Cảnh báo</span>
-              <span className="stat-value">--</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Trung bình nhiệt độ</span>
-              <span className="stat-value">-- °C</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Trung bình pH</span>
-              <span className="stat-value">--</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <section className="analytics-chart-grid">
+        <HarvestTrendChart
+          data={harvest?.byDate ?? []}
+        />
+
+        <SurvivalPanel
+          report={survival}
+        />
+
+        <MoltingPanel
+          report={molting}
+        />
+
+        <EfficiencyPanel
+          data={efficiency}
+        />
+      </section>
     </div>
   )
 }

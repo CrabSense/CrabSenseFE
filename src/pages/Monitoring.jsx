@@ -1,59 +1,77 @@
-import React, { useState, useEffect } from 'react'
-import WaterQualityCard from '../components/WaterQualityCard'
-import { waterQualityAPI } from '../services/api'
-import { WATER_QUALITY_PARAMETERS, REFRESH_INTERVALS } from '../utils/constants'
+import useMonitoring
+  from '../hooks/useMonitoring'
 
-const Monitoring = () => {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+import useSelectedArea
+  from '../hooks/useSelectedArea'
 
-  const fetchData = async () => {
-    try {
-      setLoading(true)
-      const result = await waterQualityAPI.getLatestData()
-      setData(result)
-      setError(null)
-    } catch (err) {
-      setError('Không thể tải dữ liệu. Vui lòng thử lại.')
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
+import MonitoringHeader
+  from '../components/monitoring/MonitoringHeader'
 
-  useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, REFRESH_INTERVALS.NORMAL)
-    return () => clearInterval(interval)
-  }, [])
+import MonitoringLoading
+  from '../components/monitoring/MonitoringLoading'
 
-  if (loading && !data) {
-    return <div className="loading">Đang tải dữ liệu...</div>
+import MonitoringError
+  from '../components/monitoring/MonitoringError'
+
+import EnvironmentGrid
+  from '../components/monitoring/environment/EnvironmentGrid'
+
+import MonitoringSummaryGrid
+  from '../components/monitoring/summary/MonitoringSummaryGrid'
+
+import BoxMonitoringSection
+  from '../components/monitoring/boxes/BoxMonitoringSection'
+
+import '../styles/monitoring/Monitoring.css'
+
+function Monitoring() {
+  const {
+    selectedAreaId,
+  } = useSelectedArea()
+
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    reload,
+  } = useMonitoring(
+    selectedAreaId
+  )
+
+  if (loading) {
+    return <MonitoringLoading />
   }
 
   if (error) {
     return (
-      <div className="error">
-        <p>{error}</p>
-        <button onClick={fetchData}>Thử lại</button>
-      </div>
+      <MonitoringError
+        message={error}
+        onRetry={reload}
+      />
     )
   }
 
   return (
-    <div className="monitoring">
-      <h2>Giám sát chất lượng nước</h2>
-      <div className="monitoring-grid">
-        {data && Object.entries(WATER_QUALITY_PARAMETERS).map(([key, parameter]) => (
-          <WaterQualityCard
-            key={parameter}
-            parameter={parameter}
-            value={data[parameter] || 0}
-            timestamp={data.timestamp}
-          />
-        ))}
-      </div>
+    <div className="monitoring-page">
+      <MonitoringHeader
+        syncedAt={data?.syncedAt}
+        refreshing={refreshing}
+        onRefresh={reload}
+      />
+
+      <EnvironmentGrid
+        water={data?.areaWater}
+        devices={data?.areaDevices}
+      />
+
+      <MonitoringSummaryGrid
+        summary={data?.summary}
+      />
+
+      <BoxMonitoringSection
+        boxes={data?.items ?? []}
+      />
     </div>
   )
 }

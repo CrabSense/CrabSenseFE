@@ -1,3 +1,4 @@
+import useSelectedArea from '../hooks/useSelectedArea'
 import useDashboard from '../hooks/useDashboard'
 
 import DashboardHeader from '../components/dashboard/DashboardHeader'
@@ -5,6 +6,7 @@ import DashboardLoading from '../components/dashboard/DashboardLoading'
 import DashboardError from '../components/dashboard/DashboardError'
 
 import StatsGrid from '../components/dashboard/stats/StatsGrid'
+
 import FarmHealthCard from '../components/dashboard/health/FarmHealthCard'
 import HealthBreakdown from '../components/dashboard/health/HealthBreakdown'
 
@@ -15,6 +17,10 @@ import '../styles/dashboard/Dashboard.css'
 
 function Dashboard() {
   const {
+    selectedAreaId,
+  } = useSelectedArea()
+
+  const {
     overview,
     metrics,
     todayTasks,
@@ -23,7 +29,7 @@ function Dashboard() {
     refreshing,
     error,
     reload,
-  } = useDashboard()
+  } = useDashboard(selectedAreaId)
 
   if (loading) {
     return <DashboardLoading />

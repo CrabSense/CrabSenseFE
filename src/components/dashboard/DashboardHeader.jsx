@@ -18,11 +18,10 @@ import {
             <span>LIVE FARM OVERVIEW</span>
           </div>
   
-          <h1>Dashboard</h1>
+          <h1>Farm Overview</h1>
   
           <p>
-            Monitor farm operations, system health and real-time activity
-            across CrabSense.
+          Monitor farm operations, system health and real-time activity across CrabSense.
           </p>
         </div>
   
