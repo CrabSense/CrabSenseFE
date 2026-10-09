@@ -1,0 +1,275 @@
+.farm-area-grid {
+    display: grid;
+  
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  
+    gap: 12px;
+  }
+  
+  .farm-area-card {
+    position: relative;
+  
+    overflow: hidden;
+  
+    padding: 0;
+  
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 11px;
+  
+    background: #0d1510;
+  
+    color: inherit;
+  
+    transition:
+      border-color 0.15s ease,
+      background 0.15s ease,
+      transform 0.15s ease;
+  }
+  
+  .farm-area-card:hover {
+    border-color: rgba(119, 255, 0, 0.12);
+  
+    transform: translateY(-1px);
+  }
+  
+  .farm-area-card.selected {
+    border-color: rgba(119, 255, 0, 0.26);
+  
+    background: rgba(119, 255, 0, 0.035);
+  }
+  
+  .farm-area-select {
+    width: 100%;
+  
+    padding: 14px;
+  
+    border: 0;
+  
+    background: transparent;
+  
+    color: inherit;
+  
+    font-family: inherit;
+    text-align: left;
+  
+    cursor: pointer;
+  }
+  
+  .farm-area-card-top {
+    display: flex;
+    justify-content: space-between;
+  
+    gap: 10px;
+  }
+  
+  .farm-area-card-top > div {
+    min-width: 0;
+  
+    display: flex;
+    flex-direction: column;
+  
+    gap: 4px;
+  }
+  
+  .farm-area-card-top span {
+    color: #657068;
+  
+    font-size: 8px;
+  }
+  
+  .farm-area-card-top strong {
+    overflow: hidden;
+  
+    color: #e8ede9;
+  
+    font-size: 12px;
+  
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  
+  .farm-status {
+    height: fit-content;
+  
+    flex: 0 0 auto;
+  
+    padding: 3px 6px;
+  
+    border-radius: 999px;
+  
+    background: rgba(255, 255, 255, 0.035);
+  
+    color: #7b867e;
+  
+    font-size: 7px;
+  
+    text-transform: uppercase;
+  }
+  
+  .farm-status.active {
+    background: rgba(119, 255, 0, 0.05);
+  
+    color: #77ff00;
+  }
+  
+  .farm-area-stats {
+    display: flex;
+    flex-wrap: wrap;
+  
+    gap: 14px;
+  
+    margin-top: 14px;
+  
+    color: #768179;
+  
+    font-size: 8px;
+  }
+  
+  .farm-area-stats span {
+    display: flex;
+    align-items: center;
+  
+    gap: 4px;
+  }
+  
+  
+  /* CARD ACTIONS */
+  
+  .farm-area-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  
+    padding: 8px 11px;
+  
+    border-top:
+      1px solid rgba(255, 255, 255, 0.035);
+  }
+  
+  .farm-area-action {
+    display: flex;
+    align-items: center;
+  
+    gap: 5px;
+  
+    padding: 5px 7px;
+  
+    border: 0;
+    border-radius: 6px;
+  
+    background: transparent;
+  
+    color: #69756c;
+  
+    font-family: inherit;
+    font-size: 8px;
+  
+    cursor: pointer;
+  
+    transition:
+      color 0.15s ease,
+      background 0.15s ease;
+  }
+  
+  .farm-area-action:hover {
+    background: rgba(119, 255, 0, 0.05);
+  
+    color: #77ff00;
+  }
+  
+  
+  /* HEADING ACTIONS */
+  
+  .farm-area-heading-actions {
+    display: flex;
+    align-items: center;
+  
+    gap: 12px;
+  }
+  
+  .farm-create-btn {
+    min-height: 34px;
+  
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  
+    gap: 6px;
+  
+    padding: 0 11px;
+  
+    border: 1px solid rgba(119, 255, 0, 0.22);
+    border-radius: 8px;
+  
+    background: rgba(119, 255, 0, 0.07);
+  
+    color: #77ff00;
+  
+    font-family: inherit;
+    font-size: 9px;
+    font-weight: 650;
+  
+    cursor: pointer;
+  
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
+  }
+  
+  .farm-create-btn:hover {
+    border-color: rgba(119, 255, 0, 0.35);
+  
+    background: rgba(119, 255, 0, 0.1);
+  }
+  
+  @media (max-width: 1150px) {
+    .farm-area-grid {
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    }
+  }
+  
+  @media (max-width: 650px) {
+    .farm-area-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .farm-area-heading-actions {
+      width: 100%;
+  
+      justify-content: space-between;
+    }
+  }
+
+  .farm-area-deactivate {
+    display: inline-flex;
+    align-items: center;
+  
+    gap: 4px;
+  
+    padding: 5px 7px;
+  
+    border: 0;
+    border-radius: 6px;
+  
+    background: transparent;
+  
+    color: #917b52;
+  
+    font-family: inherit;
+    font-size: 8px;
+  
+    cursor: pointer;
+  
+    transition:
+      color 0.15s ease,
+      background 0.15s ease;
+  }
+  
+  .farm-area-deactivate:hover {
+    background:
+      rgba(228, 184, 93, 0.06);
+  
+    color: #e4b85d;
+  }

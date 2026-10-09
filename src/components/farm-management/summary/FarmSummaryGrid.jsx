@@ -7,6 +7,8 @@ import {
   
   import FarmSummaryCard
     from './FarmSummaryCard'
+
+  import '../../../styles/farm-management/FarmSummary.css'
   
   function FarmSummaryGrid({
     areas,

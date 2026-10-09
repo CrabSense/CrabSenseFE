@@ -1,0 +1,109 @@
+.farm-state {
+    min-height: 450px;
+  
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  
+    gap: 12px;
+  
+    color: #748078;
+  }
+  
+  .farm-loader {
+    width: 28px;
+    height: 28px;
+  
+    border:
+      3px solid rgba(119, 255, 0, 0.12);
+  
+    border-top-color: #77ff00;
+  
+    border-radius: 50%;
+  
+    animation:
+      farm-state-spin 0.8s linear infinite;
+  }
+  
+  @keyframes farm-state-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .farm-empty {
+    padding: 26px;
+  
+    color: #657068;
+  
+    font-size: 9px;
+  
+    text-align: center;
+  }
+  
+  .farm-empty p {
+    margin: 0 0 12px;
+  }
+  
+  
+  /* ERROR */
+  
+  .farm-error {
+    min-height: 300px;
+  
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  
+    gap: 18px;
+  
+    padding: 22px;
+  
+    border:
+      1px solid rgba(255, 90, 90, 0.13);
+  
+    border-radius: 14px;
+  
+    background:
+      rgba(100, 15, 15, 0.06);
+  }
+  
+  .farm-error strong {
+    color: #ff8080;
+  
+    font-size: 12px;
+  }
+  
+  .farm-error p {
+    margin: 5px 0 0;
+  
+    color: #886f70;
+  
+    font-size: 9px;
+  }
+  
+  .farm-error button {
+    min-height: 34px;
+  
+    padding: 0 12px;
+  
+    border:
+      1px solid rgba(255, 100, 100, 0.14);
+  
+    border-radius: 8px;
+  
+    background:
+      rgba(255, 80, 80, 0.06);
+  
+    color: #ff8585;
+  
+    cursor: pointer;
+  }
+  
+  @media (max-width: 650px) {
+    .farm-error {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }

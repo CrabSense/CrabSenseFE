@@ -30,7 +30,14 @@ import RowList
 import BoxTable
   from '../components/farm-management/boxes/BoxTable'
 
-import '../styles/farm-management/FarmManagement.css'
+import '../styles/farm-management/FarmManagementPage.css'
+import '../styles/farm-management/FarmManagementSection.css'
+
+import ArchivedAreaList
+  from '../components/farm-management/archive/ArchivedAreaList'
+
+  import ArchivedRowList
+  from '../components/farm-management/archive/ArchivedRowList'
 
 function FarmManagement() {
   const {
@@ -52,6 +59,10 @@ function FarmManagement() {
     error,
 
     reload,
+    upsertRow,
+    upsertBox,
+    removeRow,
+    removeArea,
   } = useFarmManagement(
     selectedAreaId
   )
@@ -90,23 +101,41 @@ function FarmManagement() {
 
       <AreaList
         areas={areas}
+        rows={rows}
+        onAreaChanged={reload}
+        onAreaDeactivated={removeArea}
+      />
+
+      <ArchivedAreaList
+        onAreasChanged={
+          reload
+        }
+      />
+
+      <ArchivedRowList
+        activeAreas={
+          areas
+        }
+        onRowsChanged={
+          reload
+        }
       />
 
       <RowList
         rows={rows}
-        selectedRowId={
-          selectedRowId
-        }
-        onSelectRow={
-          setSelectedRowId
-        }
+        selectedRowId={selectedRowId}
+        onSelectRow={setSelectedRowId}
+        onRowsChanged={reload}
+        onRowSaved={upsertRow}
+        onRowDeactivated={removeRow}
       />
 
       <BoxTable
         boxes={boxes}
-        selectedRowId={
-          selectedRowId
-        }
+        rows={rows}
+        selectedRowId={selectedRowId}
+        onBoxesChanged={reload}
+        onBoxSaved={upsertBox}
       />
     </div>
   )

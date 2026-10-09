@@ -1,0 +1,99 @@
+.farm-management-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  
+    gap: 24px;
+  
+    margin-bottom: 18px;
+    padding: 20px 24px;
+  
+    border: 1px solid rgba(119, 255, 0, 0.09);
+    border-radius: 15px;
+  
+    background:
+      linear-gradient(
+        135deg,
+        rgba(119, 255, 0, 0.03),
+        transparent
+      ),
+      #0b110d;
+  }
+  
+  .farm-management-label {
+    display: flex;
+    align-items: center;
+  
+    gap: 6px;
+  
+    margin-bottom: 8px;
+  
+    color: #77ff00;
+  
+    font-size: 8px;
+    font-weight: 700;
+  
+    letter-spacing: 1.3px;
+  }
+  
+  .farm-management-header h1 {
+    margin: 0;
+  
+    font-size: 27px;
+  
+    letter-spacing: -0.5px;
+  }
+  
+  .farm-management-header p {
+    margin: 8px 0 0;
+  
+    color: #7f8b82;
+  
+    font-size: 12px;
+  }
+  
+  .farm-management-header p strong {
+    color: #b9c4bc;
+  }
+  
+  .farm-management-refresh {
+    min-height: 38px;
+  
+    display: flex;
+    align-items: center;
+  
+    gap: 7px;
+  
+    padding: 0 13px;
+  
+    border: 1px solid rgba(119, 255, 0, 0.12);
+    border-radius: 9px;
+  
+    background: #0e1711;
+  
+    color: #bac4bc;
+  
+    cursor: pointer;
+  }
+  
+  .farm-management-refresh:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  
+  .farm-spin {
+    animation: farm-spin 0.8s linear infinite;
+  }
+  
+  @keyframes farm-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  @media (max-width: 650px) {
+    .farm-management-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }

@@ -1,0 +1,133 @@
+.farm-archived-row-grid {
+    display: grid;
+  
+    grid-template-columns:
+      repeat(
+        auto-fill,
+        minmax(220px, 1fr)
+      );
+  
+    gap: 10px;
+  
+    margin-top: 12px;
+  }
+  
+  
+  .farm-archived-row-card {
+    padding: 12px;
+  
+    border:
+      1px solid rgba(
+        255,
+        255,
+        255,
+        0.05
+      );
+  
+    border-radius: 10px;
+  
+    background: #0d1510;
+  }
+  
+  
+  .farm-archived-row-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  
+    gap: 10px;
+  }
+  
+  
+  .farm-archived-row-code {
+    color: #68736b;
+  
+    font-size: 8px;
+    font-weight: 600;
+  }
+  
+  
+  .farm-archived-row-main h3 {
+    margin: 3px 0;
+  
+    color: #dce4de;
+  
+    font-size: 12px;
+  }
+  
+  
+  .farm-archived-row-main p {
+    margin: 0;
+  
+    color: #68736b;
+  
+    font-size: 8px;
+  }
+  
+  
+  .farm-archived-row-status {
+    padding: 3px 6px;
+  
+    border-radius: 999px;
+  
+    background:
+      rgba(
+        228,
+        184,
+        93,
+        0.08
+      );
+  
+    color: #e4b85d;
+  
+    font-size: 7px;
+  
+    text-transform: uppercase;
+  }
+  
+  
+  .farm-archived-row-stats {
+    display: grid;
+  
+    grid-template-columns:
+      repeat(3, 1fr);
+  
+    gap: 6px;
+  
+    margin: 12px 0;
+  }
+  
+  
+  .farm-archived-row-stats > div {
+    padding: 6px;
+  
+    border-radius: 6px;
+  
+    background: #111c15;
+  }
+  
+  
+  .farm-archived-row-stats span {
+    display: block;
+  
+    color: #68736b;
+  
+    font-size: 7px;
+  }
+  
+  
+  .farm-archived-row-stats strong {
+    color: #f4f7f4;
+  
+    font-size: 10px;
+  }
+  
+  
+  .farm-row-reactivate-note {
+    margin:
+      0 0 8px;
+  
+    color: #e4b85d;
+  
+    font-size: 8px;
+  }

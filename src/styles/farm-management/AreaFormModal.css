@@ -1,0 +1,375 @@
+.area-modal-backdrop {
+    position: fixed;
+    z-index: 1000;
+  
+    inset: 0;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    padding: 24px;
+  
+    background: rgba(0, 0, 0, 0.72);
+  
+    backdrop-filter: blur(6px);
+  }
+  
+  .area-modal {
+    width: min(620px, 100%);
+  
+    max-height: calc(100vh - 48px);
+  
+    overflow-y: auto;
+  
+    border: 1px solid rgba(119, 255, 0, 0.12);
+    border-radius: 15px;
+  
+    background: #0a110c;
+  
+    box-shadow:
+      0 30px 90px rgba(0, 0, 0, 0.65);
+  }
+  
+  
+  /* HEADER */
+  
+  .area-modal-header {
+    min-height: 72px;
+  
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  
+    gap: 18px;
+  
+    padding: 15px 18px;
+  
+    border-bottom:
+      1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .area-modal-title-wrap {
+    display: flex;
+    align-items: center;
+  
+    gap: 11px;
+  }
+  
+  .area-modal-icon {
+    width: 36px;
+    height: 36px;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    border: 1px solid rgba(119, 255, 0, 0.12);
+    border-radius: 9px;
+  
+    background: rgba(119, 255, 0, 0.045);
+  
+    color: #77ff00;
+  }
+  
+  .area-modal-title-wrap span {
+    display: block;
+  
+    margin-bottom: 3px;
+  
+    color: #77ff00;
+  
+    font-size: 7px;
+    font-weight: 700;
+  
+    letter-spacing: 1.2px;
+  }
+  
+  .area-modal-title-wrap h2 {
+    margin: 0;
+  
+    color: #edf2ee;
+  
+    font-size: 16px;
+  }
+  
+  .area-modal-close {
+    width: 32px;
+    height: 32px;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    border: 0;
+    border-radius: 8px;
+  
+    background: transparent;
+  
+    color: #68736b;
+  
+    cursor: pointer;
+  }
+  
+  .area-modal-close:hover {
+    background: rgba(255, 255, 255, 0.04);
+  
+    color: #dce4de;
+  }
+  
+  .area-modal-close:disabled {
+    opacity: 0.45;
+  
+    cursor: not-allowed;
+  }
+  
+  
+  /* BODY */
+  
+  .area-modal-body {
+    padding: 20px;
+  }
+  
+  .area-modal-code {
+    display: flex;
+    align-items: baseline;
+  
+    gap: 8px;
+  
+    margin-bottom: 18px;
+    padding: 10px 12px;
+  
+    border: 1px solid rgba(255, 255, 255, 0.045);
+    border-radius: 8px;
+  
+    background: #0d1510;
+  }
+  
+  .area-modal-code span {
+    color: #59645c;
+  
+    font-size: 7px;
+    font-weight: 700;
+  
+    letter-spacing: 1px;
+  }
+  
+  .area-modal-code strong {
+    color: #77ff00;
+  
+    font-size: 10px;
+  }
+  
+  .area-modal-code small {
+    margin-left: auto;
+  
+    color: #4f5952;
+  
+    font-size: 7px;
+  }
+  
+  
+  /* FORM */
+  
+  .area-form {
+    display: flex;
+    flex-direction: column;
+  
+    gap: 15px;
+  }
+  
+  .area-form-grid {
+    display: grid;
+  
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  
+    gap: 13px;
+  }
+  
+  .area-form-group {
+    min-width: 0;
+  
+    display: flex;
+    flex-direction: column;
+  
+    gap: 6px;
+  }
+  
+  .area-form-group label {
+    color: #7b867e;
+  
+    font-size: 9px;
+    font-weight: 600;
+  }
+  
+  .area-form-group label span {
+    color: #77ff00;
+  }
+  
+  .area-form-group label small {
+    color: #566159;
+  
+    font-size: 8px;
+  }
+  
+  .area-form-group input,
+  .area-form-group textarea {
+    width: 100%;
+  
+    box-sizing: border-box;
+  
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+  
+    outline: none;
+  
+    background: #0d1510;
+  
+    color: #dce4de;
+  
+    font-family: inherit;
+    font-size: 10px;
+  
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  
+  .area-form-group input {
+    height: 39px;
+  
+    padding: 0 11px;
+  }
+  
+  .area-form-group textarea {
+    min-height: 88px;
+  
+    padding: 10px 11px;
+  
+    resize: vertical;
+  
+    line-height: 1.5;
+  }
+  
+  .area-form-group input:focus,
+  .area-form-group textarea:focus {
+    border-color: rgba(119, 255, 0, 0.3);
+  
+    box-shadow:
+      0 0 0 3px rgba(119, 255, 0, 0.035);
+  }
+  
+  .area-form-group input::placeholder,
+  .area-form-group textarea::placeholder {
+    color: #444e47;
+  }
+  
+  .area-form-group input:disabled,
+  .area-form-group textarea:disabled {
+    opacity: 0.55;
+  }
+
+  .area-form-group input:disabled {
+    cursor: not-allowed;
+  
+    color: #78837b;
+  
+    background: #0a100c;
+  }
+  
+  .area-form-error {
+    margin-top: 15px;
+    padding: 10px 12px;
+  
+    border: 1px solid rgba(255, 90, 90, 0.13);
+    border-radius: 8px;
+  
+    background: rgba(130, 20, 20, 0.08);
+  
+    color: #ff7b7b;
+  
+    font-size: 9px;
+  }
+  
+  
+  /* FOOTER */
+  
+  .area-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  
+    gap: 9px;
+  
+    padding: 14px 20px;
+  
+    border-top:
+      1px solid rgba(255, 255, 255, 0.05);
+  
+    background:
+      rgba(255, 255, 255, 0.008);
+  }
+  
+  .area-btn-secondary,
+  .area-btn-primary {
+    min-height: 36px;
+  
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  
+    gap: 6px;
+  
+    padding: 0 13px;
+  
+    border-radius: 8px;
+  
+    font-family: inherit;
+    font-size: 9px;
+    font-weight: 600;
+  
+    cursor: pointer;
+  }
+  
+  .area-btn-secondary {
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  
+    background: #0e1510;
+  
+    color: #939e96;
+  }
+  
+  .area-btn-primary {
+    border: 1px solid rgba(119, 255, 0, 0.25);
+  
+    background: rgba(119, 255, 0, 0.09);
+  
+    color: #77ff00;
+  }
+  
+  .area-btn-primary:hover:not(:disabled) {
+    background: rgba(119, 255, 0, 0.13);
+  }
+  
+  .area-btn-secondary:disabled,
+  .area-btn-primary:disabled {
+    opacity: 0.45;
+  
+    cursor: not-allowed;
+  }
+  
+  @media (max-width: 650px) {
+    .area-modal-backdrop {
+      padding: 12px;
+    }
+  
+    .area-modal {
+      max-height:
+        calc(100vh - 24px);
+    }
+  
+    .area-form-grid {
+      grid-template-columns: 1fr;
+    }
+  }

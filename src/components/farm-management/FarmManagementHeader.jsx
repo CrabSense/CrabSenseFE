@@ -6,6 +6,8 @@ import {
   import useSelectedArea
     from '../../hooks/useSelectedArea'
   
+  import '../../styles/farm-management/FarmManagementHeader.css'
+
   function FarmManagementHeader({
     refreshing,
     onRefresh,

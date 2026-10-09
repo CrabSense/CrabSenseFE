@@ -80,7 +80,95 @@ import {
       },
       [farmingAreaId]
     )
+    
+    const upsertRow = useCallback(
+      (savedRow) => {
+        if (!savedRow?.id) {
+          return
+        }
+    
+        setRows((currentRows) => {
+          const exists =
+            currentRows.some(
+              (row) =>
+                row.id === savedRow.id
+            )
+    
+          if (exists) {
+            return currentRows.map(
+              (row) =>
+                row.id === savedRow.id
+                  ? savedRow
+                  : row
+            )
+          }
+    
+          return [
+            ...currentRows,
+            savedRow,
+          ]
+        })
+      },
+      []
+    )
   
+    const upsertBox = useCallback(
+      (savedBox) => {
+        if (!savedBox?.id) {
+          return
+        }
+    
+        setBoxes((currentBoxes) => {
+          const exists =
+            currentBoxes.some(
+              (box) =>
+                box.id === savedBox.id
+            )
+    
+          if (exists) {
+            return currentBoxes.map(
+              (box) =>
+                box.id === savedBox.id
+                  ? savedBox
+                  : box
+            )
+          }
+    
+          return [
+            ...currentBoxes,
+            savedBox,
+          ]
+        })
+      },
+      []
+    )
+
+    const removeRow = useCallback(
+      (rowId) => {
+        setRows(
+          (currentRows) =>
+            currentRows.filter(
+              (row) =>
+                row.id !== rowId
+            )
+        )
+      },
+      []
+    )
+
+    const removeArea = useCallback(
+      (areaId) => {
+        setAreas(
+          (currentAreas) =>
+            currentAreas.filter(
+              (area) =>
+                area.id !== areaId
+            )
+        )
+      },
+      []
+    )
+
     useEffect(() => {
       load(false)
     }, [load])
@@ -96,5 +184,10 @@ import {
   
       reload: () =>
         load(true),
+
+      upsertRow,
+      upsertBox,
+      removeRow,
+      removeArea,
     }
   }

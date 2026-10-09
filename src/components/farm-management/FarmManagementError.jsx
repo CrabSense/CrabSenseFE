@@ -1,3 +1,5 @@
+import '../../styles/farm-management/FarmManagementState.css'
+
 function FarmManagementError({
     message,
     onRetry,

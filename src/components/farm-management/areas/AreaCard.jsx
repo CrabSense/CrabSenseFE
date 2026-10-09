@@ -1,20 +1,29 @@
 import {
-    Boxes,
-    Grid3X3,
-    Shell,
-  } from 'lucide-react'
-  
-  function AreaCard({
-    area,
-    selected,
-    onSelect,
-  }) {
-    return (
+  Boxes,
+  Grid3X3,
+  Pencil,
+  Shell,
+  PowerOff,
+} from 'lucide-react'
+
+function AreaCard({
+  area,
+  selected,
+  onSelect,
+  onEdit,
+  onDeactivate,
+}) {
+  return (
+    <article
+      className={`farm-area-card ${
+        selected
+          ? 'selected'
+          : ''
+      }`}
+    >
       <button
         type="button"
-        className={`farm-area-card ${
-          selected ? 'selected' : ''
-        }`}
+        className="farm-area-select"
         onClick={() =>
           onSelect(area.id)
         }
@@ -24,12 +33,12 @@ import {
             <span>
               {area.code}
             </span>
-  
+
             <strong>
               {area.name}
             </strong>
           </div>
-  
+
           <span
             className={`farm-status ${
               area.isActive
@@ -40,25 +49,57 @@ import {
             {area.status}
           </span>
         </div>
-  
+
         <div className="farm-area-stats">
           <span>
             <Grid3X3 size={13} />
-            {area.rowCount ?? 0} rows
+            {area.rowCount ?? 0}
+            {' '}rows
           </span>
-  
+
           <span>
             <Boxes size={13} />
-            {area.boxCount ?? 0} boxes
+            {area.boxCount ?? 0}
+            {' '}boxes
           </span>
-  
+
           <span>
             <Shell size={13} />
-            {area.crabCount ?? 0} crabs
+            {area.crabCount ?? 0}
+            {' '}crabs
           </span>
         </div>
       </button>
-    )
-  }
-  
-  export default AreaCard
+
+      <div className="farm-area-card-actions">
+        <button
+          type="button"
+          className="farm-area-action"
+          onClick={() =>
+            onEdit(area)
+          }
+          title="Edit area"
+        >
+          <Pencil size={13} />
+          Edit
+        </button>
+
+        <button
+          type="button"
+          className="farm-area-deactivate"
+          onClick={(event) => {
+            event.stopPropagation()
+
+            onDeactivate?.(area)
+          }}
+        >
+          <PowerOff size={12} />
+
+          Deactivate
+        </button>
+      </div>
+    </article>
+  )
+}
+
+export default AreaCard
