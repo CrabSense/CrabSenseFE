@@ -1,134 +1,123 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5080/api'
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5080/api";
 
-let refreshPromise = null
+let refreshPromise = null;
 
 const clearAuthStorage = () => {
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('refreshToken')
-  localStorage.removeItem('expiresAt')
-  localStorage.removeItem('user')
-}
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("expiresAt");
+  localStorage.removeItem("user");
+};
 
 const saveAuthData = (data) => {
-  if (!data) return
+  if (!data) return;
 
   if (data.accessToken) {
-    localStorage.setItem('accessToken', data.accessToken)
+    localStorage.setItem("accessToken", data.accessToken);
   }
 
   if (data.refreshToken) {
-    localStorage.setItem('refreshToken', data.refreshToken)
+    localStorage.setItem("refreshToken", data.refreshToken);
   }
 
   if (data.expiresAt) {
-    localStorage.setItem('expiresAt', data.expiresAt)
+    localStorage.setItem("expiresAt", data.expiresAt);
   }
 
   if (data.user) {
-    localStorage.setItem('user', JSON.stringify(data.user))
+    localStorage.setItem("user", JSON.stringify(data.user));
   }
-}
+};
 
 const redirectToLogin = () => {
-  clearAuthStorage()
+  clearAuthStorage();
 
-  if (window.location.pathname !== '/login') {
-    window.location.replace('/login')
+  if (window.location.pathname !== "/login") {
+    window.location.replace("/login");
   }
-}
+};
 
 // Dùng fetch trực tiếp ở đây để tránh:
 // fetchAPI -> refresh -> fetchAPI -> refresh -> ...
 export const refreshAccessToken = async () => {
-  const refreshToken = localStorage.getItem('refreshToken')
+  const refreshToken = localStorage.getItem("refreshToken");
 
   if (!refreshToken) {
-    throw new Error('No refresh token available.')
+    throw new Error("No refresh token available.");
   }
 
   // Nếu nhiều API cùng lúc đều bị 401,
   // chỉ gửi 1 refresh request.
   if (refreshPromise) {
-    return refreshPromise
+    return refreshPromise;
   }
 
   refreshPromise = (async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           refreshToken,
         }),
-      })
+      });
 
-      let result = null
+      let result = null;
 
       try {
-        result = await response.json()
+        result = await response.json();
       } catch {
-        result = null
+        result = null;
       }
 
-      if (
-        !response.ok ||
-        !result?.success ||
-        !result?.data?.accessToken
-      ) {
+      if (!response.ok || !result?.success || !result?.data?.accessToken) {
         throw new Error(
-          result?.message || 'Session expired. Please sign in again.'
-        )
+          result?.message || "Session expired. Please sign in again.",
+        );
       }
 
-      saveAuthData(result.data)
+      saveAuthData(result.data);
 
-      return result.data.accessToken
+      return result.data.accessToken;
     } catch (error) {
-      clearAuthStorage()
-      throw error
+      clearAuthStorage();
+      throw error;
     } finally {
-      refreshPromise = null
+      refreshPromise = null;
     }
-  })()
+  })();
 
-  return refreshPromise
-}
+  return refreshPromise;
+};
 
-const fetchAPI = async (
-  endpoint,
-  options = {},
-  configOptions = {}
-) => {
-  const {
-    skipAuth = false,
-    skipRefresh = false,
-  } = configOptions
+const fetchAPI = async (endpoint, options = {}, configOptions = {}) => {
+  const { skipAuth = false, skipRefresh = false } = configOptions;
 
-  const url = `${API_BASE_URL}${endpoint}`
+  const url = `${API_BASE_URL}${endpoint}`;
 
   const makeRequest = async (token = null) => {
     const headers = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
-    }
+    };
 
     if (!skipAuth && token) {
-      headers.Authorization = `Bearer ${token}`
+      headers.Authorization = `Bearer ${token}`;
     }
 
     return fetch(url, {
       ...options,
       headers,
-    })
-  }
+    });
+  };
 
   try {
-    const currentToken = localStorage.getItem('accessToken')
+    const currentToken = localStorage.getItem("accessToken");
 
-    let response = await makeRequest(currentToken)
+    let response = await makeRequest(currentToken);
 
     /*
      * Access token hết hạn:
@@ -139,60 +128,57 @@ const fetchAPI = async (
     if (
       response.status === 401 &&
       !skipRefresh &&
-      endpoint !== '/auth/login' &&
-      endpoint !== '/auth/refresh'
+      endpoint !== "/auth/login" &&
+      endpoint !== "/auth/refresh"
     ) {
       try {
-        const newAccessToken = await refreshAccessToken()
+        const newAccessToken = await refreshAccessToken();
 
-        response = await makeRequest(newAccessToken)
+        response = await makeRequest(newAccessToken);
       } catch (refreshError) {
-        redirectToLogin()
-        throw refreshError
+        redirectToLogin();
+        throw refreshError;
       }
     }
 
-    let result = null
+    let result = null;
 
     try {
-      result = await response.json()
+      result = await response.json();
     } catch {
-      result = null
+      result = null;
     }
 
     if (!response.ok) {
       const message =
         result?.message ||
         result?.title ||
-        `Request failed with status ${response.status}`
+        `Request failed with status ${response.status}`;
 
       // Retry rồi mà vẫn 401
       if (response.status === 401) {
-        redirectToLogin()
+        redirectToLogin();
       }
 
-      throw new Error(message)
+      throw new Error(message);
     }
 
-    return result
+    return result;
   } catch (error) {
-    console.error(`API request failed: ${endpoint}`, error)
-    throw error
+    console.error(`API request failed: ${endpoint}`, error);
+    throw error;
   }
-}
+};
 
 // Giữ compatibility với Monitoring.jsx hiện tại
 export const waterQualityAPI = {
-  getLatestData: () =>
-    fetchAPI('/water-quality/latest'),
+  getLatestData: () => fetchAPI("/water-quality/latest"),
 
   getHistoricalData: (startDate, endDate) =>
-    fetchAPI(
-      `/water-quality/history?start=${startDate}&end=${endDate}`
-    ),
+    fetchAPI(`/water-quality/history?start=${startDate}&end=${endDate}`),
 
   getParameterData: (parameter) =>
     fetchAPI(`/water-quality/parameter/${parameter}`),
-}
+};
 
-export default fetchAPI
+export default fetchAPI;

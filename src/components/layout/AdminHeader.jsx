@@ -1,110 +1,312 @@
+import { useState } from "react";
+
 import {
   LogOut,
   Menu,
   UserRound,
-} from 'lucide-react'
+  ShieldCheck,
+  ChevronRight,
+} from "lucide-react";
 
-import {
-  useLocation,
-  useNavigate,
-} from 'react-router-dom'
+import { useLocation, useNavigate } from "react-router-dom";
 
-import authService from '../../services/authService'
+import { Button } from "@/components/ui/button";
 
-import FarmingAreaSelector
-  from '../filters/FarmingAreaSelector'
+import authService from "../../services/authService";
+import FarmingAreaSelector from "../filters/FarmingAreaSelector";
+import useTranslation from "../../hooks/useTranslation";
 
-import '../../styles/layout/AdminHeader.css'
+// ============================================
+// PAGE TITLE MAPPING
+// ============================================
 
-const PAGE_TITLES = {
-  '/dashboard': 'Dashboard',
-  '/monitoring': 'Monitoring',
-  '/analytics': 'Analytics',
-  '/farm-management': 'Farm Management',
-  '/settings': 'Settings',
-}
+const PAGE_TITLE_KEYS = {
+  "/dashboard": "nav.dashboard",
+  "/monitoring": "nav.monitoring",
+  "/analytics": "nav.analytics",
+  "/farm-management": "nav.farmManagement",
+  "/settings": "nav.settings",
+};
+
+// ============================================
+// ADMIN HEADER
+// ============================================
 
 function AdminHeader({ onOpenSidebar }) {
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const user = authService.getStoredUser()
+  const { t } = useTranslation();
 
-  const pageTitle =
-    PAGE_TITLES[location.pathname] ||
-    'CrabSense'
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const user = authService.getStoredUser();
+
+  const titleKey = PAGE_TITLE_KEYS[location.pathname];
+
+  const pageTitle = titleKey ? t(titleKey) : "CrabSense";
+
+  // ==========================================
+  // LOGOUT
+  // ==========================================
 
   const handleLogout = async () => {
+    if (loggingOut) return;
+
+    setLoggingOut(true);
+
     try {
-      await authService.logout()
+      await authService.logout();
     } catch (error) {
-      console.error(
-        'Logout failed:',
-        error
-      )
+      console.error("Logout failed:", error);
     } finally {
-      navigate('/login', {
+      navigate("/login", {
         replace: true,
-      })
+      });
     }
-  }
+  };
+
+  // ==========================================
+  // RENDER
+  // ==========================================
 
   return (
-    <header className="admin-topbar">
-      <div className="admin-topbar-left">
-        <button
+    <header
+      className={[
+        // Sticky header
+        "sticky top-0 z-[100]",
+
+        // Dropdown must be able to overflow
+        "overflow-visible",
+
+        // Layout
+        "flex min-h-[74px]",
+        "items-center justify-between",
+        "gap-4",
+
+        // Dark header styling
+        "border-b border-[#77FF00]/10",
+        "bg-[#080D09]/95",
+        "backdrop-blur-xl",
+
+        // Header transition
+        "transition-[background-color,border-color]",
+        "duration-[240ms]",
+
+        // Responsive
+        "px-7",
+        "max-[900px]:px-[18px]",
+        "max-[760px]:flex-wrap",
+        "max-[760px]:py-3",
+      ].join(" ")}
+    >
+      {/* ======================================
+          LEFT: PAGE IDENTITY
+         ====================================== */}
+
+      <div
+        className={["flex min-w-0 shrink-0", "items-center gap-3"].join(" ")}
+      >
+        {/* MOBILE SIDEBAR BUTTON */}
+        <Button
           type="button"
-          className="mobile-menu-button"
+          variant="outline"
+          size="icon"
           onClick={onOpenSidebar}
-          aria-label="Open navigation"
+          aria-label={t("nav.openNavigation")}
+          aria-controls="crabsense-sidebar"
+          className={[
+            "hidden h-10 w-10 shrink-0",
+
+            "rounded-xl",
+
+            "border-[#77FF00]/15",
+            "bg-[#77FF00]/[0.05]",
+            "text-[#77FF00]",
+
+            "transition-[background-color,border-color,box-shadow]",
+            "duration-200",
+
+            "hover:border-[#77FF00]/30",
+            "hover:bg-[#77FF00]/10",
+            "hover:shadow-[0_0_18px_rgba(119,255,0,0.06)]",
+
+            "focus-visible:ring-2",
+            "focus-visible:ring-[#77FF00]/30",
+
+            "max-[900px]:inline-flex",
+          ].join(" ")}
         >
-          <Menu size={20} />
-        </button>
+          <Menu size={20} aria-hidden="true" />
+        </Button>
 
-        <div>
-          <p className="topbar-eyebrow">
-            CRABSENSE ADMIN
-          </p>
+        {/* TITLE GROUP */}
+        <div className="min-w-0">
+          <div className="mb-1 flex items-center gap-1.5">
+            <ShieldCheck
+              size={12}
+              aria-hidden="true"
+              className="text-[#77FF00]"
+            />
 
-          <h2>{pageTitle}</h2>
+            <span className="truncate text-[9px] font-bold uppercase tracking-[0.13em] text-[#77FF00]">
+              {t("nav.adminPortal")}
+            </span>
+
+            <ChevronRight
+              size={12}
+              aria-hidden="true"
+              className="text-[#526A56]"
+            />
+          </div>
+
+          {/* ANIMATED PAGE TITLE */}
+          <h2
+            key={location.pathname}
+            className={[
+              "admin-header-title-reveal",
+
+              "truncate text-[19px]",
+              "font-semibold",
+              "tracking-[-0.5px]",
+              "text-[#F4F7F4]",
+            ].join(" ")}
+          >
+            {pageTitle}
+          </h2>
         </div>
       </div>
 
-      <div className="admin-topbar-center">
-        <FarmingAreaSelector />
+      {/* ======================================
+          CENTER: FARMING AREA SELECTOR
+         ====================================== */}
+
+      <div
+        className={[
+          "relative z-20",
+
+          "flex min-w-0 flex-1",
+          "items-center justify-center",
+
+          "overflow-visible",
+          "px-3",
+
+          "max-[760px]:order-3",
+          "max-[760px]:w-full",
+          "max-[760px]:basis-full",
+          "max-[760px]:px-0",
+        ].join(" ")}
+      >
+        <div
+          className={[
+            "relative w-full min-w-0",
+            "max-w-[470px]",
+            "overflow-visible",
+          ].join(" ")}
+        >
+          <FarmingAreaSelector />
+        </div>
       </div>
 
-      <div className="admin-topbar-right">
-        <div className="topbar-user">
-          <div className="topbar-avatar">
-            <UserRound size={18} />
+      {/* ======================================
+          RIGHT: USER AND LOGOUT
+         ====================================== */}
+
+      <div
+        className={[
+          "relative z-10",
+
+          "flex shrink-0",
+          "items-center gap-3",
+        ].join(" ")}
+      >
+        {/* ACCOUNT */}
+        <div className="group flex items-center gap-2.5">
+          {/* AVATAR */}
+          <div
+            className={[
+              "flex h-10 w-10",
+              "shrink-0 items-center justify-center",
+
+              "rounded-xl",
+
+              "border border-[#77FF00]/20",
+              "bg-[#77FF00]/[0.06]",
+              "text-[#77FF00]",
+
+              "transition-[background-color,border-color,box-shadow]",
+              "duration-[220ms]",
+
+              "group-hover:border-[#77FF00]/30",
+              "group-hover:bg-[#77FF00]/[0.09]",
+              "group-hover:shadow-[0_0_16px_rgba(119,255,0,0.05)]",
+            ].join(" ")}
+          >
+            <UserRound size={19} aria-hidden="true" />
           </div>
 
-          <div className="topbar-user-info">
-            <strong>
-              {user?.fullName ||
-                user?.username ||
-                'Administrator'}
+          {/* USER INFO */}
+          <div
+            className={[
+              "flex max-w-[165px]",
+              "min-w-0 flex-col",
+
+              "max-[1100px]:hidden",
+            ].join(" ")}
+          >
+            <strong className="truncate text-xs font-semibold text-[#E5EEE6]">
+              {user?.fullName || user?.username || t("common.administrator")}
             </strong>
 
-            <span>
-              {user?.role || 'SystemAdmin'}
+            <span className="mt-1 truncate text-[10px] text-[#87988A]">
+              {user?.role || "SystemAdmin"}
             </span>
           </div>
         </div>
 
-        <button
+        {/* LOGOUT */}
+        <Button
           type="button"
-          className="topbar-logout"
+          variant="outline"
           onClick={handleLogout}
-        >
-          <LogOut size={18} />
+          disabled={loggingOut}
+          aria-label={loggingOut ? t("common.loggingOut") : t("common.logout")}
+          title={t("common.logout")}
+          className={[
+            "h-10 gap-2 rounded-xl",
 
-          <span>Logout</span>
-        </button>
+            "border-[#2A3B2E]",
+            "bg-[#111A13]",
+
+            "px-3.5",
+
+            "text-[#A3B3A6]",
+
+            "transition-[background-color,border-color,color,box-shadow]",
+            "duration-[220ms]",
+
+            "hover:border-red-500/25",
+            "hover:bg-red-500/[0.08]",
+            "hover:text-red-400",
+            "hover:shadow-[0_0_16px_rgba(239,68,68,0.04)]",
+
+            "focus-visible:ring-2",
+            "focus-visible:ring-red-500/20",
+
+            "disabled:opacity-50",
+
+            "max-[520px]:px-3",
+          ].join(" ")}
+        >
+          <LogOut size={16} aria-hidden="true" />
+
+          <span className="max-[520px]:hidden">
+            {loggingOut ? t("common.loggingOut") : t("common.logout")}
+          </span>
+        </Button>
       </div>
     </header>
-  )
+  );
 }
 
-export default AdminHeader
+export default AdminHeader;

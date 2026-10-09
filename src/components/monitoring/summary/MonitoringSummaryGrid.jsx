@@ -1,43 +1,76 @@
-import MonitoringSummaryCard
-  from './MonitoringSummaryCard'
+import {
+  Boxes,
+  CircleCheck,
+  TriangleAlert,
+  ShieldAlert,
+  WifiOff,
+} from "lucide-react";
 
-function MonitoringSummaryGrid({
-  summary,
-}) {
-  if (!summary) return null
+import MonitoringSummaryCard from "./MonitoringSummaryCard";
+
+import useTranslation from "@/hooks/useTranslation";
+
+function MonitoringSummaryGrid({ summary }) {
+  const { t } = useTranslation();
+
+  if (!summary) return null;
+
+  const summaryItems = [
+    {
+      key: "totalBoxes",
+      value: summary.total,
+      tone: "default",
+      icon: Boxes,
+    },
+    {
+      key: "healthy",
+      value: summary.healthy,
+      tone: "healthy",
+      icon: CircleCheck,
+    },
+    {
+      key: "warning",
+      value: summary.warning,
+      tone: "warning",
+      icon: TriangleAlert,
+    },
+    {
+      key: "critical",
+      value: summary.critical,
+      tone: "critical",
+      icon: ShieldAlert,
+    },
+    {
+      key: "offline",
+      value: summary.offline,
+      tone: "offline",
+      icon: WifiOff,
+    },
+  ];
 
   return (
-    <section className="monitoring-summary-grid">
-      <MonitoringSummaryCard
-        label="Total Boxes"
-        value={summary.total}
-      />
-
-      <MonitoringSummaryCard
-        label="Healthy"
-        value={summary.healthy}
-        tone="healthy"
-      />
-
-      <MonitoringSummaryCard
-        label="Warning"
-        value={summary.warning}
-        tone="warning"
-      />
-
-      <MonitoringSummaryCard
-        label="Critical"
-        value={summary.critical}
-        tone="critical"
-      />
-
-      <MonitoringSummaryCard
-        label="Offline"
-        value={summary.offline}
-        tone="offline"
-      />
+    <section
+      aria-label={t("monitoring.boxSummary")}
+      className={[
+        "mb-6 grid min-w-0 gap-5",
+        "grid-cols-1",
+        "sm:grid-cols-2",
+        "xl:grid-cols-3",
+        "2xl:grid-cols-5",
+      ].join(" ")}
+    >
+      {summaryItems.map((item, index) => (
+        <MonitoringSummaryCard
+          key={item.key}
+          index={index}
+          label={t(`monitoring.${item.key}`)}
+          value={item.value}
+          tone={item.tone}
+          icon={item.icon}
+        />
+      ))}
     </section>
-  )
+  );
 }
 
-export default MonitoringSummaryGrid
+export default MonitoringSummaryGrid;

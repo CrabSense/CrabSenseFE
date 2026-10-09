@@ -1,77 +1,65 @@
-import {
-  useState,
-} from 'react'
+import { useState } from "react";
 
-import useAnalytics
-  from '../hooks/useAnalytics'
+import useAnalytics from "../hooks/useAnalytics";
+import useSelectedArea from "../hooks/useSelectedArea";
+import useTranslation from "../hooks/useTranslation";
 
-import useSelectedArea
-  from '../hooks/useSelectedArea'
+import PageReveal from "../components/ui/PageReveal";
 
-import AnalyticsHeader
-  from '../components/analytics/AnalyticsHeader'
+import AnalyticsHeader from "../components/analytics/AnalyticsHeader";
+import AnalyticsDateFilter from "../components/analytics/filters/AnalyticsDateFilter";
+import AnalyticsKpiGrid from "../components/analytics/kpi/AnalyticsKpiGrid";
 
-import AnalyticsDateFilter
-  from '../components/analytics/filters/AnalyticsDateFilter'
+import HarvestTrendChart from "../components/analytics/harvest/HarvestTrendChart";
+import SurvivalPanel from "../components/analytics/survival/SurvivalPanel";
+import MoltingPanel from "../components/analytics/molting/MoltingPanel";
+import EfficiencyPanel from "../components/analytics/operations/EfficiencyPanel";
 
-import AnalyticsKpiGrid
-  from '../components/analytics/kpi/AnalyticsKpiGrid'
+import AnalyticsLoading from "../components/analytics/AnalyticsLoading";
+import AnalyticsError from "../components/analytics/AnalyticsError";
 
-import HarvestTrendChart
-  from '../components/analytics/harvest/HarvestTrendChart'
+// ============================================
+// DATE HELPERS
+// ============================================
 
-import SurvivalPanel
-  from '../components/analytics/survival/SurvivalPanel'
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
-import MoltingPanel
-  from '../components/analytics/molting/MoltingPanel'
-
-import EfficiencyPanel
-  from '../components/analytics/operations/EfficiencyPanel'
-
-import AnalyticsLoading
-  from '../components/analytics/AnalyticsLoading'
-
-import AnalyticsError
-  from '../components/analytics/AnalyticsError'
-
-import '../styles/analytics/Analytics.css'
+  return `${year}-${month}-${day}`;
+}
 
 function getDefaultFromDate() {
-  const date = new Date()
+  const date = new Date();
 
-  date.setDate(
-    date.getDate() - 30
-  )
+  date.setDate(date.getDate() - 30);
 
-  return date
-    .toISOString()
-    .slice(0, 10)
+  return formatLocalDate(date);
 }
 
 function getToday() {
-  return new Date()
-    .toISOString()
-    .slice(0, 10)
+  return formatLocalDate(new Date());
 }
 
+// ============================================
+// ANALYTICS PAGE
+// ============================================
+
 function Analytics() {
-  const {
-    selectedAreaId,
-  } = useSelectedArea()
+  const { t } = useTranslation();
 
-  const [fromDate, setFromDate] =
-    useState(getDefaultFromDate)
+  const { selectedAreaId } = useSelectedArea();
 
-  const [toDate, setToDate] =
-    useState(getToday)
+  const [fromDate, setFromDate] = useState(getDefaultFromDate);
+
+  const [toDate, setToDate] = useState(getToday);
 
   const {
     harvest,
     survival,
     molting,
     efficiency,
-
     loading,
     refreshing,
     error,
@@ -80,68 +68,95 @@ function Analytics() {
     farmingAreaId: selectedAreaId,
     fromDate,
     toDate,
-  })
+  });
 
+  // INITIAL LOADING
   if (loading) {
-    return <AnalyticsLoading />
+    return (
+      <main className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
+        <AnalyticsLoading />
+      </main>
+    );
   }
 
+  // API ERROR
   if (error) {
     return (
-      <AnalyticsError
-        message={error}
-        onRetry={reload}
-      />
-    )
+      <main className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
+        <AnalyticsError
+          message={error}
+          onRetry={reload}
+          refreshing={refreshing}
+        />
+      </main>
+    );
   }
 
+  // ANALYTICS CONTENT
   return (
-    <div className="analytics-page">
-      <AnalyticsHeader
-        refreshing={refreshing}
-        onRefresh={reload}
-      />
+    <main className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
+      {/* HEADER */}
+      <PageReveal delay={0}>
+        <AnalyticsHeader refreshing={refreshing} onRefresh={reload} />
+      </PageReveal>
 
-      <div className="analytics-toolbar">
-        <AnalyticsDateFilter
-          fromDate={fromDate}
-          toDate={toDate}
-          onFromDateChange={setFromDate}
-          onToDateChange={setToDate}
+      {/* DATE FILTER */}
+      <PageReveal delay={60}>
+        <div className="mb-6 flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <AnalyticsDateFilter
+            fromDate={fromDate}
+            toDate={toDate}
+            onFromDateChange={setFromDate}
+            onToDateChange={setToDate}
+          />
+
+          <p className="max-w-md text-xs leading-relaxed text-[#8C9A90]">
+            {t("analytics.dateRangeNote")}
+          </p>
+        </div>
+      </PageReveal>
+
+      {/* KPI OVERVIEW */}
+      <PageReveal delay={80}>
+        <AnalyticsKpiGrid
+          survival={survival}
+          harvest={harvest}
+          molting={molting}
+          efficiency={efficiency}
         />
+      </PageReveal>
 
-        <span className="analytics-filter-note">
-          Date range applies to Survival and
-          Operational Efficiency reports.
-        </span>
-      </div>
+      {/* REPORT CHARTS */}
+      <section
+        aria-label={t("analytics.reportsAria")}
+        className={[
+          "grid min-w-0 grid-cols-1",
+          "items-stretch gap-5",
+          "xl:grid-cols-2",
+        ].join(" ")}
+      >
+        {/* HARVEST TREND */}
+        <PageReveal delay={0} className="h-full">
+          <HarvestTrendChart data={harvest?.byDate ?? []} />
+        </PageReveal>
 
-      <AnalyticsKpiGrid
-        survival={survival}
-        harvest={harvest}
-        molting={molting}
-        efficiency={efficiency}
-      />
+        {/* SURVIVAL REPORT */}
+        <PageReveal delay={80} className="h-full">
+          <SurvivalPanel report={survival} />
+        </PageReveal>
 
-      <section className="analytics-chart-grid">
-        <HarvestTrendChart
-          data={harvest?.byDate ?? []}
-        />
+        {/* MOLTING REPORT */}
+        <PageReveal delay={0} className="h-full">
+          <MoltingPanel report={molting} />
+        </PageReveal>
 
-        <SurvivalPanel
-          report={survival}
-        />
-
-        <MoltingPanel
-          report={molting}
-        />
-
-        <EfficiencyPanel
-          data={efficiency}
-        />
+        {/* EFFICIENCY REPORT */}
+        <PageReveal delay={80} className="h-full">
+          <EfficiencyPanel data={efficiency} />
+        </PageReveal>
       </section>
-    </div>
-  )
+    </main>
+  );
 }
 
-export default Analytics
+export default Analytics;

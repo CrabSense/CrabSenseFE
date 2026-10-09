@@ -1,503 +1,365 @@
+import { useEffect, useState } from "react";
+import { MapPin, Save, LoaderCircle } from "lucide-react";
+
 import {
-    MapPin,
-    Save,
-    X,
-  } from 'lucide-react'
-  
-  import {
-    useEffect,
-    useState,
-  } from 'react'
-  
-  import farmManagementService
-    from '../../../services/farmManagementService'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
-import '../../../styles/farm-management/AreaFormModal.css'
-  
-  import AreaForm
-    from './AreaForm'
-  
-    const emptyForm = {
-        name: '',
-        location: '',
-        address: '',
-        region: '',
-        areaSquareMeters: '',
-        establishedAt: getTodayLocalDate(),
-        description: '',
-      }
+import { Button } from "@/components/ui/button";
 
-  function getTodayLocalDate() {
-    const now = new Date()
-  
-    const year = now.getFullYear()
-    const month = String(
-      now.getMonth() + 1
-    ).padStart(2, '0')
-  
-    const day = String(
-      now.getDate()
-    ).padStart(2, '0')
-  
-    return `${year}-${month}-${day}`
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+import farmManagementService from "../../../services/farmManagementService";
+import useTranslation from "@/hooks/useTranslation";
+
+import AreaForm from "./AreaForm";
+
+// ============================
+// DATE HELPERS
+// ============================
+function getTodayLocalDate() {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function toDateInputValue(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
   }
-  
-  function toDateInputValue(
-    value
-  ) {
-    if (!value) return ''
-  
-    const date =
-      new Date(value)
-  
-    if (
-      Number.isNaN(
-        date.getTime()
-      )
-    ) {
-      return ''
-    }
-  
-    return date
-      .toISOString()
-      .slice(0, 10)
-  }
-  
-  function buildInitialForm(area) {
-    if (!area) {
-      return {
-        ...emptyForm,
-        establishedAt:
-          getTodayLocalDate(),
-      }
-    }
-  
+
+  return date.toISOString().slice(0, 10);
+}
+
+// ============================
+// INITIAL FORM STATE
+// ============================
+function buildInitialForm(area) {
+  if (!area) {
     return {
-      name:
-        area.name ?? '',
-  
-      location:
-        area.location ?? '',
-  
-      address:
-        area.address ?? '',
-  
-      region:
-        area.region ?? '',
-  
+      name: "",
+      location: "",
+      address: "",
+      region: "",
+      areaSquareMeters: "",
+      establishedAt: getTodayLocalDate(),
+      description: "",
+    };
+  }
+
+  return {
+    name: area.name ?? "",
+    location: area.location ?? "",
+    address: area.address ?? "",
+    region: area.region ?? "",
+    areaSquareMeters: area.areaSquareMeters ?? "",
+    establishedAt: toDateInputValue(area.establishedAt),
+    description: area.description ?? "",
+  };
+}
+
+function normalizeOptional(value) {
+  return String(value ?? "").trim() || null;
+}
+
+// ============================
+// COMPONENT
+// ============================
+function AreaFormModal({ open, area, onClose, onSuccess }) {
+  const { t } = useTranslation();
+
+  const isEdit = Boolean(area);
+
+  const [form, setForm] = useState(() => buildInitialForm(null));
+
+  const [saving, setSaving] = useState(false);
+
+  // Store translation keys for local errors.
+  // Keep Backend errors as their original messages.
+  const [error, setError] = useState(null);
+  const [errorIsKey, setErrorIsKey] = useState(false);
+
+  // ============================
+  // RESET FORM ON OPEN
+  // ============================
+  useEffect(() => {
+    if (!open) return;
+
+    setForm(buildInitialForm(area));
+    setError(null);
+    setErrorIsKey(false);
+  }, [open, area]);
+
+  // ============================
+  // HANDLE FIELD CHANGE
+  // ============================
+  const handleChange = (field, value) => {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+
+    setError(null);
+    setErrorIsKey(false);
+  };
+
+  // ============================
+  // HANDLE DIALOG CLOSE
+  // ============================
+  const handleOpenChange = (nextOpen) => {
+    if (!nextOpen && !saving) {
+      onClose?.();
+    }
+  };
+
+  // ============================
+  // BUILD BACKEND PAYLOAD
+  // ============================
+  const buildPayload = () => {
+    const payload = {
+      name: form.name.trim(),
+
+      location: normalizeOptional(form.location),
+
       areaSquareMeters:
-        area.areaSquareMeters ?? '',
-  
-      establishedAt:
-        toDateInputValue(
-          area.establishedAt
-        ),
-  
-      description:
-        area.description ?? '',
+        form.areaSquareMeters === "" ? null : Number(form.areaSquareMeters),
+
+      description: normalizeOptional(form.description),
+
+      status: isEdit ? (area?.status ?? null) : null,
+
+      address: normalizeOptional(form.address),
+
+      region: normalizeOptional(form.region),
+
+      establishedAt: form.establishedAt || null,
+
+      avatarUrl: isEdit ? (area?.avatarUrl ?? null) : null,
+
+      latitude: isEdit ? (area?.latitude ?? null) : null,
+
+      longitude: isEdit ? (area?.longitude ?? null) : null,
+    };
+
+    if (isEdit) {
+      payload.isActive = area?.isActive ?? true;
     }
-  }
-  
-  function normalizeOptional(
-    value
-  ) {
-    const trimmed =
-      String(value ?? '').trim()
-  
-    return trimmed || null
-  }
-  
-  function AreaFormModal({
-    open,
-    area,
-    onClose,
-    onSuccess,
-  }) {
-    const isEdit =
-      Boolean(area)
-  
-    const [form, setForm] =
-      useState(emptyForm)
-  
-    const [saving, setSaving] =
-      useState(false)
-  
-    const [error, setError] =
-      useState(null)
-  
-    useEffect(() => {
-      if (!open) return
-  
-      setForm(
-        buildInitialForm(area)
-      )
-  
-      setError(null)
-    }, [
-      open,
-      area,
-    ])
-  
-    useEffect(() => {
-      if (!open) return
-  
-      const handleEscape = (
-        event
-      ) => {
-        if (
-          event.key === 'Escape' &&
-          !saving
-        ) {
-          onClose()
-        }
-      }
-  
-      document.addEventListener(
-        'keydown',
-        handleEscape
-      )
-  
-      document.body.style.overflow =
-        'hidden'
-  
-      return () => {
-        document.removeEventListener(
-          'keydown',
-          handleEscape
-        )
-  
-        document.body.style.overflow =
-          ''
-      }
-    }, [
-      open,
-      saving,
-      onClose,
-    ])
-  
-    if (!open) {
-      return null
+
+    return payload;
+  };
+
+  // ============================
+  // ERROR HELPERS
+  // ============================
+  const setLocalError = (key) => {
+    setError(key);
+    setErrorIsKey(true);
+  };
+
+  const setBackendError = (message, fallbackKey) => {
+    if (message) {
+      setError(message);
+      setErrorIsKey(false);
+    } else {
+      setLocalError(fallbackKey);
     }
-  
-    const handleChange = (
-      field,
-      value
-    ) => {
-      setForm(
-        (current) => ({
-          ...current,
-          [field]: value,
-        })
-      )
-  
-      if (error) {
-        setError(null)
-      }
+  };
+
+  const displayError = errorIsKey && error ? t(error) : error;
+
+  // ============================
+  // SUBMIT CREATE / UPDATE
+  // ============================
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (saving) return;
+
+    const name = form.name.trim();
+
+    // Validate required name.
+    if (!name) {
+      setLocalError("farmAreas.nameRequired");
+      return;
     }
-  
-    const buildCreatePayload =
-      () => ({
-        name:
-          form.name.trim(),
-  
-        location:
-          normalizeOptional(
-            form.location
-          ),
-  
-        areaSquareMeters:
-          form.areaSquareMeters === ''
-            ? null
-            : Number(
-                form.areaSquareMeters
-              ),
-  
-        description:
-          normalizeOptional(
-            form.description
-          ),
-  
-        status: null,
-  
-        address:
-          normalizeOptional(
-            form.address
-          ),
-  
-        region:
-          normalizeOptional(
-            form.region
-          ),
-  
-        establishedAt:
-          form.establishedAt ||
-          null,
-  
-        avatarUrl: null,
-  
-        latitude: null,
-  
-        longitude: null,
-      })
-  
-    const buildUpdatePayload =
-      () => ({
-        name:
-          form.name.trim(),
-  
-        location:
-          normalizeOptional(
-            form.location
-          ),
-  
-        areaSquareMeters:
-          form.areaSquareMeters === ''
-            ? null
-            : Number(
-                form.areaSquareMeters
-              ),
-  
-        description:
-          normalizeOptional(
-            form.description
-          ),
-  
-        /*
-         * Những field chưa expose
-         * trong modal phải preserve.
-         */
-        status:
-          area?.status ?? null,
-  
-        isActive:
-          area?.isActive ?? true,
-  
-        address:
-          normalizeOptional(
-            form.address
-          ),
-  
-        region:
-          normalizeOptional(
-            form.region
-          ),
-  
-        establishedAt:
-          form.establishedAt ||
-          null,
-  
-        avatarUrl:
-          area?.avatarUrl ??
-          null,
-  
-        latitude:
-          area?.latitude ??
-          null,
-  
-        longitude:
-          area?.longitude ??
-          null,
-      })
-  
-    const handleSubmit =
-      async (event) => {
-        event.preventDefault()
-  
-        const name =
-          form.name.trim()
-  
-        if (!name) {
-          setError(
-            'Area name is required.'
-          )
-  
-          return
-        }
-  
-        if (
-          form.areaSquareMeters !== '' &&
-          (
-            Number.isNaN(
-              Number(
-                form.areaSquareMeters
-              )
-            ) ||
-            Number(
-              form.areaSquareMeters
-            ) < 0
-          )
-        ) {
-          setError(
-            'Area size must be a valid positive number.'
-          )
-  
-          return
-        }
-  
-        try {
-          setSaving(true)
-          setError(null)
-  
-          let result
-  
-          if (isEdit) {
-            result =
-              await farmManagementService
-                .updateArea(
-                  area.id,
-                  buildUpdatePayload()
-                )
-          } else {
-            result =
-              await farmManagementService
-                .createArea(
-                  buildCreatePayload()
-                )
-          }
-  
-          await onSuccess?.(
-            result,
-            isEdit
-              ? 'update'
-              : 'create'
-          )
-  
-          onClose()
-        } catch (err) {
-          console.error(
-            'Area save failed:',
-            err
-          )
-  
-          setError(
-            err.message ||
-            `Unable to ${
-              isEdit
-                ? 'update'
-                : 'create'
-            } farming area.`
-          )
-        } finally {
-          setSaving(false)
-        }
-      }
-  
-    return (
-      <div
-        className="area-modal-backdrop"
-        onMouseDown={(event) => {
-          if (
-            event.target ===
-              event.currentTarget &&
-            !saving
-          ) {
-            onClose()
+
+    // Validate area size.
+    const size = Number(form.areaSquareMeters);
+
+    if (form.areaSquareMeters !== "" && (!Number.isFinite(size) || size < 0)) {
+      setLocalError("farmAreas.invalidSize");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+      setErrorIsKey(false);
+
+      const payload = buildPayload();
+
+      // CREATE / UPDATE API
+      const result = isEdit
+        ? await farmManagementService.updateArea(area.id, payload)
+        : await farmManagementService.createArea(payload);
+
+      // Notify parent component.
+      await onSuccess?.(result, isEdit ? "update" : "create");
+
+      onClose?.();
+    } catch (err) {
+      console.error("Area save failed:", err);
+
+      setBackendError(
+        err?.message,
+        isEdit ? "farmAreas.updateFailed" : "farmAreas.createFailed",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        showCloseButton={!saving}
+        onEscapeKeyDown={(event) => {
+          if (saving) {
+            event.preventDefault();
           }
         }}
+        onInteractOutside={(event) => {
+          if (saving) {
+            event.preventDefault();
+          }
+        }}
+        className={[
+          "max-h-[calc(100dvh-24px)]",
+          "w-[calc(100%-24px)]",
+          "max-w-[620px] overflow-y-auto",
+          "rounded-2xl border-[#77FF00]/20",
+          "bg-[#0A110C] p-0",
+          "text-[#F4F7F4]",
+          "shadow-2xl",
+        ].join(" ")}
       >
-        <div
-          className="area-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="area-modal-title"
-        >
-          <div className="area-modal-header">
-            <div className="area-modal-title-wrap">
-              <div className="area-modal-icon">
-                <MapPin size={18} />
-              </div>
-  
-              <div>
-                <span>
-                  FARMING AREA
-                </span>
-  
-                <h2
-                  id="area-modal-title"
-                >
-                  {isEdit
-                    ? 'Edit Area'
-                    : 'Create Area'}
-                </h2>
-              </div>
+        {/* ============================
+            MODAL HEADER
+           ============================ */}
+        <DialogHeader className="border-b border-[#24382A] px-5 py-4 pr-12 text-left">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#77FF00]/20 bg-[#77FF00]/[0.06]">
+              <MapPin size={19} className="text-[#77FF00]" aria-hidden="true" />
             </div>
-  
-            <button
+
+            <div>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#77FF00]">
+                {t("farm.farmingArea")}
+              </p>
+
+              <DialogTitle className="text-lg font-semibold text-[#F4F7F4]">
+                {isEdit ? t("farmAreas.editArea") : t("farmAreas.createArea")}
+              </DialogTitle>
+            </div>
+          </div>
+
+          <DialogDescription className="mt-2 text-xs text-[#8C9A90]">
+            {isEdit
+              ? t("farmAreas.editDescription")
+              : t("farmAreas.createDescription")}
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* ============================
+            CREATE / EDIT FORM
+           ============================ */}
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-5 px-5 py-5">
+            {/* AREA CODE - EDIT ONLY */}
+            {isEdit && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#24382A] bg-[#0D1510] px-3 py-2.5">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8C9A90]">
+                  {t("farm.areaCode")}
+                </span>
+
+                <strong className="text-xs text-[#77FF00]">
+                  {area.code || "—"}
+                </strong>
+
+                <span className="ml-auto text-[10px] text-[#647466]">
+                  {t("farm.systemGenerated")}
+                </span>
+              </div>
+            )}
+
+            {/* AREA INPUT FIELDS */}
+            <AreaForm form={form} onChange={handleChange} disabled={saving} />
+
+            {/* ERROR MESSAGE */}
+            {displayError && (
+              <Alert
+                variant="destructive"
+                role="alert"
+                className="border-red-500/20 bg-red-500/[0.06] text-red-300"
+              >
+                <AlertDescription>{displayError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          {/* ============================
+              FORM ACTIONS
+             ============================ */}
+          <DialogFooter className="flex flex-col-reverse gap-2 border-t border-[#24382A] px-5 py-4 sm:flex-row sm:justify-end">
+            <Button
               type="button"
-              className="area-modal-close"
+              variant="outline"
               onClick={onClose}
               disabled={saving}
-              aria-label="Close"
+              className="border-[#24382A] bg-[#0D1510] text-[#ACB9AE] hover:bg-[#17251B] hover:text-white"
             >
-              <X size={18} />
-            </button>
-          </div>
-  
-          <form
-            onSubmit={
-              handleSubmit
-            }
-          >
-            <div className="area-modal-body">
-              {isEdit && (
-                <div className="area-modal-code">
-                  <span>
-                    AREA CODE
-                  </span>
-  
-                  <strong>
-                    {area.code}
-                  </strong>
-  
-                  <small>
-                    System generated
-                  </small>
-                </div>
+              {t("farm.cancel")}
+            </Button>
+
+            <Button
+              type="submit"
+              disabled={saving}
+              className="gap-2 bg-[#77FF00] font-semibold text-[#050806] hover:bg-[#63E600]"
+            >
+              {saving ? (
+                <LoaderCircle
+                  size={15}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Save size={15} aria-hidden="true" />
               )}
-  
-              <AreaForm
-                form={form}
-                onChange={
-                  handleChange
-                }
-                disabled={saving}
-              />
-  
-              {error && (
-                <div className="area-form-error">
-                  {error}
-                </div>
-              )}
-            </div>
-  
-            <div className="area-modal-footer">
-              <button
-                type="button"
-                className="area-btn-secondary"
-                onClick={onClose}
-                disabled={saving}
-              >
-                Cancel
-              </button>
-  
-              <button
-                type="submit"
-                className="area-btn-primary"
-                disabled={saving}
-              >
-                <Save size={14} />
-  
-                {saving
-                  ? 'Saving...'
-                  : isEdit
-                    ? 'Save Changes'
-                    : 'Create Area'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-  
-  export default AreaFormModal
+
+              {saving
+                ? t("farm.saving")
+                : isEdit
+                  ? t("farm.saveChanges")
+                  : t("farmAreas.createArea")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export default AreaFormModal;

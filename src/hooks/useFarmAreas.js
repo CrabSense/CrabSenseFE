@@ -1,44 +1,38 @@
-import { useCallback, useEffect, useState } from 'react'
-import farmingService from '../services/farmingService'
+import { useCallback, useEffect, useState } from "react";
+import farmingService from "../services/farmingService";
 
 export default function useFarmAreas() {
-  const [areas, setAreas] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [areas, setAreas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadAreas = useCallback(async () => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       const data = await farmingService.getAreas({
         isActive: true,
-      })
+      });
 
-      setAreas(data)
+      setAreas(data);
     } catch (err) {
-      console.error(
-        'Failed to load farming areas:',
-        err
-      )
+      console.error("Failed to load farming areas:", err);
 
-      setError(
-        err.message ||
-        'Unable to load farming areas.'
-      )
+      setError(err.message || "Unable to load farming areas.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    loadAreas()
-  }, [loadAreas])
+    loadAreas();
+  }, [loadAreas]);
 
   return {
     areas,
     loading,
     error,
     reload: loadAreas,
-  }
+  };
 }

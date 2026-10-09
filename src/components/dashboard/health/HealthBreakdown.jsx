@@ -1,46 +1,68 @@
-import HealthProgress from './HealthProgress'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-function HealthBreakdown({
-  metrics,
-  iotOnlinePercentage,
-}) {
-  if (!metrics) return null
+import HealthProgress from "./HealthProgress";
+import useTranslation from "@/hooks/useTranslation";
+
+function HealthBreakdown({ metrics, iotOnlinePercentage }) {
+  const { t } = useTranslation();
+
+  if (!metrics) return null;
+
+  const healthItems = [
+    {
+      key: "waterQuality",
+      value: metrics.waterQualityScore,
+    },
+    {
+      key: "crabHealth",
+      value: metrics.crabHealthScore,
+    },
+    {
+      key: "deviceStatus",
+      value: metrics.deviceStatusScore,
+    },
+    {
+      key: "iotOnline",
+      value: iotOnlinePercentage,
+    },
+  ];
 
   return (
-    <article className="dashboard-card">
-      <div className="dashboard-card-heading">
-        <div>
-          <p className="dashboard-eyebrow">
-            SYSTEM HEALTH
-          </p>
+    <Card
+      className={[
+        "h-full min-w-0 gap-6",
+        "rounded-2xl border",
+        "border-[#24382A]",
+        "bg-[#0D1510]",
+        "shadow-none",
+      ].join(" ")}
+    >
+      {/* HEADER */}
+      <CardHeader className="gap-1.5 px-6">
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#77FF00]">
+          {t("dashboard.systemHealthCategory")}
+        </p>
 
-          <h3>Health Breakdown</h3>
+        <CardTitle className="text-lg font-semibold tracking-tight text-[#F4F7F4]">
+          {t("dashboard.healthBreakdown")}
+        </CardTitle>
+      </CardHeader>
+
+      {/* HEALTH METRICS */}
+      <CardContent className="px-6 pb-6">
+        <div className="flex flex-col gap-6">
+          {healthItems.map((item, index) => (
+            <HealthProgress
+              key={item.key}
+              label={t(`dashboard.${item.key}`)}
+              value={item.value}
+              delay={340 + index * 100}
+            />
+          ))}
         </div>
-      </div>
-
-      <div className="health-breakdown-list">
-        <HealthProgress
-          label="Water Quality"
-          value={metrics.waterQualityScore}
-        />
-
-        <HealthProgress
-          label="Crab Health"
-          value={metrics.crabHealthScore}
-        />
-
-        <HealthProgress
-          label="Device Status"
-          value={metrics.deviceStatusScore}
-        />
-
-        <HealthProgress
-          label="IoT Online"
-          value={iotOnlinePercentage}
-        />
-      </div>
-    </article>
-  )
+      </CardContent>
+    </Card>
+  );
 }
 
-export default HealthBreakdown
+export default HealthBreakdown;

@@ -20,22 +20,26 @@ Hệ thống giám sát chất lượng nước cho nuôi trồng cua biển.
 ## Cài đặt
 
 1. Clone repository:
+
 ```bash
 git clone <repository-url>
 cd CrabSenseFE
 ```
 
 2. Cài đặt dependencies:
+
 ```bash
 npm install
 ```
 
 3. Tạo file `.env` từ `.env.example`:
+
 ```bash
 cp .env.example .env
 ```
 
 4. Chạy development server:
+
 ```bash
 npm run dev
 ```
@@ -79,34 +83,39 @@ Repo này triển khai **Member 2 (Web)** theo workbook (sheet `02_Man_hinh_UI` 
 
 ## Vai trò
 
-| Mục | Nội dung (Excel) |
-|-----|------------------|
+| Mục       | Nội dung (Excel)                                                                       |
+| --------- | -------------------------------------------------------------------------------------- |
 | Module UI | Farm, IoT monitor, Alerts, AI Decision, Harvest, Frozen, Trace, Sales, Reports, System |
-| FR UI | FR-1 UI, FR-2 charts, FR-9, FR-10 UI |
-| Layout | Sidebar + top bar; desktop browser = Desktop layout khi fullscreen |
+| FR UI     | FR-1 UI, FR-2 charts, FR-9, FR-10 UI                                                   |
+| Layout    | Sidebar + top bar; desktop browser = Desktop layout khi fullscreen                     |
 
 ## Màn hình Web chính (sheet 02_Man_hinh_UI)
 
 ### Auth & Dashboard
+
 - `WEB-AUTH-Login` — `/login`
 - `WEB-HOME-Dashboard` — `/` KPI trại + alert + AI harvest window
 
 ### Farm
+
 - Areas / Rows / Boxes grid / Box detail (tabs Overview·Crabs·WQ·Videos·Alerts·Ops·Trace)
 - Crop batches, Crabs, Crab lots
 - Operation Log (`/ops/logs`) — cho ăn, thay nước, Canxi, muối, vệ sinh, lọc, điều trị
 
 ### IoT
+
 - Water systems / zones + flow diagram
 - Realtime monitoring + lịch sử WQ charts
 - Device Management (ESP32 / phone: battery, RSSI, firmware)
 
 ### Cảnh báo & System
+
 - Alerts list + resolve
 - Alert thresholds
 - In-App notifications + **Notification Center** (Telegram/Email/In-App/SMS)
 
-### AI Decision Support *(không gọi “AI Detection” đơn thuần)*
+### AI Decision Support _(không gọi “AI Detection” đơn thuần)_
+
 - Video gallery + schedules
 - Review detections, Manual Inspection, Feedback, Recommendations, Dataset (YOLO)
 

@@ -1,71 +1,129 @@
-import {
-    Activity,
-    PackageCheck,
-    Shell,
-    TrendingUp,
-  } from 'lucide-react'
-  
-  import AnalyticsKpiCard
-    from './AnalyticsKpiCard'
-  
-  function AnalyticsKpiGrid({
-    survival,
-    harvest,
-    molting,
-    efficiency,
-  }) {
-    return (
-      <section className="analytics-kpi-grid">
-        <AnalyticsKpiCard
-          icon={Activity}
-          label="Survival Rate"
-          value={
-            Number(
-              survival?.survivalRate ?? 0
-            ).toFixed(1)
-          }
-          suffix="%"
-          description={`${survival?.aliveCrabs ?? 0} alive crabs`}
-          tone="bio"
-        />
-  
-        <AnalyticsKpiCard
-          icon={PackageCheck}
-          label="Harvest Weight"
-          value={
-            Number(
-              harvest?.totalWeightKg ?? 0
-            ).toFixed(1)
-          }
-          suffix="kg"
-          description={`${harvest?.totalQuantity ?? 0} harvested crabs`}
-        />
-  
-        <AnalyticsKpiCard
-          icon={Shell}
-          label="Molting Rate"
-          value={
-            Number(
-              molting?.moltingRate ?? 0
-            ).toFixed(1)
-          }
-          suffix="%"
-          description={`${molting?.moltedCrabs ?? 0} molted crabs`}
-        />
-  
-        <AnalyticsKpiCard
-          icon={TrendingUp}
-          label="Harvest Rate"
-          value={
-            Number(
-              efficiency?.harvestRate ?? 0
-            ).toFixed(1)
-          }
-          suffix="%"
-          description="Operational efficiency"
-        />
-      </section>
-    )
+import { Activity, PackageCheck, Shell, TrendingUp } from "lucide-react";
+
+import AnalyticsKpiCard from "./AnalyticsKpiCard";
+
+import useTranslation from "../../../hooks/useTranslation";
+
+// ============================================
+// FORMAT DECIMAL METRICS
+// ============================================
+
+function formatMetric(value, decimals = 1) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
   }
-  
-  export default AnalyticsKpiGrid
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number.toFixed(decimals) : "—";
+}
+
+// ============================================
+// FORMAT COUNTS BY LANGUAGE
+// ============================================
+
+function formatCount(value, language) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number.toLocaleString(language === "vi" ? "vi-VN" : "en-US")
+    : "—";
+}
+
+// ============================================
+// ANALYTICS KPI GRID
+// ============================================
+
+function AnalyticsKpiGrid({ survival, harvest, molting, efficiency }) {
+  const { t, language } = useTranslation();
+
+  return (
+    <section
+      aria-label={t("analytics.kpiOverview")}
+      className={[
+        "mb-6 grid min-w-0 gap-5",
+        "grid-cols-1 sm:grid-cols-2",
+        "2xl:grid-cols-4",
+      ].join(" ")}
+    >
+      {/* ====================================
+          1. SURVIVAL RATE
+         ==================================== */}
+
+      <AnalyticsKpiCard
+        index={0}
+        icon={Activity}
+        label={t("analytics.survivalRate")}
+        value={formatMetric(survival?.survivalRate)}
+        numericValue={survival?.survivalRate}
+        formatValue={formatMetric}
+        suffix="%"
+        description={`${formatCount(
+          survival?.aliveCrabs,
+          language,
+        )} ${t("analytics.aliveCrabs")}`}
+        tone="bio"
+      />
+
+      {/* ====================================
+          2. HARVEST WEIGHT
+         ==================================== */}
+
+      <AnalyticsKpiCard
+        index={1}
+        icon={PackageCheck}
+        label={t("analytics.harvestWeight")}
+        value={formatMetric(harvest?.totalWeightKg)}
+        numericValue={harvest?.totalWeightKg}
+        formatValue={formatMetric}
+        suffix="kg"
+        description={`${formatCount(
+          harvest?.totalQuantity,
+          language,
+        )} ${t("analytics.harvestedCrabs")}`}
+        tone="default"
+      />
+
+      {/* ====================================
+          3. MOLTING RATE
+         ==================================== */}
+
+      <AnalyticsKpiCard
+        index={2}
+        icon={Shell}
+        label={t("analytics.moltingRate")}
+        value={formatMetric(molting?.moltingRate)}
+        numericValue={molting?.moltingRate}
+        formatValue={formatMetric}
+        suffix="%"
+        description={`${formatCount(
+          molting?.moltedCrabs,
+          language,
+        )} ${t("analytics.moltedCrabs")}`}
+        tone="default"
+      />
+
+      {/* ====================================
+          4. HARVEST RATE
+         ==================================== */}
+
+      <AnalyticsKpiCard
+        index={3}
+        icon={TrendingUp}
+        label={t("analytics.harvestRate")}
+        value={formatMetric(efficiency?.harvestRate)}
+        numericValue={efficiency?.harvestRate}
+        formatValue={formatMetric}
+        suffix="%"
+        description={t("analytics.operationalEfficiencyDescription")}
+        tone="default"
+      />
+    </section>
+  );
+}
+
+export default AnalyticsKpiGrid;

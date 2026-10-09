@@ -1,14 +1,12 @@
-import { useContext } from 'react'
-import { AreaContext } from '../context/AreaContext'
+import { useContext } from "react";
+import { AreaContext } from "../context/AreaContext";
 
 export default function useSelectedArea() {
-  const context = useContext(AreaContext)
+  const context = useContext(AreaContext);
 
   if (!context) {
-    throw new Error(
-      'useSelectedArea must be used inside AreaProvider.'
-    )
+    throw new Error("useSelectedArea must be used inside AreaProvider.");
   }
 
-  return context
+  return context;
 }

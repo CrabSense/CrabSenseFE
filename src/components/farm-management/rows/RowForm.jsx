@@ -1,116 +1,168 @@
-function RowForm({
-    form,
-    onChange,
-    disabled,
-  }) {
-    const handleChange = (
-      event
-    ) => {
-      const {
-        name,
-        value,
-      } = event.target
-  
-      onChange(name, value)
-    }
-  
-    return (
-      <div className="row-form">
-        <div className="row-form-group row-form-full">
-          <label htmlFor="row-name">
-            Row Name
-            <span>*</span>
-          </label>
-  
-          <input
-            id="row-name"
-            name="name"
-            type="text"
-            value={form.name}
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+import useTranslation from "@/hooks/useTranslation";
+
+// ============================
+// SHARED INPUT STYLES
+// ============================
+const inputStyles = [
+  "border-[#24382A]",
+  "bg-[#0D1510]",
+  "text-[#DCE4DE]",
+  "placeholder:text-[#647466]",
+  "focus-visible:border-[#77FF00]/40",
+  "focus-visible:ring-[#77FF00]/15",
+  "disabled:cursor-not-allowed",
+  "disabled:opacity-50",
+].join(" ");
+
+// ============================
+// ROW FORM COMPONENT
+// ============================
+function RowForm({ form, onChange, disabled = false }) {
+  const { t } = useTranslation();
+
+  // ============================
+  // HANDLE INPUT CHANGE
+  // ============================
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    onChange?.(name, value);
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* ============================
+          ROW NAME
+         ============================ */}
+      <div className="space-y-2">
+        <Label htmlFor="row-name" className="text-xs text-[#ACB9AE]">
+          {t("farmRows.rowName")}
+
+          <span className="ml-1 text-[#77FF00]" aria-hidden="true">
+            *
+          </span>
+        </Label>
+
+        <Input
+          id="row-name"
+          name="name"
+          type="text"
+          value={form.name ?? ""}
+          onChange={handleChange}
+          placeholder={t("farmRows.namePlaceholder")}
+          disabled={disabled}
+          required
+          autoFocus
+          className={inputStyles}
+        />
+      </div>
+
+      {/* ============================
+          ROW LOCATION
+         ============================ */}
+      <div className="space-y-2">
+        <Label htmlFor="row-location" className="text-xs text-[#ACB9AE]">
+          {t("farm.location")}
+        </Label>
+
+        <Input
+          id="row-location"
+          name="location"
+          type="text"
+          value={form.location ?? ""}
+          onChange={handleChange}
+          placeholder={t("farmRows.locationPlaceholder")}
+          disabled={disabled}
+          className={inputStyles}
+        />
+      </div>
+
+      {/* ============================
+          CAPACITY & SORT ORDER
+         ============================ */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* CAPACITY */}
+        <div className="space-y-2">
+          <Label htmlFor="row-capacity" className="text-xs text-[#ACB9AE]">
+            {t("farm.capacity")}
+          </Label>
+
+          <Input
+            id="row-capacity"
+            name="capacity"
+            type="number"
+            min="0"
+            step="1"
+            value={form.capacity ?? ""}
             onChange={handleChange}
-            placeholder="e.g. Nursery Row 1"
+            placeholder="0"
             disabled={disabled}
-            autoFocus
+            aria-describedby="row-capacity-hint"
+            className={inputStyles}
           />
+
+          <p
+            id="row-capacity-hint"
+            className="text-[11px] leading-relaxed text-[#738477]"
+          >
+            {t("farmRows.capacityHint")}
+          </p>
         </div>
-  
-        <div className="row-form-grid">
-          <div className="row-form-group">
-            <label htmlFor="row-location">
-              Location
-            </label>
-  
-            <input
-              id="row-location"
-              name="location"
-              type="text"
-              value={form.location}
-              onChange={handleChange}
-              placeholder="e.g. North side"
-              disabled={disabled}
-            />
-          </div>
-  
-          <div className="row-form-group">
-            <label htmlFor="row-capacity">
-              Capacity
-              <small>
-                {' '}0 = unlimited
-              </small>
-            </label>
-  
-            <input
-              id="row-capacity"
-              name="capacity"
-              type="number"
-              min="0"
-              max="500"
-              step="1"
-              value={form.capacity}
-              onChange={handleChange}
-              disabled={disabled}
-            />
-          </div>
-        </div>
-  
-        <div className="row-form-group row-form-full">
-          <label htmlFor="row-sort-order">
-            Sort Order
-          </label>
-  
-          <input
+
+        {/* SORT ORDER */}
+        <div className="space-y-2">
+          <Label htmlFor="row-sort-order" className="text-xs text-[#ACB9AE]">
+            {t("farm.sortOrder")}
+          </Label>
+
+          <Input
             id="row-sort-order"
             name="sortOrder"
             type="number"
             min="0"
             step="1"
-            value={form.sortOrder}
+            value={form.sortOrder ?? ""}
             onChange={handleChange}
+            placeholder="0"
             disabled={disabled}
+            aria-describedby="row-sort-order-hint"
+            className={inputStyles}
           />
-  
-          <small className="row-form-help">
-            Controls the display order of this row.
-          </small>
-        </div>
-  
-        <div className="row-form-group row-form-full">
-          <label htmlFor="row-description">
-            Description
-          </label>
-  
-          <textarea
-            id="row-description"
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Optional row description..."
-            rows={4}
-            disabled={disabled}
-          />
+
+          <p
+            id="row-sort-order-hint"
+            className="text-[11px] leading-relaxed text-[#738477]"
+          >
+            {t("farmRows.sortOrderHint")}
+          </p>
         </div>
       </div>
-    )
-  }
-  
-  export default RowForm
+
+      {/* ============================
+          DESCRIPTION
+         ============================ */}
+      <div className="space-y-2">
+        <Label htmlFor="row-description" className="text-xs text-[#ACB9AE]">
+          {t("farm.descriptionLabel")}
+        </Label>
+
+        <Textarea
+          id="row-description"
+          name="description"
+          value={form.description ?? ""}
+          onChange={handleChange}
+          placeholder={t("farmRows.descriptionPlaceholder")}
+          disabled={disabled}
+          rows={4}
+          className={`${inputStyles} min-h-24 resize-y`}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default RowForm;

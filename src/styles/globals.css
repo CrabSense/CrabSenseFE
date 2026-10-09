@@ -1,0 +1,523 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+/* =========================================
+   CRABSENSE GLOBAL THEME
+   Dark + Neon Green Only
+   ========================================= */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: dark;
+
+  /* =====================================
+     CRABSENSE DESIGN TOKENS
+     ===================================== */
+
+  --cs-background: #050806;
+  --cs-surface: #0d1510;
+  --cs-surface-elevated: #111c15;
+
+  --cs-accent: #77ff00;
+  --cs-accent-hover: #48e600;
+  --cs-green-strong: #1c8d00;
+
+  --cs-text: #f4f7f4;
+  --cs-text-muted: #8c9a90;
+
+  --cs-border: #24382a;
+
+  /* =====================================
+     SHADCN THEME TOKENS
+     ===================================== */
+
+  /* Main background */
+  --background: #050806;
+  --foreground: #f4f7f4;
+
+  /* Cards */
+  --card: #0d1510;
+  --card-foreground: #f4f7f4;
+
+  /* Popovers / Dropdowns / Dialogs */
+  --popover: #111c15;
+  --popover-foreground: #f4f7f4;
+
+  /* Primary - Neon Green */
+  --primary: #77ff00;
+  --primary-foreground: #050806;
+
+  /* Secondary */
+  --secondary: #111c15;
+  --secondary-foreground: #f4f7f4;
+
+  /* Muted */
+  --muted: #111c15;
+  --muted-foreground: #8c9a90;
+
+  /* Interactive hover */
+  --accent: #1c3320;
+  --accent-foreground: #77ff00;
+
+  /* Destructive */
+  --destructive: #ef4444;
+
+  /* Borders / Input / Focus */
+  --border: #24382a;
+  --input: #24382a;
+  --ring: #77ff00;
+
+  /* =====================================
+     SIDEBAR TOKENS
+     ===================================== */
+
+  --sidebar: #0d1510;
+  --sidebar-foreground: #f4f7f4;
+
+  --sidebar-primary: #77ff00;
+  --sidebar-primary-foreground: #050806;
+
+  --sidebar-accent: #1c3320;
+  --sidebar-accent-foreground: #77ff00;
+
+  --sidebar-border: #24382a;
+  --sidebar-ring: #77ff00;
+
+  /* =====================================
+     CHART COLORS
+     ===================================== */
+
+  --chart-1: #77ff00;
+  --chart-2: #48e600;
+  --chart-3: #1c8d00;
+  --chart-4: #36b8a5;
+  --chart-5: #e9b44c;
+
+  /* =====================================
+     RADIUS
+     ===================================== */
+
+  --radius: 0.75rem;
+}
+
+/* =========================================
+   DARK CLASS COMPATIBILITY
+   ========================================= */
+
+/*
+   CrabSense is permanently dark.
+
+   Keep .dark compatibility because some
+   Shadcn components use dark: utilities.
+
+   The same theme applies regardless of
+   whether Settings previously saved a
+   darkMode preference.
+*/
+
+.dark {
+  color-scheme: dark;
+}
+
+/* =========================================
+   TAILWIND V4 THEME MAPPING
+   ========================================= */
+
+@theme inline {
+  /* Base */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Card */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Popover */
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Primary */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  /* Secondary */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* Muted */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Accent */
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* Destructive */
+  --color-destructive: var(--destructive);
+
+  /* Borders */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* CrabSense */
+  --color-cs-background: var(--cs-background);
+  --color-cs-surface: var(--cs-surface);
+  --color-cs-surface-elevated: var(--cs-surface-elevated);
+
+  --color-cs-neon: var(--cs-accent);
+  --color-cs-neon-hover: var(--cs-accent-hover);
+  --color-cs-strong-green: var(--cs-green-strong);
+
+  --color-cs-text: var(--cs-text);
+  --color-cs-muted: var(--cs-text-muted);
+  --color-cs-border: var(--cs-border);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: var(--radius);
+  --radius-xl: 1rem;
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Typography */
+  --font-sans: "Geist Variable", sans-serif;
+  --font-heading: var(--font-sans);
+}
+
+/* =========================================
+   BASE STYLES
+   ========================================= */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* =========================================
+   CRABSENSE GLOBAL LAYOUT
+   ========================================= */
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+
+  background-color: #050806;
+
+  color-scheme: dark;
+}
+
+body {
+  display: block;
+
+  width: 100%;
+  min-width: 320px;
+  min-height: 100vh;
+
+  margin: 0;
+
+  background-color: #050806;
+  color: #f4f7f4;
+
+  font-family: "Geist Variable", sans-serif;
+}
+
+#root {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+
+  max-width: none;
+
+  margin: 0;
+  padding: 0;
+
+  text-align: left;
+}
+
+/* Hide native page scrollbar */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* CrabSense - Shared Page Reveal */
+
+@keyframes crabsense-dashboard-reveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.page-scroll-reveal {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition:
+    opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.page-scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================
+   CRABSENSE - KPI CARD REVEAL
+   Only opacity: avoid double transform
+   with the parent PageReveal.
+   ============================================ */
+
+@keyframes crabsense-kpi-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.kpi-card-reveal {
+  animation: crabsense-kpi-fade 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ============================================
+   CRABSENSE - OPERATIONS ITEM REVEAL
+   Used by TodayTasks and RecentActivity
+   ============================================ */
+
+@keyframes crabsense-operation-item-reveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.operation-item-reveal {
+  animation: crabsense-operation-item-reveal 380ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .operation-item-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ============================================
+   CRABSENSE - SAFE MONITORING TABLE REVEAL
+   ============================================ */
+
+@keyframes crabsense-table-row-reveal {
+  from {
+    opacity: 0.35;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.monitoring-table-row-reveal {
+  opacity: 1;
+}
+
+.monitoring-table-row-reveal.is-visible {
+  animation: crabsense-table-row-reveal 380ms cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+
+  animation-delay: var(--row-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monitoring-table-row-reveal.is-visible {
+    animation: none !important;
+  }
+}
+
+/* ============================================
+   CRABSENSE - FARM AREA CARD REVEAL
+   ============================================ */
+
+@keyframes crabsense-farm-area-reveal {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.farm-area-card-reveal {
+  animation: crabsense-farm-area-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+
+  animation-delay: var(--area-reveal-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .farm-area-card-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ============================================
+   CRABSENSE - FARM ROW CARD REVEAL
+   ============================================ */
+
+@keyframes crabsense-farm-row-reveal {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.farm-row-card-reveal {
+  animation: crabsense-farm-row-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  animation-delay: var(--row-card-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .farm-row-card-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ============================================
+   CRABSENSE - FARM BOX ROW REVEAL
+   Safe animation for CRUD tables
+   ============================================ */
+
+@keyframes crabsense-farm-box-row-reveal {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.farm-box-row-reveal {
+  animation: crabsense-farm-box-row-reveal 360ms cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+
+  animation-delay: var(--box-row-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .farm-box-row-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ============================================
+   CRABSENSE - FARM ARCHIVE REVEAL
+   ============================================ */
+
+@keyframes crabsense-archive-card-reveal {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.farm-archive-card-reveal {
+  animation: crabsense-archive-card-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+
+  animation-delay: var(--archive-card-delay, 0ms);
+}
+
+/* Keep archived cards visible by default. */
+.farm-archive-card-reveal-done {
+  opacity: 1;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .farm-archive-card-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
