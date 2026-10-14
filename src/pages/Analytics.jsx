@@ -1,70 +1,162 @@
-import React, { useState } from 'react'
-import { calculateAverage, formatDate } from '../utils/helpers'
+import { useState } from "react";
 
-const Analytics = () => {
-  const [dateRange, setDateRange] = useState({
-    start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
-  })
+import useAnalytics from "../hooks/useAnalytics";
+import useSelectedArea from "../hooks/useSelectedArea";
+import useTranslation from "../hooks/useTranslation";
 
-  const handleDateChange = (field, value) => {
-    setDateRange(prev => ({ ...prev, [field]: value }))
-  }
+import PageReveal from "../components/ui/PageReveal";
 
-  return (
-    <div className="analytics">
-      <h2>Phân tích dữ liệu</h2>
-      
-      <div className="date-range-selector">
-        <div className="input-group">
-          <label>Từ ngày:</label>
-          <input 
-            type="date" 
-            value={dateRange.start}
-            onChange={(e) => handleDateChange('start', e.target.value)}
-          />
-        </div>
-        <div className="input-group">
-          <label>Đến ngày:</label>
-          <input 
-            type="date" 
-            value={dateRange.end}
-            onChange={(e) => handleDateChange('end', e.target.value)}
-          />
-        </div>
-        <button className="btn-primary">Xem báo cáo</button>
-      </div>
+import AnalyticsHeader from "../components/analytics/AnalyticsHeader";
+import AnalyticsDateFilter from "../components/analytics/filters/AnalyticsDateFilter";
+import AnalyticsKpiGrid from "../components/analytics/kpi/AnalyticsKpiGrid";
 
-      <div className="analytics-content">
-        <div className="chart-placeholder">
-          <p>Biểu đồ phân tích sẽ được hiển thị ở đây</p>
-          <small>Khoảng thời gian: {formatDate(dateRange.start)} - {formatDate(dateRange.end)}</small>
-        </div>
+import HarvestTrendChart from "../components/analytics/harvest/HarvestTrendChart";
+import SurvivalPanel from "../components/analytics/survival/SurvivalPanel";
+import MoltingPanel from "../components/analytics/molting/MoltingPanel";
+import EfficiencyPanel from "../components/analytics/operations/EfficiencyPanel";
 
-        <div className="statistics">
-          <h3>Thống kê tổng quan</h3>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <span className="stat-label">Tổng số mẫu</span>
-              <span className="stat-value">--</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Cảnh báo</span>
-              <span className="stat-value">--</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Trung bình nhiệt độ</span>
-              <span className="stat-value">-- °C</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Trung bình pH</span>
-              <span className="stat-value">--</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+import AnalyticsLoading from "../components/analytics/AnalyticsLoading";
+import AnalyticsError from "../components/analytics/AnalyticsError";
+
+// ============================================
+// DATE HELPERS
+// ============================================
+
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
-export default Analytics
+function getDefaultFromDate() {
+  const date = new Date();
+
+  date.setDate(date.getDate() - 30);
+
+  return formatLocalDate(date);
+}
+
+function getToday() {
+  return formatLocalDate(new Date());
+}
+
+// ============================================
+// ANALYTICS PAGE
+// ============================================
+
+function Analytics() {
+  const { t } = useTranslation();
+
+  const { selectedAreaId } = useSelectedArea();
+
+  const [fromDate, setFromDate] = useState(getDefaultFromDate);
+
+  const [toDate, setToDate] = useState(getToday);
+
+  const {
+    harvest,
+    survival,
+    molting,
+    efficiency,
+    loading,
+    refreshing,
+    error,
+    reload,
+  } = useAnalytics({
+    farmingAreaId: selectedAreaId,
+    fromDate,
+    toDate,
+  });
+
+  // INITIAL LOADING
+  if (loading) {
+    return (
+      <main className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
+        <AnalyticsLoading />
+      </main>
+    );
+  }
+
+  // API ERROR
+  if (error) {
+    return (
+      <main className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
+        <AnalyticsError
+          message={error}
+          onRetry={reload}
+          refreshing={refreshing}
+        />
+      </main>
+    );
+  }
+
+  // ANALYTICS CONTENT
+  return (
+    <main className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
+      {/* HEADER */}
+      <PageReveal delay={0}>
+        <AnalyticsHeader refreshing={refreshing} onRefresh={reload} />
+      </PageReveal>
+
+      {/* DATE FILTER */}
+      <PageReveal delay={60}>
+        <div className="mb-6 flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <AnalyticsDateFilter
+            fromDate={fromDate}
+            toDate={toDate}
+            onFromDateChange={setFromDate}
+            onToDateChange={setToDate}
+          />
+
+          <p className="max-w-md text-xs leading-relaxed text-[#8C9A90]">
+            {t("analytics.dateRangeNote")}
+          </p>
+        </div>
+      </PageReveal>
+
+      {/* KPI OVERVIEW */}
+      <PageReveal delay={80}>
+        <AnalyticsKpiGrid
+          survival={survival}
+          harvest={harvest}
+          molting={molting}
+          efficiency={efficiency}
+        />
+      </PageReveal>
+
+      {/* REPORT CHARTS */}
+      <section
+        aria-label={t("analytics.reportsAria")}
+        className={[
+          "grid min-w-0 grid-cols-1",
+          "items-stretch gap-5",
+          "xl:grid-cols-2",
+        ].join(" ")}
+      >
+        {/* HARVEST TREND */}
+        <PageReveal delay={0} className="h-full">
+          <HarvestTrendChart data={harvest?.byDate ?? []} />
+        </PageReveal>
+
+        {/* SURVIVAL REPORT */}
+        <PageReveal delay={80} className="h-full">
+          <SurvivalPanel report={survival} />
+        </PageReveal>
+
+        {/* MOLTING REPORT */}
+        <PageReveal delay={0} className="h-full">
+          <MoltingPanel report={molting} />
+        </PageReveal>
+
+        {/* EFFICIENCY REPORT */}
+        <PageReveal delay={80} className="h-full">
+          <EfficiencyPanel data={efficiency} />
+        </PageReveal>
+      </section>
+    </main>
+  );
+}
+
+export default Analytics;

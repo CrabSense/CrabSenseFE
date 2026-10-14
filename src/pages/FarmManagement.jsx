@@ -1,86 +1,177 @@
-import React, { useState } from 'react'
+import { useCallback, useEffect, useState } from "react";
 
-const initialAreas = [
-  { id: 1, name: 'Khu A', rows: [{ id: 11, name: 'Dãy A1', boxes: [{ id: 111, name: 'Hộp A1-01', crabs: 4 }, { id: 112, name: 'Hộp A1-02', crabs: 0 }] }] },
-  { id: 2, name: 'Khu B', rows: [{ id: 21, name: 'Dãy B1', boxes: [{ id: 211, name: 'Hộp B1-01', crabs: 0 }] }] },
-]
+import useSelectedArea from "../hooks/useSelectedArea";
+import useFarmManagement from "../hooks/useFarmManagement";
 
-const FarmManagement = () => {
-  const [areas, setAreas] = useState(initialAreas)
-  const [selectedAreaId, setSelectedAreaId] = useState(1)
-  const [selectedRowId, setSelectedRowId] = useState(11)
-  const [form, setForm] = useState(null)
-  const [draft, setDraft] = useState('')
+import PageReveal from "../components/ui/PageReveal";
 
-  const area = areas.find((item) => item.id === selectedAreaId)
-  const row = area?.rows.find((item) => item.id === selectedRowId) ?? area?.rows[0]
+import FarmManagementHeader from "../components/farm-management/FarmManagementHeader";
+import FarmManagementLoading from "../components/farm-management/FarmManagementLoading";
+import FarmManagementError from "../components/farm-management/FarmManagementError";
 
-  const addItem = () => {
-    if (!draft.trim()) return
-    const value = draft.trim()
-    setAreas((current) => {
-      if (form === 'area') return [...current, { id: Date.now(), name: value, rows: [] }]
-      return current.map((item) => {
-      if (item.id !== area.id) return item
-      if (form === 'row') return { ...item, rows: [...item.rows, { id: Date.now(), name: value, boxes: [] }] }
-      return { ...item, rows: item.rows.map((itemRow) => itemRow.id === row.id
-        ? { ...itemRow, boxes: [...itemRow.boxes, { id: Date.now(), name: value, crabs: 0 }] }
-        : itemRow) }
-      })
-    })
-    setDraft('')
-    setForm(null)
+import FarmSummaryGrid from "../components/farm-management/summary/FarmSummaryGrid";
+
+import AreaList from "../components/farm-management/areas/AreaList";
+import RowList from "../components/farm-management/rows/RowList";
+import BoxTable from "../components/farm-management/boxes/BoxTable";
+
+import ArchivedAreaList from "../components/farm-management/archive/ArchivedAreaList";
+import ArchivedRowList from "../components/farm-management/archive/ArchivedRowList";
+
+function FarmManagement() {
+  const { selectedAreaId } = useSelectedArea();
+
+  // Currently selected farming row
+  const [selectedRowId, setSelectedRowId] = useState(null);
+
+  // Archive refresh signals
+  const [archivedAreasVersion, setArchivedAreasVersion] = useState(0);
+
+  const [archivedRowsVersion, setArchivedRowsVersion] = useState(0);
+
+  const {
+    areas,
+    rows,
+    boxes,
+    loading,
+    refreshing,
+    error,
+    reload,
+    upsertRow,
+    upsertBox,
+    removeRow,
+    removeArea,
+  } = useFarmManagement(selectedAreaId);
+
+  // Reset selected row when area changes
+  useEffect(() => {
+    setSelectedRowId(null);
+  }, [selectedAreaId]);
+
+  // Clear selection if row no longer exists
+  useEffect(() => {
+    if (selectedRowId && !rows.some((row) => row.id === selectedRowId)) {
+      setSelectedRowId(null);
+    }
+  }, [rows, selectedRowId]);
+
+  // Called after deactivating an area
+  const handleAreaDeactivated = useCallback(
+    (areaId) => {
+      if (!areaId) return;
+
+      removeArea(areaId);
+
+      setArchivedAreasVersion((current) => current + 1);
+    },
+    [removeArea],
+  );
+
+  // Called after deactivating a row
+  const handleRowDeactivated = useCallback(
+    (rowId) => {
+      if (!rowId) return;
+
+      removeRow(rowId);
+
+      setSelectedRowId((current) => (current === rowId ? null : current));
+
+      setArchivedRowsVersion((current) => current + 1);
+    },
+    [removeRow],
+  );
+
+  // Refresh active data after area restoration
+  const handleAreasChanged = useCallback(async () => {
+    await reload();
+
+    setArchivedRowsVersion((current) => current + 1);
+  }, [reload]);
+
+  // Refresh active data after row restoration
+  const handleRowsChanged = useCallback(async () => {
+    await reload();
+  }, [reload]);
+
+  if (loading) {
+    return (
+      <main className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
+        <FarmManagementLoading />
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
+        <FarmManagementError message={error} onRetry={reload} />
+      </main>
+    );
   }
 
   return (
-    <section className="farm-management">
-      <div className="page-heading">
-        <div>
-          <h2>Quản lý khu nuôi</h2>
-          <p>Quản lý theo cấp Khu → Dãy → Hộp</p>
-        </div>
-        <button className="btn-primary" type="button" onClick={() => setForm('area')}>+ Thêm khu</button>
-      </div>
+    <main className="mx-auto w-full min-w-0 max-w-[1600px] space-y-6 text-[#F4F7F4]">
+      {/* HEADER */}
+      <PageReveal delay={0}>
+        <FarmManagementHeader refreshing={refreshing} onRefresh={reload} />
+      </PageReveal>
 
-      <div className="management-columns">
-        <div className="management-panel">
-          <div className="panel-title"><strong>Khu nuôi</strong><span>{areas.length}</span></div>
-          {areas.map((item) => (
-            <button className={`tree-item ${item.id === selectedAreaId ? 'selected' : ''}`} key={item.id} type="button" onClick={() => { setSelectedAreaId(item.id); setSelectedRowId(item.rows[0]?.id) }}>
-              <span>◈ {item.name}</span><small>{item.rows.length} dãy</small>
-            </button>
-          ))}
-        </div>
+      {/* SUMMARY */}
+      <PageReveal delay={80}>
+        <FarmSummaryGrid areas={areas} rows={rows} boxes={boxes} />
+      </PageReveal>
 
-        <div className="management-panel">
-          <div className="panel-title"><strong>Dãy nuôi</strong><button type="button" className="text-action" onClick={() => setForm('row')}>+ Thêm dãy</button></div>
-          {(area?.rows ?? []).map((item) => (
-            <button className={`tree-item ${item.id === row?.id ? 'selected' : ''}`} key={item.id} type="button" onClick={() => setSelectedRowId(item.id)}>
-              <span>☷ {item.name}</span><small>{item.boxes.length} hộp</small>
-            </button>
-          ))}
-        </div>
+      {/* ACTIVE FARMING AREAS */}
+      <PageReveal delay={0}>
+        <AreaList
+          areas={areas}
+          rows={rows}
+          onAreasChanged={reload}
+          onAreaDeactivated={handleAreaDeactivated}
+        />
+      </PageReveal>
 
-        <div className="management-panel boxes-panel">
-          <div className="panel-title"><strong>Hộp nuôi · {row?.name ?? 'Chưa có dãy'}</strong><button type="button" className="text-action" onClick={() => setForm('box')} disabled={!row}>+ Thêm hộp</button></div>
-          {(row?.boxes ?? []).map((box) => (
-            <article className={`box-item ${box.crabs ? 'occupied' : 'empty'} `} key={box.id}>
-              <div><strong>{box.name}</strong><small>{box.crabs ? `Có ${box.crabs} con cua` : 'Chưa có cua'}</small></div>
-              <span className="box-state">{box.crabs ? 'Đang nuôi' : 'Trống'}</span>
-            </article>
-          ))}
-          {!row?.boxes.length && <p className="empty-copy">Dãy này chưa có hộp nuôi.</p>}
-        </div>
-      </div>
+      {/* ACTIVE FARMING ROWS */}
+      <PageReveal delay={0}>
+        <RowList
+          rows={rows}
+          selectedRowId={selectedRowId}
+          onSelectRow={setSelectedRowId}
+          onRowsChanged={reload}
+          onRowSaved={upsertRow}
+          onRowDeactivated={handleRowDeactivated}
+        />
+      </PageReveal>
 
-      {form && <div className="inline-form">
-        <strong>{form === 'area' ? 'Thêm khu nuôi' : form === 'row' ? 'Thêm dãy nuôi' : 'Thêm hộp nuôi'}</strong>
-        <input autoFocus value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Nhập tên..." onKeyDown={(event) => event.key === 'Enter' && addItem()} />
-        <button className="btn-primary" type="button" onClick={addItem}>Lưu</button>
-        <button className="btn-secondary" type="button" onClick={() => setForm(null)}>Hủy</button>
-      </div>}
-    </section>
-  )
+      {/* ACTIVE FARMING BOXES */}
+      <PageReveal delay={0}>
+        <BoxTable
+          boxes={boxes}
+          rows={rows}
+          selectedRowId={selectedRowId}
+          onBoxesChanged={reload}
+          onBoxSaved={upsertBox}
+        />
+      </PageReveal>
+
+      {/* ARCHIVED AREAS */}
+      <PageReveal delay={0}>
+        <ArchivedAreaList
+          refreshKey={archivedAreasVersion}
+          onAreasChanged={handleAreasChanged}
+        />
+      </PageReveal>
+
+      {/* ARCHIVED ROWS */}
+      <PageReveal delay={0}>
+        <ArchivedRowList
+          activeAreas={areas}
+          refreshKey={archivedRowsVersion}
+          onRowsChanged={handleRowsChanged}
+        />
+      </PageReveal>
+    </main>
+  );
 }
 
-export default FarmManagement
+export default FarmManagement;
