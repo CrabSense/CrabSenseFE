@@ -1,9 +1,17 @@
+import PropTypes from "prop-types";
 import {
   BarChart3,
   Boxes,
+  Brain,
+  Cctv,
+  Cpu,
   Gauge,
+  HardDrive,
   MonitorDot,
+  Rocket,
+  ScrollText,
   Settings,
+  Shield,
   ChevronsLeft,
   X,
   ShieldCheck,
@@ -16,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import logo from "../../assets/LOGO2.png";
 import SidebarNavItem from "./SidebarNavItem.jsx";
 import useTranslation from "../../hooks/useTranslation";
+import authService from "../../services/authService";
+import { isSystemAdministratorRole } from "../../constants/roles";
 
 const MAIN_NAV_ITEMS = [
   {
@@ -48,6 +58,69 @@ const SYSTEM_NAV_ITEMS = [
   },
 ];
 
+const SYSTEM_ADMIN_GROUPS = [
+  {
+    labelKey: null,
+    items: [
+      {
+        to: "/system",
+        labelKey: "nav.systemOverview",
+        icon: Gauge,
+      },
+    ],
+  },
+  {
+    labelKey: "nav.deviceAi",
+    items: [
+      {
+        to: "/system/devices",
+        labelKey: "nav.deviceManagement",
+        icon: Cpu,
+      },
+      {
+        to: "/system/cameras",
+        labelKey: "nav.cameraRecording",
+        icon: Cctv,
+      },
+      {
+        to: "/system/ai",
+        labelKey: "nav.aiServices",
+        icon: Brain,
+      },
+    ],
+  },
+  {
+    labelKey: "nav.infrastructure",
+    items: [
+      {
+        to: "/system/storage",
+        labelKey: "nav.storageBackup",
+        icon: HardDrive,
+      },
+      {
+        to: "/system/deployment",
+        labelKey: "nav.deployment",
+        icon: Rocket,
+      },
+    ],
+  },
+  {
+    labelKey: "nav.securityGroup",
+    items: [
+      {
+        to: "/system/security",
+        labelKey: "nav.securityAccess",
+        icon: Shield,
+      },
+      {
+        to: "/system/logs",
+        labelKey: "nav.systemLogs",
+        icon: ScrollText,
+      },
+    ],
+  },
+];
+
 function Sidebar({
   collapsed = false,
   mobileOpen = false,
@@ -55,6 +128,8 @@ function Sidebar({
   onCloseMobile,
 }) {
   const { t } = useTranslation();
+  const user = authService.getStoredUser();
+  const isSystemAdmin = isSystemAdministratorRole(user?.role);
 
   // Hide text immediately when collapsing.
   // Reveal it only after the sidebar has
@@ -224,7 +299,7 @@ function Sidebar({
               </strong>
 
               <span className="mt-1 block truncate text-[9px] font-semibold uppercase tracking-[0.11em] text-[#8B9B8E]">
-                {t("nav.adminPortal")}
+                {isSystemAdmin ? t("nav.systemRole") : t("nav.adminPortal")}
               </span>
             </div>
 
@@ -305,7 +380,7 @@ function Sidebar({
                 </div>
 
                 <strong className="min-w-0 flex-1 truncate text-[11px] font-semibold text-[#E4EFE5]">
-                  {t("nav.farmWorkspace")}
+                  {isSystemAdmin ? t("nav.systemWorkspace") : t("nav.farmWorkspace")}
                 </strong>
 
                 <span
@@ -315,116 +390,57 @@ function Sidebar({
               </div>
 
               <p className="mt-2.5 text-[10px] leading-[1.7] text-[#8D9D90]">
-                {t("nav.workspaceDescription")}
+                {isSystemAdmin
+                  ? t("nav.systemWorkspaceDescription")
+                  : t("nav.workspaceDescription")}
               </p>
             </div>
           </div>
 
-          {/* MAIN MENU HEADING */}
-          <div
-            className={[
-              "overflow-hidden",
-              "text-[10px] font-bold uppercase",
-              "tracking-[0.16em] text-[#728575]",
-
-              "transition-[max-height,margin,opacity]",
-              "duration-[320ms]",
-              "ease-in-out",
-              "motion-reduce:transition-none",
-
-              collapsed
-                ? [
-                    "min-[901px]:max-h-0",
-                    "min-[901px]:mb-0",
-                    "min-[901px]:opacity-0",
-                  ].join(" ")
-                : [
-                    "min-[901px]:max-h-8",
-                    "min-[901px]:mb-3",
-                    "min-[901px]:opacity-100",
-                  ].join(" "),
-
-              "max-[900px]:mb-3",
-              "max-[900px]:max-h-8",
-              "max-[900px]:opacity-100",
-            ].join(" ")}
-          >
-            <span
-              className={["block whitespace-nowrap px-3", textMotion].join(" ")}
-            >
-              {t("nav.mainMenu")}
-            </span>
-          </div>
-
-          {/* MAIN NAVIGATION */}
-          <nav aria-label={t("nav.mainMenu")} className="flex flex-col gap-1.5">
-            {MAIN_NAV_ITEMS.map((item) => (
-              <SidebarNavItem
-                key={item.to}
-                to={item.to}
-                icon={item.icon}
-                label={t(item.labelKey)}
-                collapsed={collapsed}
-                onClick={onCloseMobile}
-              />
-            ))}
-          </nav>
-
-          {/* SEPARATOR */}
-          <div className="my-5 h-px bg-white/[0.07]" />
-
-          {/* SYSTEM MENU HEADING */}
-          <div
-            className={[
-              "overflow-hidden",
-              "text-[10px] font-bold uppercase",
-              "tracking-[0.16em] text-[#728575]",
-
-              "transition-[max-height,margin,opacity]",
-              "duration-[320ms]",
-              "ease-in-out",
-              "motion-reduce:transition-none",
-
-              collapsed
-                ? [
-                    "min-[901px]:max-h-0",
-                    "min-[901px]:mb-0",
-                    "min-[901px]:opacity-0",
-                  ].join(" ")
-                : [
-                    "min-[901px]:max-h-8",
-                    "min-[901px]:mb-3",
-                    "min-[901px]:opacity-100",
-                  ].join(" "),
-
-              "max-[900px]:mb-3",
-              "max-[900px]:max-h-8",
-              "max-[900px]:opacity-100",
-            ].join(" ")}
-          >
-            <span
-              className={["block whitespace-nowrap px-3", textMotion].join(" ")}
-            >
-              {t("nav.systemMenu")}
-            </span>
-          </div>
-
-          {/* SYSTEM NAVIGATION */}
-          <nav
-            aria-label={t("nav.systemMenu")}
-            className="flex flex-col gap-1.5"
-          >
-            {SYSTEM_NAV_ITEMS.map((item) => (
-              <SidebarNavItem
-                key={item.to}
-                to={item.to}
-                icon={item.icon}
-                label={t(item.labelKey)}
-                collapsed={collapsed}
-                onClick={onCloseMobile}
-              />
-            ))}
-          </nav>
+          {(isSystemAdmin
+            ? SYSTEM_ADMIN_GROUPS
+            : [
+                { labelKey: "nav.mainMenu", items: MAIN_NAV_ITEMS },
+                { labelKey: "nav.systemMenu", items: SYSTEM_NAV_ITEMS },
+              ]
+          ).map((group, index) => (
+            <div key={group.labelKey || "overview"} className={index ? "mt-5" : ""}>
+              {index > 0 ? <div className="mb-5 h-px bg-white/[0.07]" /> : null}
+              {group.labelKey ? (
+                <div
+                  className={[
+                    "overflow-hidden",
+                    "text-[10px] font-bold uppercase",
+                    "tracking-[0.16em] text-[#728575]",
+                    "transition-[max-height,margin,opacity]",
+                    "duration-[320ms]",
+                    "ease-in-out",
+                    "motion-reduce:transition-none",
+                    collapsed
+                      ? "min-[901px]:mb-0 min-[901px]:max-h-0 min-[901px]:opacity-0"
+                      : "min-[901px]:mb-3 min-[901px]:max-h-8 min-[901px]:opacity-100",
+                    "mb-3 max-h-8 max-[900px]:opacity-100",
+                  ].join(" ")}
+                >
+                  <span className={["block whitespace-nowrap px-3", textMotion].join(" ")}>
+                    {t(group.labelKey)}
+                  </span>
+                </div>
+              ) : null}
+              <nav className="flex flex-col gap-1.5">
+                {group.items.map((item) => (
+                  <SidebarNavItem
+                    key={item.to}
+                    to={item.to}
+                    icon={item.icon}
+                    label={t(item.labelKey)}
+                    collapsed={collapsed}
+                    onClick={onCloseMobile}
+                  />
+                ))}
+              </nav>
+            </div>
+          ))}
         </div>
 
         {/* FOOTER */}
@@ -482,11 +498,13 @@ function Sidebar({
               ].join(" ")}
             >
               <strong className="block truncate text-[11px] font-semibold text-[#E3EDE5]">
-                {t("nav.platform")}
+                {isSystemAdmin ? t("nav.systemRole") : t("nav.platform")}
               </strong>
 
               <span className="mt-1 block truncate text-[10px] text-[#8D9D90]">
-                {t("nav.systemAdministration")}
+                {isSystemAdmin
+                  ? user?.email || user?.username || t("nav.systemAdministration")
+                  : t("nav.systemAdministration")}
               </span>
             </div>
 
@@ -501,5 +519,12 @@ function Sidebar({
     </>
   );
 }
+
+Sidebar.propTypes = {
+  collapsed: PropTypes.bool,
+  mobileOpen: PropTypes.bool,
+  onToggleCollapse: PropTypes.func,
+  onCloseMobile: PropTypes.func,
+};
 
 export default Sidebar;

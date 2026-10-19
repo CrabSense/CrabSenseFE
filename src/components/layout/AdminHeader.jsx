@@ -13,6 +13,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 import authService from "../../services/authService";
+import { isSystemAdministratorRole } from "../../constants/roles";
 import FarmingAreaSelector from "../filters/FarmingAreaSelector";
 import useTranslation from "../../hooks/useTranslation";
 
@@ -26,6 +27,14 @@ const PAGE_TITLE_KEYS = {
   "/analytics": "nav.analytics",
   "/farm-management": "nav.farmManagement",
   "/settings": "nav.settings",
+  "/system": "nav.systemOverview",
+  "/system/devices": "nav.deviceManagement",
+  "/system/cameras": "nav.cameraRecording",
+  "/system/ai": "nav.aiServices",
+  "/system/storage": "nav.storageBackup",
+  "/system/deployment": "nav.deployment",
+  "/system/security": "nav.securityAccess",
+  "/system/logs": "nav.systemLogs",
 };
 
 // ============================================
@@ -41,6 +50,7 @@ function AdminHeader({ onOpenSidebar }) {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const user = authService.getStoredUser();
+  const isSystemAdmin = isSystemAdministratorRole(user?.role);
 
   const titleKey = PAGE_TITLE_KEYS[location.pathname];
 
@@ -204,7 +214,7 @@ function AdminHeader({ onOpenSidebar }) {
             "overflow-visible",
           ].join(" ")}
         >
-          <FarmingAreaSelector />
+          {isSystemAdmin ? null : <FarmingAreaSelector />}
         </div>
       </div>
 
@@ -259,7 +269,7 @@ function AdminHeader({ onOpenSidebar }) {
             </strong>
 
             <span className="mt-1 truncate text-[10px] text-[#87988A]">
-              {user?.role || "SystemAdmin"}
+              {isSystemAdmin ? "System Administrator" : user?.role || "FarmAdministrator"}
             </span>
           </div>
         </div>

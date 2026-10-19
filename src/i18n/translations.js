@@ -21,6 +21,21 @@ export const translations = {
       workspaceDescription: "Monitoring and farm operations",
       systemMenu: "PREFERENCES",
       systemAdministration: "System administration",
+      systemOverview: "System Overview",
+      deviceManagement: "Device Management",
+      cameraRecording: "Camera & Recording",
+      aiServices: "AI Services",
+      storageBackup: "Storage & Backup",
+      deployment: "Deployment",
+      securityAccess: "Security & Access",
+      systemLogs: "System Logs",
+      deviceAi: "DEVICE & AI",
+      infrastructure: "INFRASTRUCTURE",
+      securityGroup: "SECURITY",
+      systemWorkspace: "System infrastructure",
+      systemWorkspaceDescription:
+        "Cameras, sensors, controllers, and AI services. Configure the recording schedule and monitor device status. Manage storage, backup, deployment, and system security.",
+      systemRole: "System Administrator",
     },
 
     common: {
@@ -33,26 +48,39 @@ export const translations = {
     },
 
     login: {
-      brandTitle: "Smart Crab Farming.",
-      brandHighlight: "Smarter Management.",
-      brandDescription:
-        "Monitor, analyze and manage your CrabSense ecosystem from one intelligent platform.",
-      systemStatus: "CrabSense Management Platform",
-      adminPortal: "ADMIN PORTAL",
-      welcome: "Welcome back",
-      description: "Sign in to access the CrabSense administration dashboard.",
-      username: "Username or Email",
-      usernamePlaceholder: "Enter username or email",
+      farmTitle: "SMART SOFT-SHELL CRAB FARM",
+      tagline: "Technology alongside — Healthy crabs every day",
+      featureMonitor: "Smart\nmonitoring",
+      featureManage: "Easy\nmanagement",
+      featureEnvironment: "Stable\nenvironment",
+      featureYield: "Sustainable\nyield",
+      welcome: "Admin sign in",
+      description: "Follow CrabSense from the admin console.",
+      username: "Username",
+      usernamePlaceholder: "Admin account name",
       password: "Password",
-      passwordPlaceholder: "Enter your password",
-      showPassword: "Show",
-      hidePassword: "Hide",
-      signIn: "Sign In",
+      passwordPlaceholder: "Enter password",
+      rememberMe: "Remember me",
+      forgotPassword: "Forgot password?",
+      showPassword: "Show password",
+      hidePassword: "Hide password",
+      signIn: "Sign in",
       signingIn: "Signing in...",
-      requiredFields: "Please enter your username/email and password.",
-      noAdminAccess: "This account does not have administrator access.",
-      invalidCredentials: "Invalid username or password.",
-      secureAccess: "Secure access · CrabSense",
+      or: "or",
+      register: "No account yet? Register",
+      loginFailedTitle: "Sign in failed",
+      dismissError: "Dismiss",
+      requiredUsername: "Please enter your username",
+      requiredPassword: "Please enter your password",
+      noAdminAccess:
+        "This account is not a farm administrator or system administrator.",
+      invalidCredentials:
+        "Username or password is incorrect. Please check and try again.",
+      copyright: "© 2026 CrabSense • Soft-shell crab farm",
+      policy: "Policy",
+      terms: "Terms",
+      help: "Help",
+      contact: "Contact",
     },
 
     settings: {
@@ -713,6 +741,21 @@ export const translations = {
       workspaceDescription: "Giám sát và vận hành trang trại",
       systemMenu: "TÙY CHỌN",
       systemAdministration: "Quản trị hệ thống",
+      systemOverview: "Tổng quan hệ thống",
+      deviceManagement: "Quản lý thiết bị",
+      cameraRecording: "Camera và ghi hình",
+      aiServices: "Dịch vụ AI",
+      storageBackup: "Lưu trữ và sao lưu",
+      deployment: "Triển khai",
+      securityAccess: "Bảo mật và truy cập",
+      systemLogs: "Nhật ký hệ thống",
+      deviceAi: "THIẾT BỊ VÀ AI",
+      infrastructure: "HẠ TẦNG",
+      securityGroup: "BẢO MẬT",
+      systemWorkspace: "Hạ tầng hệ thống",
+      systemWorkspaceDescription:
+        "Camera, cảm biến, bộ điều khiển và dịch vụ AI. Cấu hình lịch ghi hình và theo dõi trạng thái thiết bị. Quản lý lưu trữ, sao lưu, triển khai và bảo mật hệ thống.",
+      systemRole: "System Administrator",
     },
 
     common: {
@@ -725,39 +768,39 @@ export const translations = {
     },
 
     login: {
-      brandTitle: "Nuôi cua thông minh.",
-      brandHighlight: "Quản lý hiệu quả hơn.",
-
-      brandDescription:
-        "Giám sát, phân tích và quản lý toàn bộ hệ sinh thái CrabSense trên một nền tảng thông minh.",
-
-      systemStatus: "Nền tảng quản lý CrabSense",
-
-      adminPortal: "CỔNG QUẢN TRỊ",
-
-      welcome: "Chào mừng trở lại",
-
-      description: "Đăng nhập để truy cập bảng điều khiển quản trị CrabSense.",
-
-      username: "Tên đăng nhập hoặc Email",
-      usernamePlaceholder: "Nhập tên đăng nhập hoặc email",
-
+      farmTitle: "TRẠI NUÔI CUA LỘT THÔNG MINH",
+      tagline: "Công nghệ đồng hành — Cua khỏe mỗi ngày",
+      featureMonitor: "Giám sát\nthông minh",
+      featureManage: "Quản lý\ndễ dàng",
+      featureEnvironment: "Môi trường\nổn định",
+      featureYield: "Năng suất\nbền vững",
+      welcome: "Đăng nhập quản trị",
+      description: "Theo dõi hệ thống ngay trên bảng quản trị.",
+      username: "Tên đăng nhập",
+      usernamePlaceholder: "Tên tài khoản quản trị",
       password: "Mật khẩu",
-      passwordPlaceholder: "Nhập mật khẩu của bạn",
-
-      showPassword: "Hiện",
-      hidePassword: "Ẩn",
-
+      passwordPlaceholder: "Nhập mật khẩu",
+      rememberMe: "Ghi nhớ đăng nhập",
+      forgotPassword: "Quên mật khẩu?",
+      showPassword: "Hiện mật khẩu",
+      hidePassword: "Ẩn mật khẩu",
       signIn: "Đăng nhập",
       signingIn: "Đang đăng nhập...",
-
-      requiredFields: "Vui lòng nhập tên đăng nhập/email và mật khẩu.",
-
-      noAdminAccess: "Tài khoản này không có quyền truy cập trang quản trị.",
-
-      invalidCredentials: "Tên đăng nhập hoặc mật khẩu không chính xác.",
-
-      secureAccess: "Truy cập bảo mật · CrabSense",
+      or: "hoặc",
+      register: "Chưa có tài khoản? Đăng ký",
+      loginFailedTitle: "Đăng nhập không thành công",
+      dismissError: "Đóng",
+      requiredUsername: "Vui lòng nhập tên đăng nhập",
+      requiredPassword: "Vui lòng nhập mật khẩu",
+      noAdminAccess:
+        "Tài khoản không thuộc Farm Administrator, Farm Manager, Farm Staff hoặc System Administrator.",
+      invalidCredentials:
+        "Tên đăng nhập hoặc mật khẩu không chính xác. Vui lòng kiểm tra và thử lại.",
+      copyright: "© 2026 CrabSense • Trại nuôi cua lột",
+      policy: "Chính sách",
+      terms: "Điều khoản",
+      help: "Trợ giúp",
+      contact: "Liên hệ",
     },
 
     settings: {
