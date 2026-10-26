@@ -17,6 +17,11 @@ import {
   ShieldCheck,
   Activity,
   ChevronRight,
+  UsersRound,
+  Waves,
+  BellRing,
+  SlidersHorizontal,
+  ClipboardList,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +52,36 @@ const MAIN_NAV_ITEMS = [
     to: "/farm-management",
     labelKey: "nav.farmManagement",
     icon: Boxes,
+  },
+  {
+    to: "/farm-users",
+    labelKey: "nav.employeeManagement",
+    icon: UsersRound,
+    adminOnly: true,
+  },
+  {
+    to: "/ras-management",
+    labelKey: "nav.rasManagement",
+    icon: Waves,
+    adminOnly: true,
+  },
+  {
+    to: "/alerts",
+    labelKey: "nav.alertManagement",
+    icon: BellRing,
+    adminOnly: true,
+  },
+  {
+    to: "/environmental-thresholds",
+    labelKey: "nav.environmentalThresholds",
+    icon: SlidersHorizontal,
+    adminOnly: true,
+  },
+  {
+    to: "/operational-reports",
+    labelKey: "nav.operationalReports",
+    icon: ClipboardList,
+    adminOnly: true,
   },
 ];
 
@@ -428,7 +463,7 @@ function Sidebar({
                 </div>
               ) : null}
               <nav className="flex flex-col gap-1.5">
-                {group.items.map((item) => (
+              {group.items.filter((item) => ! item.adminOnly || user?.role === "FarmAdministrator").map((item) => (
                   <SidebarNavItem
                     key={item.to}
                     to={item.to}

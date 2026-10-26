@@ -18,7 +18,13 @@ import SystemLogs from "./pages/system/SystemLogs.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 import authService from "./services/authService";
+import FarmUsersPage from "./pages/FarmUsersPage";
+import EnvironmentalThresholds from "./pages/EnvironmentalThresholds";
+import AlertManagement from "./pages/AlertManagement";
+import RasManagement from "./pages/RasManagement";
+import OperationalReports from "./pages/OperationalReports";
 import {
+  FARM_ADMINISTRATOR_ROLE,
   FARM_PORTAL_ROLES,
   SYSTEM_ADMINISTRATOR_ROLE,
   homePathForRole,
@@ -54,6 +60,14 @@ function App() {
         >
           <Route path="/dashboard" element={<Dashboard />} />
 
+          <Route path="/farm-users"
+            element={
+                <ProtectedRoute allowedRoles={[FARM_ADMINISTRATOR_ROLE]}>
+                  <FarmUsersPage />
+                </ProtectedRoute>
+              }
+            />
+
           <Route path="/monitoring" element={<Monitoring />} />
 
           <Route path="/analytics" element={<Analytics />} />
@@ -61,6 +75,26 @@ function App() {
           <Route path="/farm-management" element={<FarmManagement />} />
 
           <Route path="/settings" element={<Settings />} />
+
+          <Route
+  path="/operational-reports"
+  element={<OperationalReports />}
+/>
+
+          <Route
+  path="/environmental-thresholds"
+  element={<EnvironmentalThresholds />}
+/>
+
+<Route
+  path="/alerts"
+  element={<AlertManagement />}
+/>
+
+<Route
+  path="/ras-management"
+  element={<RasManagement />}
+/>
         </Route>
 
         <Route

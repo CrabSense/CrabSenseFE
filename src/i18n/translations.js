@@ -36,6 +36,11 @@ export const translations = {
       systemWorkspaceDescription:
         "Cameras, sensors, controllers, and AI services. Configure the recording schedule and monitor device status. Manage storage, backup, deployment, and system security.",
       systemRole: "System Administrator",
+      employeeManagement: "Employee Management",
+      rasManagement: "RAS Management",
+      alertManagement: "Alert Management",
+      environmentalThresholds: "Environmental Thresholds",
+      operationalReports: "Operational Reports",
     },
 
     common: {
@@ -756,6 +761,11 @@ export const translations = {
       systemWorkspaceDescription:
         "Camera, cảm biến, bộ điều khiển và dịch vụ AI. Cấu hình lịch ghi hình và theo dõi trạng thái thiết bị. Quản lý lưu trữ, sao lưu, triển khai và bảo mật hệ thống.",
       systemRole: "System Administrator",
+      employeeManagement: "Quản lý nhân viên",
+      rasManagement: "Quản lý RAS",
+      alertManagement: "Quản lý cảnh báo",
+      environmentalThresholds: "Ngưỡng môi trường",
+      operationalReports: "Báo cáo vận hành",
     },
 
     common: {

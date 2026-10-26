@@ -1,9 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 import HealthProgress from "./HealthProgress";
 import useTranslation from "@/hooks/useTranslation";
 
-function HealthBreakdown({ metrics, iotOnlinePercentage }) {
+function HealthBreakdown({
+  metrics,
+  iotOnlinePercentage,
+}) {
   const { t } = useTranslation();
 
   if (!metrics) return null;
@@ -37,7 +46,6 @@ function HealthBreakdown({ metrics, iotOnlinePercentage }) {
         "shadow-none",
       ].join(" ")}
     >
-      {/* HEADER */}
       <CardHeader className="gap-1.5 px-6">
         <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#77FF00]">
           {t("dashboard.systemHealthCategory")}
@@ -48,7 +56,6 @@ function HealthBreakdown({ metrics, iotOnlinePercentage }) {
         </CardTitle>
       </CardHeader>
 
-      {/* HEALTH METRICS */}
       <CardContent className="px-6 pb-6">
         <div className="flex flex-col gap-6">
           {healthItems.map((item, index) => (

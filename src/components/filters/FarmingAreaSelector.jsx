@@ -350,36 +350,26 @@ function FarmingAreaSelector() {
       <div
         id={menuId}
         aria-hidden={!open}
-        inert={!open || areasLoading}
+        inert={!open || areasLoading ? "" : undefined}
         className={[
           "absolute left-0",
           "top-[calc(100%+12px)]",
-
           "z-[500]",
-
           "w-[360px]",
           "max-w-[calc(100vw-36px)]",
-
           "max-h-[330px]",
           "overflow-y-auto",
-
           "origin-top-left",
-
           "rounded-xl border",
           "border-[#77FF00]/15",
-
           "bg-[#090F0B]/[0.98]",
-
           "p-[7px]",
-
           "shadow-[0_20px_55px_rgba(0,0,0,0.55)]",
           "backdrop-blur-[18px]",
-
           // Open / close transitions.
           "transition-[opacity,transform,visibility]",
           "duration-[240ms]",
           "ease-[cubic-bezier(0.22,1,0.36,1)]",
-
           "motion-reduce:transition-none",
 
           open && !areasLoading
