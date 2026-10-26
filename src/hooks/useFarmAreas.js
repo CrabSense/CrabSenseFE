@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 import farmingService from "../services/farmingService";
 
@@ -15,11 +16,26 @@ export default function useFarmAreas() {
         isActive: true,
       });
 
+      if (!Array.isArray(data)) {
+        throw new Error(
+          "Farming areas response is not an array."
+        );
+      }
+
       setAreas(data);
+
+      console.log(
+        "[useFarmAreas] Loaded:",
+        data.length,
+        "areas"
+      );
     } catch (err) {
       console.error("Failed to load farming areas:", err);
 
-      setError(err.message || "Unable to load farming areas.");
+      setAreas([]);
+      setError(
+        err.message || "Unable to load farming areas."
+      );
     } finally {
       setLoading(false);
     }

@@ -1,66 +1,45 @@
+
 import fetchAPI from "./api";
 
-const buildAreaQuery = (farmingAreaId) => {
+function unwrap(response) {
+  if (response == null) {
+    throw new Error("Backend returned no response.");
+  }
+
+  if (response.success === false) {
+    throw new Error(response.message || "Dashboard request failed.");
+  }
+
+  if (response.success === true) {
+    return response.data;
+  }
+
+  return response;
+}
+
+function createQuery(farmingAreaId) {
   if (!farmingAreaId) return "";
 
-  return `?farmingAreaId=${encodeURIComponent(farmingAreaId)}`;
-};
+  const params = new URLSearchParams({
+    farmingAreaId: String(farmingAreaId),
+  });
+
+  return `?${params.toString()}`;
+}
 
 const dashboardService = {
-  getOverview: async (farmingAreaId = null) => {
+  async getOverview(farmingAreaId = null) {
     const response = await fetchAPI(
-      `/dashboard/overview${buildAreaQuery(farmingAreaId)}`,
+      `/dashboard/overview${createQuery(farmingAreaId)}`
     );
-
-    if (!response?.success) {
-      throw new Error(
-        response?.message || "Unable to load dashboard overview.",
-      );
-    }
-
-    return response.data;
+    return unwrap(response);
   },
 
-  getMetrics: async (farmingAreaId = null) => {
+  async getMetrics(farmingAreaId = null) {
     const response = await fetchAPI(
-      `/dashboard/metrics${buildAreaQuery(farmingAreaId)}`,
+      `/dashboard/metrics${createQuery(farmingAreaId)}`
     );
-
-    if (!response?.success) {
-      throw new Error(response?.message || "Unable to load dashboard metrics.");
-    }
-
-    return response.data;
-  },
-
-  getTodayTasks: async (farmingAreaId = null) => {
-    const response = await fetchAPI(
-      `/operations/today${buildAreaQuery(farmingAreaId)}`,
-    );
-
-    if (!response?.success) {
-      throw new Error(response?.message || "Unable to load today tasks.");
-    }
-
-    return response.data ?? [];
-  },
-
-  getRecentActivity: async (limit = 6, farmingAreaId = null) => {
-    const params = new URLSearchParams();
-
-    params.set("limit", String(limit));
-
-    if (farmingAreaId) {
-      params.set("farmingAreaId", farmingAreaId);
-    }
-
-    const response = await fetchAPI(`/operations/recent?${params.toString()}`);
-
-    if (!response?.success) {
-      throw new Error(response?.message || "Unable to load recent activity.");
-    }
-
-    return response.data ?? [];
+    return unwrap(response);
   },
 };
 

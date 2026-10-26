@@ -1,65 +1,87 @@
-import { useCallback, useEffect, useState } from "react";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import dashboardService from "../services/dashboardService";
 
 export default function useDashboard(farmingAreaId = null) {
   const [overview, setOverview] = useState(null);
   const [metrics, setMetrics] = useState(null);
-  const [todayTasks, setTodayTasks] = useState([]);
-  const [recentActivity, setRecentActivity] = useState([]);
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
-  const [refreshing, setRefreshing] = useState(false);
+  const requestIdRef = useRef(0);
+  const loadedAreaRef = useRef(undefined);
 
   const loadDashboard = useCallback(
     async (isRefresh = false) => {
+      const requestId = ++requestIdRef.current;
+      const areaId = farmingAreaId || null;
+
+      const canRefresh =
+        isRefresh &&
+        loadedAreaRef.current === areaId;
+
+      if (canRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+        setRefreshing(false);
+        setOverview(null);
+        setMetrics(null);
+      }
+
+      setError(null);
+
       try {
-        if (isRefresh) {
-          setRefreshing(true);
-        } else {
-          setLoading(true);
-        }
+        const [overviewData, metricsData] = await Promise.all([
+          dashboardService.getOverview(areaId),
+          dashboardService.getMetrics(areaId),
+        ]);
 
-        setError(null);
-
-        const [overviewData, metricsData, taskData, activityData] =
-          await Promise.all([
-            dashboardService.getOverview(farmingAreaId),
-            dashboardService.getMetrics(farmingAreaId),
-            dashboardService.getTodayTasks(farmingAreaId),
-            dashboardService.getRecentActivity(6, farmingAreaId),
-          ]);
+        if (requestId !== requestIdRef.current) return;
 
         setOverview(overviewData);
         setMetrics(metricsData);
-        setTodayTasks(taskData);
-        setRecentActivity(activityData);
+        loadedAreaRef.current = areaId;
       } catch (err) {
-        console.error("Dashboard load failed:", err);
+        if (requestId !== requestIdRef.current) return;
 
-        setError(err.message || "Unable to load dashboard.");
+        console.error("Dashboard loading failed:", err);
+        setError(err?.message || "Unable to load dashboard.");
+
+        setOverview(null);
+        setMetrics(null);
+        loadedAreaRef.current = undefined;
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
-    [farmingAreaId],
+    [farmingAreaId]
   );
 
   useEffect(() => {
     loadDashboard(false);
+
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [loadDashboard]);
+
+  const reload = useCallback(
+    () => loadDashboard(true),
+    [loadDashboard]
+  );
 
   return {
     overview,
     metrics,
-    todayTasks,
-    recentActivity,
     loading,
     refreshing,
     error,
-
-    reload: () => loadDashboard(true),
+    reload,
   };
 }
