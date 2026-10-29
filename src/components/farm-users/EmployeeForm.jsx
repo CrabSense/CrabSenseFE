@@ -10,7 +10,7 @@ const EMPTY_FORM = {
   fullName: "",
   role: "FarmStaff",
   phone: "",
-  employeeId: "",
+  farmingAreaId: "",
 };
 
 const inputClass =
@@ -28,6 +28,8 @@ export default function EmployeeForm({
   onSubmit,
   onCancel,
   loading = false,
+  areas = [],
+  selectedAreaId = null,
 }) {
   const isEdit = Boolean(employee);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -37,19 +39,41 @@ export default function EmployeeForm({
     setForm(
       employee
         ? {
-            username: employee.username || "",
-            email: employee.email || "",
-            password: "",
-            fullName: employee.fullName || "",
-            role: employee.role || "FarmStaff",
-            phone: employee.phone || "",
-            employeeId: employee.employeeId || "",
-          }
+          username: employee.username || "",
+          email: employee.email || "",
+          password: "",
+          fullName: employee.fullName || "",
+          role: employee.role || "FarmStaff",
+          phone: employee.phone || "",
+          employeeId: employee.employeeId || "",
+          farmingAreaId: "",
+        }
         : { ...EMPTY_FORM }
     );
 
     setValidationError("");
   }, [employee]);
+
+  useEffect(() => {
+    if (employee || form.farmingAreaId || !selectedAreaId) {
+      return;
+    }
+
+    const selectedAreaExists = areas.some(
+      (area) => area.id === selectedAreaId
+    );
+
+    if (!selectedAreaExists) {
+      return;
+    }
+
+    // Chỉ điền khu mặc định khi trường này còn trống; không thay lựa chọn người dùng.
+    setForm((current) =>
+      current.farmingAreaId
+        ? current
+        : { ...current, farmingAreaId: selectedAreaId }
+    );
+  }, [employee, areas, selectedAreaId, form.farmingAreaId]);
 
   function change(field, value) {
     setValidationError("");
@@ -95,12 +119,20 @@ export default function EmployeeForm({
       return;
     }
 
+    //Kiểm tra và gửi ID khu
+    if (!isEdit && !form.farmingAreaId) {
+      setValidationError("Please select a farming area.");
+      return;
+    }
+
     onSubmit({
       username: form.username.trim(),
       fullName: form.fullName.trim(),
       email: form.email.trim(),
       password: form.password,
       role: form.role,
+      farmingAreaId: form.farmingAreaId,
+
     });
   }
 
@@ -127,6 +159,36 @@ export default function EmployeeForm({
         </div>
       </div>
 
+      {/* Chọn khu nuôi được gán cho tài khoản nhân viên */}
+      {!isEdit && (
+        <div>
+          <label htmlFor="emp-farming-area" className={labelClass}>
+            Khu vực nuôi *
+          </label>
+
+          <select
+            id="emp-farming-area"
+            className={inputClass}
+            value={form.farmingAreaId}
+            onChange={(e) => change("farmingAreaId", e.target.value)}
+            required
+            disabled={loading || areas.length === 0}
+          >
+            <option value="">Chọn khu vực nuôi</option>
+            {areas.map((area) => (
+              <option key={area.id} value={area.id}>
+                {area.code} — {area.name}
+              </option>
+            ))}
+          </select>
+
+          {areas.length === 0 && (
+            <p className="mt-1.5 text-xs text-amber-300">
+              Tài khoản hiện chưa có khu vực nuôi được gán.
+            </p>
+          )}
+        </div>
+      )}
       {!isEdit && (
         <div>
           <label htmlFor="emp-username" className={labelClass}>
@@ -285,4 +347,12 @@ EmployeeForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   loading: PropTypes.bool,
+  areas: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      code: PropTypes.string,
+      name: PropTypes.string,
+    })
+  ),
+  selectedAreaId: PropTypes.string,
 };
