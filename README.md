@@ -155,3 +155,12 @@ The workflow `.github/workflows/deploy-pages.yml` builds PRs without deploying, 
 3. In Actions → Deploy FE to GitHub Pages, run the workflow on main if needed. Check the deployment environment URL after success.
 
 Pages builds use `/CrabSenseFE/` and hash routes (e.g. `/CrabSenseFE/#/login`) so direct reloads work. Local development and other builds retain BrowserRouter and root paths. Only static frontend files are hosted; the .NET backend and database run separately. Vite variables are public in the built bundle; never place passwords, tokens or private keys in them.
+
+### Custom domain: khanhtn45.id.vn
+
+After verifying the domain in GitHub and configuring DNS, set Pages Custom domain to `khanhtn45.id.vn`, select Enforce HTTPS when available, and set these repository Actions variables:
+
+- `VITE_PAGES_BASE_PATH` = `/` (custom domain root; default `/CrabSenseFE/` for the project URL).
+- `VITE_API_BASE_URL` = `https://api.khanhtn45.id.vn/api` (requires DNS, reverse proxy and a valid TLS certificate on the VPS).
+
+Run the Pages workflow on main. The frontend uses hash routes, e.g. `https://khanhtn45.id.vn/#/login`. BE must allow the exact frontend origin `https://khanhtn45.id.vn`; retain existing origins as needed. Never put a backend credential in Vite variables.
