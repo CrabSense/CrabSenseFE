@@ -32,59 +32,142 @@ function StatusPill({ camera }) {
 }
 StatusPill.propTypes = { camera: PropTypes.object.isRequired };
 
+const CAMERA_TYPES = [
+  ["camera", "IP Camera"],
+  ["esp32-cam", "ESP32-CAM"],
+  ["usb-camera", "USB Camera"],
+];
+const RESOLUTIONS = ["640x480", "1280x720", "1920x1080", "3840x2160"];
+const RESOLUTION_LABELS = {"640x480":"640 × 480 (VGA)","1280x720":"1280 × 720 (HD)","1920x1080":"1920 × 1080 (Full HD)","3840x2160":"3840 × 2160 (4K)"};
+
+function cameraFormType(type) {
+  const value = String(type || "").toLowerCase();
+  if (value.includes("usb")) return "usb-camera";
+  if (value.includes("esp32")) return "esp32-cam";
+  return "camera";
+}
+
+function validateCameraSource(value, snapshot = false) {
+  if (!value.trim()) return true;
+  try {
+    const url = new URL(value.trim());
+    return (snapshot ? ["http:", "https:"] : ["http:", "https:", "rtsp:", "rtsps:"]).includes(url.protocol)
+      && Boolean(url.hostname) && !url.username && !url.password && !url.search && !url.hash
+      && !value.includes("?") && !value.includes("#");
+  } catch { return false; }
+}
+
 function CameraForm({ camera, areas, onClose, onSaved }) {
   const ref = useRef(null);
+  const busyRef = useRef(false);
   const [form, setForm] = useState(() => ({
-    deviceCode: camera?.deviceCode || "", name: camera?.name || "", deviceType: camera?.deviceType?.includes("cam") ? camera.deviceType : "camera",
+    deviceCode: camera?.deviceCode || "", name: camera?.name || "", deviceType: cameraFormType(camera?.deviceType),
     ipAddress: camera?.ipAddress || "", macAddress: camera?.macAddress || "", streamUrl: camera?.streamUrl || "",
     snapshotUrl: camera?.snapshotUrl || "", resolution: camera?.resolution || "", firmwareVersion: camera?.firmwareVersion || "",
     farmingAreaId: camera?.farmingAreaId || "", farmingRowId: camera?.farmingRowId || "", installationLocation: camera?.installationLocation || "",
     note: camera?.note || "",
   }));
+  const [customResolution, setCustomResolution] = useState(() => Boolean(camera?.resolution && !RESOLUTIONS.includes(camera.resolution)));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  useEffect(() => { const dialog = ref.current; dialog.showModal(); return () => dialog.close(); }, []);
+  const usb = form.deviceType === "usb-camera";
+  const esp = form.deviceType === "esp32-cam";
+  const [method, setMethod] = useState("manual");
+  useEffect(() => {
+    const dialog = ref.current;
+    dialog.showModal();
+    return () => dialog.close();
+  }, []);
   const set = (key, value) => setForm(current => ({ ...current, [key]: value }));
   const submit = async event => {
-    event.preventDefault(); if (busy) return;
-    setBusy(true); setError("");
+    event.preventDefault();
+    if (busyRef.current) return;
+    setError("");
+    if (!form.deviceCode.trim() || !form.name.trim()) {
+      setError("Vui lòng nhập mã và tên Camera."); return;
+    }
+    if (!usb && (!validateCameraSource(form.streamUrl) || !validateCameraSource(form.snapshotUrl, true))) {
+      setError("Stream URL phải dùng HTTP(S)/RTSP(S), Snapshot URL dùng HTTP(S), không chứa tài khoản, query hoặc fragment.");
+      return;
+    }
+    if (customResolution && !form.resolution.trim()) {
+      setError("Vui lòng nhập độ phân giải hoặc chọn một mức có sẵn."); return;
+    }
+    busyRef.current = true; setBusy(true);
     try {
       const body = Object.fromEntries(Object.entries(form).map(([key, value]) => [key, value.trim()]));
+      // USB devices are registered as metadata only. Do not send hidden network fields.
+      if (usb) {
+        for (const key of ["ipAddress","macAddress","streamUrl","snapshotUrl","firmwareVersion"]) delete body[key];
+      }
       if (camera) {
         delete body.deviceCode; delete body.deviceType;
-        // Legacy protected URLs are hidden by BE. Do not erase a hidden value during an unrelated edit.
-        if (body.streamUrl === (camera.streamUrl || "")) delete body.streamUrl;
-        if (body.snapshotUrl === (camera.snapshotUrl || "")) delete body.snapshotUrl;
-        if (body.firmwareVersion === (camera.firmwareVersion || "")) delete body.firmwareVersion;
+        // Preserve hidden legacy credentials and unchanged metadata on unrelated edits.
+        for (const key of ["streamUrl","snapshotUrl","firmwareVersion","ipAddress","macAddress"]) {
+          if (body[key] === (camera[key] || "")) delete body[key];
+        }
         body.farmingAreaId ||= EMPTY_ID; body.farmingRowId ||= EMPTY_ID;
         await systemAdminService.updateCamera(camera.id, body);
       } else {
         body.farmingAreaId ||= null; body.farmingRowId ||= null;
+        for (const key of ["ipAddress","macAddress","streamUrl","snapshotUrl","firmwareVersion","resolution","installationLocation","note"]) {
+          if (body[key] === "") body[key] = null;
+        }
         await systemAdminService.createCamera(body);
       }
       onSaved(); onClose();
     } catch (err) { setError(err?.message || "Không lưu được Camera."); }
-    finally { setBusy(false); }
+    finally { busyRef.current = false; setBusy(false); }
   };
-  const fields = [["name","Tên Camera"],["ipAddress","Địa chỉ IP"],["macAddress","MAC"],["resolution","Độ phân giải"],["firmwareVersion","Firmware khai báo"],["installationLocation","Vị trí lắp đặt"]];
-  return <dialog ref={ref} aria-labelledby="camera-form-title" className="cam-dialog" onCancel={event => {event.preventDefault(); if (!busy) onClose();}}>
+  const rowOptions = (areas.find(a=>a.id===form.farmingAreaId)?.rows||[]).filter(r=>r.isActive||r.id===form.farmingRowId);
+  return <dialog ref={ref} aria-labelledby="camera-form-title" className="cam-dialog cam-camera-form" onCancel={event => {event.preventDefault(); if (!busyRef.current) onClose();}}>
     <form onSubmit={submit}>
-      <div className="cam-dialog-head"><div><h2 id="camera-form-title">{camera ? "Chỉnh sửa Camera" : "Thêm Camera"}</h2><p>Đăng ký thiết bị và cấu hình nguồn hình ảnh.</p></div><button type="button" className="cam-icon" disabled={busy} aria-label="Đóng" onClick={onClose}><X size={20}/></button></div>
+      <div className="cam-dialog-head">
+        <div className="cam-form-title"><span className="cam-form-title-icon"><Video size={25}/></span><div><h2 id="camera-form-title">{camera ? "Chỉnh sửa Camera" : "Thêm Camera"}</h2><p>{camera ? "Cập nhật thông tin đăng ký và cấu hình." : "Add Camera · Đăng ký Camera vào hệ thống"}</p></div></div>
+        <button type="button" className="cam-icon" disabled={busy} aria-label="Đóng" onClick={onClose}><X size={20}/></button>
+      </div>
       <div className="cam-form-body">
         {error && <p className="cam-error" role="alert">{error}</p>}
-        <div className="cam-form-grid">
-          <label>Mã Camera <span className="cam-required">*</span><input required disabled={Boolean(camera)} value={form.deviceCode} onChange={e=>set("deviceCode",e.target.value)} placeholder="CAM-001"/></label>
-          <label>Loại Camera<select value={form.deviceType} disabled={Boolean(camera)} onChange={e=>set("deviceType",e.target.value)}>{[...new Set(["camera","esp32-cam","usb-camera","ip-camera",form.deviceType])].map(type=><option key={type} value={type}>{type}</option>)}</select></label>
-          {fields.map(([key,label])=><label key={key}>{label}<input value={form[key]} onChange={e=>set(key,e.target.value)} maxLength={key==="resolution"?32:key==="ipAddress"||key==="macAddress"?64:key==="installationLocation"?200:undefined}/></label>)}
-          <label>Khu nuôi<select value={form.farmingAreaId} onChange={e=>setForm(current=>({...current,farmingAreaId:e.target.value,farmingRowId:""}))}><option value="">Chưa gán</option>{areas.filter(a=>a.isActive||a.id===form.farmingAreaId).map(a=><option key={a.id} value={a.id}>{a.name||a.code}</option>)}</select></label>
-          <label>Dãy nuôi<select value={form.farmingRowId} onChange={e=>set("farmingRowId",e.target.value)} disabled={!form.farmingAreaId}><option value="">Chưa gán</option>{(areas.find(a=>a.id===form.farmingAreaId)?.rows||[]).filter(r=>r.isActive||r.id===form.farmingRowId).map(r=><option key={r.id} value={r.id}>{r.name||r.code}</option>)}</select></label>
-          <label className="cam-wide">Stream URL<input value={form.streamUrl} onChange={e=>set("streamUrl",e.target.value)} placeholder="rtsp://192.168.1.21/live"/></label>
-          <label className="cam-wide">Snapshot URL<input value={form.snapshotUrl} onChange={e=>set("snapshotUrl",e.target.value)} placeholder="https://camera.example/capture"/></label>
-          <p className="cam-wide cam-hint">Không nhập mật khẩu, token, query hoặc fragment vào URL. Nguồn cần xác thực phải qua Camera Agent.</p>
-          <label className="cam-wide">Ghi chú<textarea rows={2} maxLength={500} value={form.note} onChange={e=>set("note",e.target.value)}/></label>
-        </div>
+        {!camera && <div className="cam-form-methods" role="group" aria-label="Phương thức đăng ký">
+          <button type="button" className={method==="manual"?"active":""} aria-pressed={method==="manual"} onClick={()=>setMethod("manual")}><Pencil size={21}/><span><strong>Thêm thủ công</strong><small>Nhập thông tin Camera</small></span><CircleCheck size={17}/></button>
+          <button type="button" disabled title="Cần tích hợp Camera Agent tại Kiosk"><Search size={21}/><span><strong>Tự động phát hiện</strong><small>Chưa tích hợp Camera Agent</small></span></button>
+        </div>}
+        <fieldset className="cam-form-section" disabled={busy}>
+          <legend><span className="cam-section-number">01</span> Thông tin Camera</legend>
+          <div className="cam-form-grid">
+            <label>Mã Camera <span className="cam-required">*</span><input required disabled={Boolean(camera)} maxLength={64} value={form.deviceCode} onChange={e=>set("deviceCode",e.target.value)} placeholder="CAM-001"/></label>
+            <label>Tên Camera <span className="cam-required">*</span><input required maxLength={200} value={form.name} onChange={e=>set("name",e.target.value)} placeholder="Camera khu A – Dãy 1"/></label>
+            <label>Loại Camera <span className="cam-required">*</span><select value={form.deviceType} disabled={Boolean(camera)} onChange={e=>set("deviceType",e.target.value)}>{CAMERA_TYPES.map(([type,label])=><option key={type} value={type}>{label}</option>)}</select></label>
+            {!usb && <label>Firmware khai báo<input value={form.firmwareVersion} onChange={e=>set("firmwareVersion",e.target.value)} maxLength={64} placeholder="VD: v1.0.0"/></label>}
+            <p className="cam-wide cam-hint">{camera?"Mã và loại Camera được giữ nguyên khi chỉnh sửa.":usb?"Camera USB kết nối qua máy tính/Kiosk.":esp?"ESP32-CAM có thể gửi heartbeat khi sử dụng firmware tương thích CrabSense.":"Camera IP kết nối qua mạng LAN; không cần mở cổng Camera ra Internet."}</p>
+          </div>
+        </fieldset>
+        <fieldset className="cam-form-section" disabled={busy}>
+          <legend><span className="cam-section-number">02</span> Cấu hình kết nối</legend>
+          <div className="cam-form-grid">
+            {usb ? <div className="cam-wide cam-form-info"><Wifi size={19}/><div><strong>Đăng ký Camera USB</strong><p>Chỉ lưu thông tin thiết bị và vị trí. Liên kết Kiosk, cổng USB và thu hình chưa được BE/Camera Agent hỗ trợ. Không cần nhập IP, MAC hoặc RTSP.</p></div></div> : <>
+              <label>Địa chỉ IP<input value={form.ipAddress} onChange={e=>set("ipAddress",e.target.value)} maxLength={64} placeholder="192.168.1.21"/></label>
+              <label>Địa chỉ MAC<input value={form.macAddress} onChange={e=>set("macAddress",e.target.value)} maxLength={64} placeholder="AA:BB:CC:DD:EE:FF"/></label>
+              <label className="cam-wide">Stream URL<input value={form.streamUrl} onChange={e=>set("streamUrl",e.target.value)} placeholder={esp?"http://192.168.1.21:81/stream":"rtsp://192.168.1.21:554/stream"}/><small className="cam-hint">HTTP(S) hoặc RTSP(S). Có thể bổ sung sau khi đăng ký.</small></label>
+              <label className="cam-wide">Snapshot URL<input value={form.snapshotUrl} onChange={e=>set("snapshotUrl",e.target.value)} placeholder={esp?"http://192.168.1.21/capture":"https://camera.example/capture"}/></label>
+              <div className="cam-wide cam-form-info"><CircleAlert size={18}/><p>Không nhập mật khẩu, token, query hoặc fragment trong URL. Nguồn cần xác thực phải qua Camera Agent.</p></div>
+            </>}
+            <label>Độ phân giải<select value={customResolution?"custom":form.resolution} onChange={e=>{const v=e.target.value;setCustomResolution(v==="custom");set("resolution",v==="custom"?"":v);}}><option value="">Chưa khai báo</option>{RESOLUTIONS.map(r=><option key={r} value={r}>{RESOLUTION_LABELS[r]}</option>)}<option value="custom">Khác</option></select></label>
+            {customResolution && <label>Độ phân giải tùy chỉnh<input value={form.resolution} onChange={e=>set("resolution",e.target.value)} maxLength={32} placeholder="VD: 2560x1440"/></label>}
+          </div>
+        </fieldset>
+        <fieldset className="cam-form-section" disabled={busy}>
+          <legend><span className="cam-section-number">03</span> Vị trí lắp đặt</legend>
+          <div className="cam-form-grid">
+            <label>Khu nuôi<select value={form.farmingAreaId} onChange={e=>setForm(current=>({...current,farmingAreaId:e.target.value,farmingRowId:""}))}><option value="">Chưa gán</option>{areas.filter(a=>a.isActive||a.id===form.farmingAreaId).map(a=><option key={a.id} value={a.id}>{a.name||a.code}</option>)}</select></label>
+            <label>Dãy nuôi<select value={form.farmingRowId} onChange={e=>set("farmingRowId",e.target.value)} disabled={!form.farmingAreaId}><option value="">Chưa gán</option>{rowOptions.map(r=><option key={r.id} value={r.id}>{r.name||r.code}</option>)}</select></label>
+            <label className="cam-wide">Vị trí lắp đặt cụ thể<input value={form.installationLocation} onChange={e=>set("installationLocation",e.target.value)} maxLength={200} placeholder="VD: Trên khung dãy A01, hướng xuống hộp cua"/></label>
+            <label className="cam-wide">Ghi chú<textarea rows={3} maxLength={500} value={form.note} onChange={e=>set("note",e.target.value)} placeholder="Thông tin bổ sung về Camera…"/></label>
+          </div>
+        </fieldset>
+        {!camera && <div className="cam-form-info cam-form-after"><CircleCheck size={19}/><div><strong>Sau khi đăng ký</strong><p>Camera được lưu ở trạng thái Offline, chờ heartbeat xác thực. Lịch trình ghi hình được cấu hình ở trang riêng.</p></div></div>}
       </div>
-      <div className="cam-dialog-foot"><button type="button" className="system-secondary-button" disabled={busy} onClick={onClose}>Hủy</button><button type="submit" className="system-primary-button" disabled={busy}>{busy?"Đang lưu…":"Lưu Camera"}</button></div>
+      <div className="cam-dialog-foot"><span className="cam-required-note"><span className="cam-required">*</span> Trường bắt buộc</span><button type="button" className="system-secondary-button" disabled={busy} onClick={onClose}>Hủy</button><button type="submit" className="system-primary-button" disabled={busy}>{busy?"Đang lưu…":camera?"Lưu thay đổi":"Đăng ký Camera"}</button></div>
     </form>
   </dialog>;
 }

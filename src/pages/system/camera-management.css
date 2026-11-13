@@ -25,3 +25,31 @@
 @media(max-width:1220px){.cam-layout:has(.cam-detail){flex-direction:column}.cam-layout:has(.cam-detail) .cam-list-panel{width:100%}.cam-detail{position:static;width:100%}.cam-detail-body{max-width:100%}.cam-preview{max-width:520px;width:100%;justify-self:center}}
 @media(max-width:1150px){.cam-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){.cam-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.cam-metric{padding:10px;min-height:76px;gap:7px}.cam-metric-icon{width:36px;height:36px}.cam-metric strong{font-size:23px}.cam-metric small{font-size:11px}.cam-filters{padding:12px}.cam-form-grid{grid-template-columns:1fr}.cam-view-tabs{gap:8px}.cam-view-tabs button,.cam-view-tabs a{font-size:11px}.cam-dialog-head,.cam-dialog-foot,.cam-form-body{padding:13px}.cam-pagination{padding:12px}}
+
+/* Structured camera registration form: same light palette as System Overview. */
+.cam-camera-form{width:min(790px,calc(100% - 24px))}
+.cam-camera-form .cam-dialog-head{position:sticky;top:0;z-index:2;background:#fff}
+.cam-form-title{display:flex;gap:12px;align-items:center;min-width:0}
+.cam-form-title-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:13px;background:#e4f5ed;color:#147e75;flex:none}
+.cam-form-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.cam-form-methods button{display:flex;align-items:center;text-align:left;gap:10px;padding:12px;border:1px solid #dcebe8;border-radius:12px;background:#f9fcfb;color:#416573;cursor:pointer;min-width:0}
+.cam-form-methods button.active{background:#eaf7f1;border-color:#8fc6b7;color:#13796e}
+.cam-form-methods button:disabled{opacity:.65;cursor:not-allowed}
+.cam-form-methods button>span{flex:1;min-width:0}
+.cam-form-methods button strong,.cam-form-methods button small{display:block}
+.cam-form-methods button small{font-size:11px;color:#597580;margin-top:4px}
+.cam-form-section{min-width:0;border:1px solid #dcebe8;border-radius:13px;padding:14px;margin:0 0 17px;background:#fff}
+.cam-form-section legend{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#153b56;padding:0 7px}
+.cam-section-number{display:grid;place-items:center;background:#e4f5ed;color:#147e75;font-size:11px;width:28px;height:28px;border-radius:8px}
+.cam-form-section .cam-form-grid label{display:block;line-height:1.6}
+.cam-form-section input,.cam-form-section select,.cam-form-section textarea{display:block;margin-top:5px;min-height:39px}
+.cam-form-section textarea{resize:vertical}
+.cam-form-section label small{display:block;margin-top:4px;font-weight:400}
+.cam-form-info{display:flex;align-items:flex-start;gap:9px;border-radius:9px;padding:10px 12px;background:#f0f8f5;color:#416573;font-size:12px;line-height:1.5}
+.cam-form-info svg{flex:none;color:#147e75;margin-top:1px}
+.cam-form-info p{margin:0}
+.cam-form-info strong{display:block;color:#13796e;margin-bottom:2px}
+.cam-form-after{margin-top:2px}
+.cam-required-note{margin-right:auto;color:#597580;font-size:11px}
+.cam-camera-form .cam-dialog-foot{z-index:2}
+@media(max-width:600px){.cam-form-methods{grid-template-columns:1fr}.cam-form-section{padding:11px}.cam-form-title-icon{width:40px;height:40px}.cam-required-note{flex-basis:100%}.cam-camera-form .cam-dialog-foot{flex-wrap:wrap}}
