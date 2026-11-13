@@ -16,6 +16,7 @@ function DeviceManagement({ kind = "all" }) {
   const [devices, setDevices] = useState([]);
   const [sensors, setSensors] = useState([]);
   const [areas, setAreas] = useState([]);
+  const [locationError, setLocationError] = useState("");
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -40,12 +41,12 @@ function DeviceManagement({ kind = "all" }) {
       const [deviceRows, sensorRows, areaRows, scheduleRows] = await Promise.all([
         systemAdminService.getDevices(),
         systemAdminService.getSensors(),
-        systemAdminService.getDeviceLocations(),
+        systemAdminService.getDeviceLocations().then(value => { setLocationError(""); return value; }).catch(err => { setLocationError(err?.message || "Không tải được khu/dãy."); return null; }),
         systemAdminService.getRecordingSchedules().catch(() => []),
       ]);
       setDevices(deviceRows);
       setSensors(sensorRows);
-      setAreas(areaRows);
+      if (areaRows !== null) setAreas(areaRows);
       setSchedules(scheduleRows);
     } catch (loadError) {
       setError(loadError?.message || "Không tải được danh sách thiết bị.");
@@ -219,10 +220,11 @@ function DeviceManagement({ kind = "all" }) {
         <SystemPageHeader title={({ camera: "Quản lý Camera", sensor: "Quản lý Sensor", controller: "Quản lý Controller" })[kind] || "Quản lý thiết bị"} description="Quản lý đăng ký, cấu hình và trạng thái thiết bị. Lịch ghi hình nằm ở tab riêng." actions={<>
           <button type="button" onClick={() => load(true)} className="system-secondary-button">Làm mới</button>
           <button type="button" onClick={exportCsv} className="system-secondary-button">Xuất dữ liệu</button>
-          <button type="button" onClick={() => setCreating(true)} className="system-primary-button">+ Thêm thiết bị</button>
+          <button type="button" disabled={Boolean(locationError)} onClick={() => setCreating(true)} className="system-primary-button">+ Thêm thiết bị</button>
         </>} />
         <SystemState loading={loading} error={error} onRetry={() => load()}>
           <div className="space-y-4">
+            {locationError && <p role="alert" className="rounded-xl border border-[#edd29b] bg-[#fff7df] p-3 text-sm text-[#95600d]">Chưa tải được danh sách khu/dãy: {locationError}. Tạm khóa thêm thiết bị và thay đổi vị trí; các thiết bị hiện có vẫn xem được.</p>}
             {notice ? <p className="rounded-2xl border border-[#a4d5c5] bg-[#e8f6ee] px-4 py-3 text-sm text-[#286454]">{notice}</p> : null}
             {issues.codes.length || issues.ips.length ? (
               <div className="rounded-2xl border border-[#edd29b] bg-[#fff7df] p-4 text-sm text-[#95600d]">
@@ -276,6 +278,7 @@ function DeviceManagement({ kind = "all" }) {
         <DeviceDetailDrawer
           row={selected}
           areas={areas}
+          locationsAvailable={!locationError}
           schedule={schedule}
           tabRequest={tabRequest}
           onClose={() => setSelected(null)}

@@ -15,7 +15,7 @@ const TABS = [
 
 const CONFIG_ACTIONS = ["UpdateDevice", "UpdateFirmware", "CreateDevice", "DisableDevice", "DeleteDevice", "TestConnection"];
 
-function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChanged }) {
+function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, tabRequest, onClose, onChanged }) {
   const [tab, setTab] = useState("info");
   const [detail, setDetail] = useState(null);
   const [diagnostics, setDiagnostics] = useState(null);
@@ -155,9 +155,9 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
         ipAddress: config.ipAddress,
         macAddress: config.macAddress,
         installationLocation: config.installationLocation,
-        farmingAreaId: config.farmingAreaId || "00000000-0000-0000-0000-000000000000",
+        ...(locationsAvailable ? { farmingAreaId: config.farmingAreaId || (row.type === "camera" ? "00000000-0000-0000-0000-000000000000" : null) } : {}),
         ...(row.type === "camera" ? {
-          farmingRowId: config.farmingRowId || "00000000-0000-0000-0000-000000000000",
+          ...(locationsAvailable ? { farmingRowId: config.farmingRowId || "00000000-0000-0000-0000-000000000000" } : {}),
           // Hidden legacy credentials must not be erased by unrelated edits.
           ...(config.streamUrl !== (row.raw.streamUrl || "") ? { streamUrl: config.streamUrl } : {}),
           ...(config.snapshotUrl !== (row.raw.snapshotUrl || "") ? { snapshotUrl: config.snapshotUrl } : {}),
@@ -235,6 +235,7 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
               <label className="block text-xs text-[#526f79]">
                 Khu vực
                 <select
+                  disabled={!locationsAvailable}
                   value={config.farmingAreaId}
                   onChange={(event) => setConfig({ ...config, farmingAreaId: event.target.value, farmingRowId: "" })}
                   className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
@@ -246,7 +247,7 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
               {row.type === "camera" ? (
                 <>
                   <label className="block text-xs text-[#526f79]">Dãy nuôi
-                    <select value={config.farmingRowId} onChange={event => setConfig({...config, farmingRowId: event.target.value})} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
+                    <select disabled={!locationsAvailable} value={config.farmingRowId} onChange={event => setConfig({...config, farmingRowId: event.target.value})} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
                       <option value="">Không gán dãy</option>
                       {(areas.find(area => area.id === config.farmingAreaId)?.rows || []).filter(item => item.isActive || item.id === config.farmingRowId).map(item => <option key={item.id} value={item.id}>{item.name || item.code}</option>)}
                     </select>
@@ -522,6 +523,7 @@ function Action({ label, onClick }) {
 DeviceDetailDrawer.propTypes = {
   row: PropTypes.object.isRequired,
   areas: PropTypes.array.isRequired,
+  locationsAvailable: PropTypes.bool,
   schedule: PropTypes.object,
   tabRequest: PropTypes.shape({ tab: PropTypes.string, nonce: PropTypes.number }),
   onClose: PropTypes.func.isRequired,
