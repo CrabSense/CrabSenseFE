@@ -33,7 +33,7 @@ function RecordingDetails({item,onClose,onDeleted,onNotice}){
     try{
       if(action==="delete"){
         await systemAdminService.deleteRecording(item.id);
-        if(active.current){onNotice("Đã xóa bản ghi và file video.");onDeleted();}
+        onNotice("Đã xóa bản ghi và file video.");onDeleted(item.id);
         return;
       }
       const limit=action==="play"?PREVIEW_LIMIT:DOWNLOAD_LIMIT;
@@ -137,7 +137,7 @@ export default function RecordingHistory({initialDeviceId=""}){
         {current.length?<div className="rec-table-scroll" tabIndex={0} role="region" aria-label="Bảng video Camera"><table className="rec-table"><thead><tr><th scope="col">Tên file / Camera</th><th scope="col">Khu / Dãy hiện tại</th><th scope="col">Thời điểm lưu</th><th scope="col">Thời lượng</th><th scope="col">Dung lượng</th><th scope="col">Chế độ ghi</th><th scope="col">Thao tác</th></tr></thead><tbody>{current.map(r=><tr key={r.id} className={selected?.id===r.id?"selected":""}><td><button className="rec-file" type="button" onClick={()=>setSelected(r)}><span><Film size={21}/></span><div><strong>{r.fileName}</strong><small>{r.deviceCode} · {r.cameraName||"Camera"}</small></div></button></td><td>{[r.areaName,r.rowName].filter(Boolean).join(" / ")||"Chưa gán"}</td><td>{recordingTime(r.createdAt)}</td><td>{durationLabel(r.durationSeconds)}</td><td>{formatBytes(r.sizeBytes)}</td><td><span className="rec-mode">{modeLabel(r.recordingMode)}</span></td><td><button type="button" className="rec-icon" title="Xem video" aria-label={"Xem "+r.fileName} onClick={()=>setSelected(r)}><PlayCircle size={19}/></button></td></tr>)}</tbody></table></div>:<div className="rec-empty"><Film size={36}/><strong>Chưa có video phù hợp</strong><p>Video sẽ xuất hiện khi được lưu vào kho media kỹ thuật Camera. Thử đổi bộ lọc hoặc làm mới.</p></div>}
         <div className="rec-pagination"><span>Hiển thị {result?.totalCount?(page-1)*pageSize+1:0}–{Math.min(page*pageSize,result?.totalCount||0)} / {result?.totalCount||0} bản ghi</span><div><label>Số dòng <select value={pageSize} onChange={e=>{setPageSize(Number(e.target.value));setPage(1);setSelected(null);}}>{[10,25,50,100].map(n=><option key={n}>{n}</option>)}</select></label><button className="rec-icon" type="button" disabled={page<=1} onClick={()=>{setPage(n=>n-1);setSelected(null);}} aria-label="Trang trước"><ChevronLeft size={19}/></button><strong>{page} / {Math.max(1,result?.totalPages||0)}</strong><button className="rec-icon" type="button" disabled={page>=(result?.totalPages||0)} onClick={()=>{setPage(n=>n+1);setSelected(null);}} aria-label="Trang sau"><ChevronRight size={19}/></button></div></div>
       </section>
-      {selected&&<RecordingDetails key={selected.id} item={selected} onClose={()=>setSelected(null)} onNotice={setNotice} onDeleted={refresh}/>}
+      {selected&&<RecordingDetails key={selected.id} item={selected} onClose={()=>setSelected(null)} onNotice={setNotice} onDeleted={id=>{setSelected(old=>old?.id===id?null:old);setRevision(n=>n+1);}}/>}
     </div>}
     <p className="rec-footnote"><Clock size={14}/> Ngày lọc là ngày lưu file; khu/dãy là vị trí hiện tại của Camera. Không suy đoán thời lượng hoặc chế độ ghi.</p>
   </div>;

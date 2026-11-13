@@ -48,8 +48,8 @@ jobs:
           }
           NODE
       - run: npm ci
-      - name: Test camera location grouping
-        run: node --test tests/cameraLocations.test.js
+      - name: Test camera location and recording history
+        run: node --test tests/cameraLocations.test.js tests/recordingHistoryModel.test.js
       - run: npm run build
       - name: Verify Pages output
         run: |

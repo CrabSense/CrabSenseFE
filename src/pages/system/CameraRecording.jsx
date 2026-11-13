@@ -77,7 +77,7 @@ function RecordingSchedule() {
       <SystemState loading={loading} error={error} onRetry={load}>
         <div className="space-y-4">
           <p className="text-sm text-[#355b6a]">
-            Camera system {online} / {cameras.length} online
+            {online} / {cameras.length} Camera Online · Cấu hình lịch ghi chưa xác nhận Camera đang ghi hình.
           </p>
           {cameras.length === 0 ? (
             <p className="text-sm text-[#526f79]">Chưa có camera trên API thiết bị.</p>
