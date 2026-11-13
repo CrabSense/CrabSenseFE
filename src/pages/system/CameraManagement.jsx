@@ -55,6 +55,7 @@ function CameraForm({ camera, areas, onClose, onSaved }) {
         // Legacy protected URLs are hidden by BE. Do not erase a hidden value during an unrelated edit.
         if (body.streamUrl === (camera.streamUrl || "")) delete body.streamUrl;
         if (body.snapshotUrl === (camera.snapshotUrl || "")) delete body.snapshotUrl;
+        if (body.firmwareVersion === (camera.firmwareVersion || "")) delete body.firmwareVersion;
         body.farmingAreaId ||= EMPTY_ID; body.farmingRowId ||= EMPTY_ID;
         await systemAdminService.updateCamera(camera.id, body);
       } else {
@@ -65,10 +66,10 @@ function CameraForm({ camera, areas, onClose, onSaved }) {
     } catch (err) { setError(err?.message || "Không lưu được Camera."); }
     finally { setBusy(false); }
   };
-  const fields = [["name","Tên Camera"],["ipAddress","Địa chỉ IP"],["macAddress","MAC"],["resolution","Độ phân giải"],["firmwareVersion","Firmware"],["installationLocation","Vị trí lắp đặt"]];
-  return <dialog ref={ref} className="cam-dialog" onCancel={event => {event.preventDefault(); if (!busy) onClose();}}>
+  const fields = [["name","Tên Camera"],["ipAddress","Địa chỉ IP"],["macAddress","MAC"],["resolution","Độ phân giải"],["firmwareVersion","Firmware khai báo"],["installationLocation","Vị trí lắp đặt"]];
+  return <dialog ref={ref} aria-labelledby="camera-form-title" className="cam-dialog" onCancel={event => {event.preventDefault(); if (!busy) onClose();}}>
     <form onSubmit={submit}>
-      <div className="cam-dialog-head"><div><h2>{camera ? "Chỉnh sửa Camera" : "Thêm Camera"}</h2><p>Đăng ký thiết bị và cấu hình nguồn hình ảnh.</p></div><button type="button" className="cam-icon" disabled={busy} aria-label="Đóng" onClick={onClose}><X size={20}/></button></div>
+      <div className="cam-dialog-head"><div><h2 id="camera-form-title">{camera ? "Chỉnh sửa Camera" : "Thêm Camera"}</h2><p>Đăng ký thiết bị và cấu hình nguồn hình ảnh.</p></div><button type="button" className="cam-icon" disabled={busy} aria-label="Đóng" onClick={onClose}><X size={20}/></button></div>
       <div className="cam-form-body">
         {error && <p className="cam-error" role="alert">{error}</p>}
         <div className="cam-form-grid">
@@ -110,8 +111,8 @@ function CameraDetails({ camera, schedule, tab, onTab, onClose, onEdit, onReload
       : systemAdminService.getCamera(camera.id).then(data=>{if(active)setDetail(data);});
     request.catch(err=>{if(active)setError(err?.message||"Không tải được chi tiết.");}).finally(()=>{if(active)setLoading(false);});
     return ()=>{active=false;};
-  },[camera.id,tab,revision]);
-  const data=detail||camera;
+  },[camera.id,camera.lastSeenAt,camera.name,camera.streamUrl,camera.snapshotUrl,camera.ipAddress,camera.macAddress,camera.resolution,camera.firmwareVersion,camera.farmingAreaId,camera.farmingRowId,camera.installationLocation,camera.note,tab,revision]);
+  const data={...detail,...camera};
   const snapshot=safeSnapshot(data.snapshotUrl);
   const execute=async action=>{
     setBusy(true);setError("");setResult("");
@@ -188,6 +189,13 @@ export default function CameraManagement(){
     finally{if(id===requestId.current){setRefreshing(false);setLoading(false);}}
   },[]);
   useEffect(()=>{load();return()=>{requestId.current++;};},[load]);
+  useEffect(()=>{
+    if (!menu) return undefined;
+    const close = event => { if (event.type === "keydown" ? event.key === "Escape" : !event.target.closest?.(".cam-more")) setMenu(null); };
+    document.addEventListener("keydown", close);
+    document.addEventListener("click", close);
+    return ()=>{document.removeEventListener("keydown",close);document.removeEventListener("click",close);};
+  },[menu]);
   const cameras=data?.cameras||[];
   const areas=data?.areas||[];
   const scheduleById=useMemo(()=>new Map((data?.schedules||[]).map(s=>[s.deviceId,s])),[data?.schedules]);
@@ -226,7 +234,7 @@ export default function CameraManagement(){
               <label>Trạng thái<select aria-label="Trạng thái" value={status} onChange={e=>{setStatus(e.target.value);setPage(1);}}><option value="all">Tất cả</option>{Object.entries(STATES).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
             </div>
             <div className="cam-list-heading"><h2>{view==="list"?"Danh sách Camera":"Camera theo khu / dãy"}</h2><span>{filtered.length} kết quả</span></div>
-            {view==="list"?<><div className="cam-table-scroll" tabIndex={0} role="region" aria-label="Danh sách Camera"><table className="cam-table"><thead><tr><th scope="col">Mã / tên Camera</th><th scope="col">Vị trí</th><th scope="col">IP / Stream</th><th scope="col">Trạng thái</th><th scope="col">Ghi hình</th><th scope="col">Kết nối gần nhất</th><th scope="col">Thao tác</th></tr></thead><tbody>{visible.map(c=><tr key={c.id} className={c.id===selectedId?"selected":""}><td><button type="button" className="cam-device" onClick={()=>choose(c)}><span className="cam-device-icon"><Camera size={20}/></span><span><strong>{c.deviceCode}</strong><small>{c.name||"Camera"}</small></span></button></td><td><span className="cam-cell-main">{cameraPlace(c)}</span><small>{display(c.installationLocation)}</small></td><td><span className="cam-cell-main">{display(c.ipAddress)}</span><small>{protocol(c.streamUrl)} · {display(c.resolution)}</small></td><td><StatusPill camera={c}/></td><td><span className="cam-pill cam-neutral">{recordingLabel(scheduleById.get(c.id))}</span><small>{scheduleById.get(c.id)?.mode!=="Disabled"&&scheduleById.has(c.id)?"Chưa tích hợp":""}</small></td><td>{formatWhen(c.lastSeenAt)}</td><td><div className="cam-actions"><button type="button" className="cam-icon" title="Xem chi tiết" aria-label={"Xem "+c.deviceCode} onClick={()=>choose(c)}><Eye size={17}/></button><button type="button" className="cam-icon" disabled={locationError} title="Chỉnh sửa" aria-label={"Sửa "+c.deviceCode} onClick={()=>editCamera(c)}><Pencil size={16}/></button><div className="cam-more"><button type="button" className="cam-icon" aria-expanded={menu===c.id} aria-label={"Thao tác "+c.deviceCode} onClick={()=>setMenu(menu===c.id?null:c.id)}><MoreHorizontal size={19}/></button>{menu===c.id&&<div className="cam-menu"><button type="button" onClick={()=>choose(c,"health")}>Chẩn đoán</button><button type="button" onClick={()=>choose(c,"events")}>Nhật ký</button><button type="button" onClick={()=>choose(c,"config")}>Cấu hình</button></div>}</div></div></td></tr>)}</tbody></table></div>
+            {view==="list"?<><div className="cam-table-scroll" tabIndex={0} role="region" aria-label="Danh sách Camera"><table className="cam-table"><thead><tr><th scope="col">Mã / tên Camera</th><th scope="col">Vị trí</th><th scope="col">IP / Stream</th><th scope="col">Trạng thái</th><th scope="col">Ghi hình</th><th scope="col">Kết nối gần nhất</th><th scope="col">Thao tác</th></tr></thead><tbody>{visible.map(c=><tr key={c.id} className={c.id===selectedId?"selected":""}><td><button type="button" className="cam-device" onClick={()=>choose(c)}><span className="cam-device-icon"><Camera size={20}/></span><span><strong>{c.deviceCode}</strong><small>{c.name||"Camera"}</small></span></button></td><td><span className="cam-cell-main">{cameraPlace(c)}</span><small>{display(c.installationLocation)}</small></td><td><span className="cam-cell-main">{display(c.ipAddress)}</span><small>{protocol(c.streamUrl)} · {display(c.resolution)}</small></td><td><StatusPill camera={c}/></td><td><span className="cam-pill cam-neutral">{recordingLabel(scheduleById.get(c.id))}</span><small>{scheduleById.get(c.id)?.runtimeStatus==="NotIntegrated"?"Chưa tích hợp":""}</small></td><td>{formatWhen(c.lastSeenAt)}</td><td><div className="cam-actions"><button type="button" className="cam-icon" title="Xem chi tiết" aria-label={"Xem "+c.deviceCode} onClick={()=>choose(c)}><Eye size={17}/></button><button type="button" className="cam-icon" disabled={locationError} title="Chỉnh sửa" aria-label={"Sửa "+c.deviceCode} onClick={()=>editCamera(c)}><Pencil size={16}/></button><div className="cam-more"><button type="button" className="cam-icon" aria-expanded={menu===c.id} aria-label={"Thao tác "+c.deviceCode} onClick={()=>setMenu(menu===c.id?null:c.id)}><MoreHorizontal size={19}/></button>{menu===c.id&&<div className="cam-menu"><button type="button" onClick={()=>choose(c,"health")}>Chẩn đoán</button><button type="button" onClick={()=>choose(c,"events")}>Nhật ký</button><button type="button" onClick={()=>choose(c,"config")}>Cấu hình</button></div>}</div></div></td></tr>)}</tbody></table></div>
               {!visible.length&&<div className="cam-empty"><Video size={30}/><strong>{cameras.length?"Không có Camera phù hợp":"Chưa có Camera đăng ký"}</strong><span>{cameras.length?"Thay đổi bộ lọc để xem kết quả.":"Thêm Camera để bắt đầu quản lý thiết bị."}</span>{!cameras.length&&!locationError&&<button className="system-primary-button" type="button" onClick={()=>setEdit({camera:null})}>Thêm Camera</button>}</div>}
               <div className="cam-pagination"><span>Hiển thị {filtered.length?(current-1)*size+1:0}–{Math.min(current*size,filtered.length)} / {filtered.length} Camera</span><div><label>Số dòng <select value={size} onChange={e=>{setSize(Number(e.target.value));setPage(1);}}>{[5,10,20,50].map(n=><option key={n}>{n}</option>)}</select></label><button type="button" className="cam-icon" aria-label="Trang trước" disabled={current===1} onClick={()=>setPage(current-1)}><ChevronLeft size={18}/></button><span className="cam-page-number">{current} / {pages}</span><button type="button" className="cam-icon" aria-label="Trang sau" disabled={current===pages} onClick={()=>setPage(current+1)}><ChevronRight size={18}/></button></div></div></>:<div className="cam-location-groups">{grouped.length?grouped.map(([place,items])=><section key={place}><h3><MapPin size={17}/>{place}<span>{items.length}</span></h3><div>{items.map(c=><button type="button" key={c.id} onClick={()=>choose(c)} className={c.id===selectedId?"active":""}><Camera size={21}/><span><strong>{c.deviceCode}</strong><small>{c.name}</small></span><StatusPill camera={c}/></button>)}</div></section>):<div className="cam-empty">Không có Camera phù hợp.</div>}</div>}
           </section>
