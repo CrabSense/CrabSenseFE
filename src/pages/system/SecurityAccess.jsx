@@ -101,7 +101,7 @@ function SecurityAccess() {
 
   return (
     <SystemPage
-      title="Security & Access"
+      title="Bảo mật hệ thống"
       description="Phiên đang hoạt động là tài khoản còn refresh token. Khóa bí mật chỉ hiện một lần lúc tạo hoặc xoay."
     >
       <SystemState loading={loading} error={error} onRetry={load}>

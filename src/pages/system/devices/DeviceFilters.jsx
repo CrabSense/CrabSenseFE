@@ -4,6 +4,7 @@ function DeviceFilters({
   query,
   onQuery,
   typeFilter,
+  fixedType = false,
   onType,
   statusFilter,
   onStatus,
@@ -22,7 +23,7 @@ function DeviceFilters({
         placeholder="Tên, mã, IP, MAC"
         className="h-10 min-w-[180px] flex-1 rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
       />
-      <Select value={typeFilter} onChange={onType} options={[["all", "Mọi loại"], ["camera", "Camera"], ["sensor", "Cảm biến"], ["controller", "Bộ điều khiển"]]} />
+      {!fixedType && <Select value={typeFilter} onChange={onType} options={[["all", "Mọi loại"], ["camera", "Camera"], ["sensor", "Cảm biến"], ["controller", "Bộ điều khiển"]]} />}
       <Select value={statusFilter} onChange={onStatus} options={[["all", "Mọi trạng thái"], ["online", "Online"], ["offline", "Offline"], ["warning", "Cảnh báo"], ["maintenance", "Bảo trì"]]} />
       <Select value={areaFilter} onChange={onArea} options={[["all", "Mọi khu vực"], ...areas.map((area) => [area, area])]} />
       <Select value={firmwareFilter} onChange={onFirmware} options={[["all", "Mọi firmware"], ...firmwares.map((item) => [item, item])]} />
@@ -54,6 +55,7 @@ DeviceFilters.propTypes = {
   query: PropTypes.string.isRequired,
   onQuery: PropTypes.func.isRequired,
   typeFilter: PropTypes.string.isRequired,
+  fixedType: PropTypes.bool,
   onType: PropTypes.func.isRequired,
   statusFilter: PropTypes.string.isRequired,
   onStatus: PropTypes.func.isRequired,

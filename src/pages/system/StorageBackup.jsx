@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import systemAdminService from "../../services/systemAdminService";
 import {
@@ -11,39 +11,27 @@ import {
 import { formatBytes, formatWhen } from "./deviceModel";
 
 function StorageBackup() {
-  const [media, setMedia] = useState([]);
   const [backups, setBackups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false);
   const [restoreName, setRestoreName] = useState("");
-  const [capacity, setCapacity] = useState(null);
-  const [usage, setUsage] = useState([]);
-  const [history, setHistory] = useState([]);
   const [schedule, setSchedule] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     const results = await Promise.allSettled([
-      systemAdminService.getMedia(),
       systemAdminService.getBackups(),
-      systemAdminService.getStorageCapacity(),
-      systemAdminService.getStorageUsage(),
-      systemAdminService.getStorageHistory(30),
       systemAdminService.getBackupSchedule(),
     ]);
     const messages = [];
     const assign = [
-      setMedia,
       setBackups,
-      setCapacity,
-      setUsage,
-      setHistory,
       setSchedule,
     ];
-    const labels = ["media", "backup", "capacity", "usage", "history", "schedule"];
+    const labels = ["backup", "schedule"];
     results.forEach((result, index) => {
       if (result.status === "fulfilled") assign[index](result.value);
       else messages.push(result.reason?.message || `Không tải được ${labels[index]}.`);
@@ -56,19 +44,6 @@ function StorageBackup() {
     load();
   }, [load]);
 
-  const mediaGroups = useMemo(() => {
-    const groups = new Map();
-    media.forEach((item) => {
-      const key = item.category || "unknown";
-      const current = groups.get(key) || { id: key, category: key, files: 0, bytes: 0 };
-      current.files += 1;
-      current.bytes += Number(item.sizeBytes) || 0;
-      groups.set(key, current);
-    });
-    return [...groups.values()];
-  }, [media]);
-
-  const mediaBytes = mediaGroups.reduce((sum, group) => sum + group.bytes, 0);
 
   const runBackup = async () => {
     setBusy(true);
@@ -103,8 +78,8 @@ function StorageBackup() {
 
   return (
     <SystemPage
-      title="Storage & Backup"
-      description="Dung lượng ổ chứa API, file media và bản sao lưu database. Lịch backup được lưu nhưng chưa có job tự chạy."
+      title="Sao lưu và khôi phục"
+      description="Quản lý bản sao lưu Database, lịch tự động và khôi phục dữ liệu."
       actions={
         <button
           type="button"
@@ -116,56 +91,14 @@ function StorageBackup() {
         </button>
       }
     >
-      <SystemState loading={loading} error={error && !media.length && !backups.length ? error : ""} onRetry={load}>
+      <SystemState loading={loading} error={error && !schedule && !backups.length ? error : ""} onRetry={load}>
         <div className="space-y-4">
           {error ? <p className="text-sm text-[#FFB4B4]">{error}</p> : null}
           {actionError ? <p className="text-sm text-[#FFB4B4]">{actionError}</p> : null}
-          <KpiGrid
-            items={[
-              {
-                label: "Media stored",
-                value: formatBytes(mediaBytes),
-                hint: `${media.length} file từ GET /api/media`,
-              },
-              {
-                label: "DB backups",
-                value: backups.length,
-                hint: "GET /api/admin/db/backups",
-              },
-              {
-                label: "Drive used",
-                value: capacity ? formatBytes(capacity.usedBytes) : "—",
-                hint: capacity
-                  ? `${capacity.driveName} / ${formatBytes(capacity.totalBytes)}`
-                  : "GET /api/storage/capacity",
-              },
-              {
-                label: "Drive free",
-                value: capacity ? formatBytes(capacity.availableBytes) : "—",
-              },
-            ]}
-          />
-          <Panel title="Storage usage">
-            <DataTable
-              empty="Chưa có nhóm dung lượng."
-              rows={usage.map((item) => ({ ...item, id: item.category }))}
-              columns={[
-                { key: "category", label: "Category" },
-                { key: "files", label: "Files" },
-                { key: "bytes", label: "Size", render: (row) => formatBytes(row.bytes) },
-              ]}
-            />
-          </Panel>
-          <Panel title="Usage history (30 days)">
-            <DataTable
-              empty="Chưa có file media trong 30 ngày."
-              rows={history.map((point) => ({ ...point, id: point.day }))}
-              columns={[
-                { key: "day", label: "Day", render: (row) => formatWhen(row.day) },
-                { key: "bytes", label: "Bytes", render: (row) => formatBytes(row.bytes) },
-              ]}
-            />
-          </Panel>
+          <KpiGrid items={[
+            { label: "Bản sao lưu Database", value: backups.length },
+            { label: "Kết quả sao lưu tự động", value: schedule?.lastResult || "—" },
+          ]} />
           {schedule ? (
             <Panel title="Backup schedule">
               <form
@@ -228,21 +161,6 @@ function StorageBackup() {
               </form>
             </Panel>
           ) : null}
-          <Panel title="Media by category">
-            <DataTable
-              empty="Chưa có file media."
-              rows={mediaGroups}
-              columns={[
-                { key: "category", label: "Category" },
-                { key: "files", label: "Files" },
-                {
-                  key: "bytes",
-                  label: "Size",
-                  render: (row) => formatBytes(row.bytes),
-                },
-              ]}
-            />
-          </Panel>
           <Panel title="Database backups">
             <DataTable
               empty="Chưa có bản sao lưu."

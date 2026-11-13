@@ -1,17 +1,11 @@
 import PropTypes from "prop-types";
+import { SYSTEM_ADMIN_GROUPS } from "./systemAdminNav";
 import {
   BarChart3,
   Boxes,
-  Brain,
-  Cctv,
-  Cpu,
   Gauge,
-  HardDrive,
   MonitorDot,
-  Rocket,
-  ScrollText,
   Settings,
-  Shield,
   ChevronsLeft,
   X,
   ShieldCheck,
@@ -93,68 +87,7 @@ const SYSTEM_NAV_ITEMS = [
   },
 ];
 
-const SYSTEM_ADMIN_GROUPS = [
-  {
-    labelKey: null,
-    items: [
-      {
-        to: "/system",
-        labelKey: "nav.systemOverview",
-        icon: Gauge,
-      },
-    ],
-  },
-  {
-    labelKey: "nav.deviceAi",
-    items: [
-      {
-        to: "/system/devices",
-        labelKey: "nav.deviceManagement",
-        icon: Cpu,
-      },
-      {
-        to: "/system/cameras",
-        labelKey: "nav.cameraRecording",
-        icon: Cctv,
-      },
-      {
-        to: "/system/ai",
-        labelKey: "nav.aiServices",
-        icon: Brain,
-      },
-    ],
-  },
-  {
-    labelKey: "nav.infrastructure",
-    items: [
-      {
-        to: "/system/storage",
-        labelKey: "nav.storageBackup",
-        icon: HardDrive,
-      },
-      {
-        to: "/system/deployment",
-        labelKey: "nav.deployment",
-        icon: Rocket,
-      },
-    ],
-  },
-  {
-    labelKey: "nav.securityGroup",
-    items: [
-      {
-        to: "/system/security",
-        labelKey: "nav.securityAccess",
-        icon: Shield,
-      },
-      {
-        to: "/system/logs",
-        labelKey: "nav.systemLogs",
-        icon: ScrollText,
-      },
-    ],
-  },
-];
+
 
 function Sidebar({
   collapsed = false,
@@ -464,14 +397,15 @@ function Sidebar({
               ) : null}
               <nav className="flex flex-col gap-1.5">
               {group.items.filter((item) => ! item.adminOnly || user?.role === "FarmAdministrator").map((item) => (
+                  <div key={item.to} className={item.child ? (collapsed ? "max-[900px]:ml-4" : "ml-4") : ""}>
                   <SidebarNavItem
-                    key={item.to}
                     to={item.to}
                     icon={item.icon}
                     label={t(item.labelKey)}
                     collapsed={collapsed}
                     onClick={onCloseMobile}
                   />
+                  </div>
                 ))}
               </nav>
             </div>

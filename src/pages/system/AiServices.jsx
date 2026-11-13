@@ -89,7 +89,7 @@ function AiServices() {
 
   return (
     <SystemPage
-      title="AI Services"
+      title="Quản lý dịch vụ AI"
       description="Dịch vụ AI chỉ hiện khi đã được đăng ký. Không có số GPU, độ chính xác hay thời gian suy luận vì backend không lưu các trường đó."
     >
       <SystemState loading={loading} error={error} onRetry={load}>

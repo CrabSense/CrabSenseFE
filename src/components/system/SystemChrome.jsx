@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Activity, Cpu, Cctv, Brain, HardDrive, Rocket, Shield, ScrollText, RefreshCw, AlertCircle, Inbox } from "lucide-react";
 import "./system-desktop.css";
 
-const pageIcons = { "/system": Activity, "/system/devices": Cpu, "/system/cameras": Cctv, "/system/ai": Brain, "/system/storage": HardDrive, "/system/deployment": Rocket, "/system/security": Shield, "/system/logs": ScrollText };
+const pageIcons = { "/system": Activity, "/system/devices": Cpu, "/system/devices/cameras": Cctv, "/system/devices/sensors": Activity, "/system/devices/controllers": Cpu, "/system/device-monitoring": Activity, "/system/backup": HardDrive, "/system/cameras": Cctv, "/system/ai": Brain, "/system/storage": HardDrive, "/system/deployment": Rocket, "/system/security": Shield, "/system/logs": ScrollText };
 
 export function SystemPageHeader({ title, description, actions }) {
   const { pathname } = useLocation();

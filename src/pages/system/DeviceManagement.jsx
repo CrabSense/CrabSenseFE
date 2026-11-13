@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
 import systemAdminService from "../../services/systemAdminService";
@@ -12,7 +13,7 @@ import AddDeviceWizard from "./devices/AddDeviceWizard";
 import { duplicateSummary, mapDeviceRows } from "./devices/rows";
 import { deviceKind } from "./deviceModel";
 
-function DeviceManagement() {
+function DeviceManagement({ kind = "all" }) {
   const [devices, setDevices] = useState([]);
   const [sensors, setSensors] = useState([]);
   const [areas, setAreas] = useState([]);
@@ -20,7 +21,7 @@ function DeviceManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState(kind);
   const [statusFilter, setStatusFilter] = useState("all");
   const [areaFilter, setAreaFilter] = useState("all");
   const [firmwareFilter, setFirmwareFilter] = useState("all");
@@ -58,7 +59,7 @@ function DeviceManagement() {
     load();
   }, [load]);
 
-  const rows = useMemo(() => mapDeviceRows(devices, sensors), [devices, sensors]);
+  const rows = useMemo(() => mapDeviceRows(devices, sensors).filter(row => kind === "all" || row.type === kind), [devices, sensors, kind]);
   const areaOptions = useMemo(
     () => [...new Set(rows.map((row) => row.area).filter(Boolean))].sort(),
     [rows],
@@ -215,7 +216,7 @@ function DeviceManagement() {
   return (
     <div className="system-workspace system-device-workspace mx-auto flex w-full min-w-0 max-w-[1800px] items-start gap-4 text-[#F4F7F4]">
       <div className="min-w-0 w-full flex-1">
-        <SystemPageHeader title="Quản lý thiết bị" description="Camera, cảm biến và bộ điều khiển. Lịch ghi hình chi tiết nằm ở Camera & Ghi hình." actions={<>
+        <SystemPageHeader title={({ camera: "Quản lý Camera", sensor: "Quản lý Sensor", controller: "Quản lý Controller" })[kind] || "Quản lý thiết bị"} description="Quản lý đăng ký, cấu hình và trạng thái thiết bị. Lịch ghi hình nằm ở tab riêng." actions={<>
           <button type="button" onClick={() => load(true)} className="system-secondary-button">Làm mới</button>
           <button type="button" onClick={exportCsv} className="system-secondary-button">Xuất dữ liệu</button>
           <button type="button" onClick={() => setCreating(true)} className="system-primary-button">+ Thêm thiết bị</button>
@@ -233,18 +234,19 @@ function DeviceManagement() {
                 ))}
               </div>
             ) : null}
-            <DeviceStats
+            {kind === "all" ? <DeviceStats
               rows={rows}
               activeType={typeFilter}
               onSelect={(type) => {
                 setTypeFilter(type);
                 setPage(1);
               }}
-            />
+            /> : null}
             <DeviceFilters
               query={query}
               onQuery={(value) => { setQuery(value); setPage(1); }}
               typeFilter={typeFilter}
+              fixedType={kind !== "all"}
               onType={(value) => { setTypeFilter(value); setPage(1); }}
               statusFilter={statusFilter}
               onStatus={(value) => { setStatusFilter(value); setPage(1); }}
@@ -282,6 +284,7 @@ function DeviceManagement() {
       ) : null}
       {creating ? (
         <AddDeviceWizard
+          initialKind={kind === "all" ? undefined : kind}
           areas={areas}
           devices={devices}
           sensors={sensors}
@@ -326,5 +329,7 @@ function DeviceManagement() {
     </div>
   );
 }
+
+DeviceManagement.propTypes = { kind: PropTypes.oneOf(["all", "camera", "sensor", "controller"]) };
 
 export default DeviceManagement;

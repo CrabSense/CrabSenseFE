@@ -6,6 +6,8 @@ import Monitoring from "./pages/Monitoring.jsx";
 import Analytics from "./pages/Analytics.jsx";
 import Settings from "./pages/Settings.jsx";
 import FarmManagement from "./pages/FarmManagement.jsx";
+import DeviceMonitoring from "./pages/system/DeviceMonitoring.jsx";
+import StorageManagement from "./pages/system/StorageManagement.jsx";
 import SystemOverview from "./pages/system/SystemOverview.jsx";
 import DeviceManagement from "./pages/system/DeviceManagement.jsx";
 import CameraRecording from "./pages/system/CameraRecording.jsx";
@@ -105,10 +107,15 @@ function App() {
           }
         >
           <Route path="/system" element={<SystemOverview />} />
-          <Route path="/system/devices" element={<DeviceManagement />} />
+          <Route path="/system/devices" element={<DeviceManagement key="all" />} />
+          <Route path="/system/devices/cameras" element={<DeviceManagement key="camera" kind="camera" />} />
+          <Route path="/system/devices/sensors" element={<DeviceManagement key="sensor" kind="sensor" />} />
+          <Route path="/system/devices/controllers" element={<DeviceManagement key="controller" kind="controller" />} />
+          <Route path="/system/device-monitoring" element={<DeviceMonitoring />} />
           <Route path="/system/cameras" element={<CameraRecording />} />
           <Route path="/system/ai" element={<AiServices />} />
-          <Route path="/system/storage" element={<StorageBackup />} />
+          <Route path="/system/storage" element={<StorageManagement />} />
+          <Route path="/system/backup" element={<StorageBackup />} />
           <Route path="/system/deployment" element={<Deployment />} />
           <Route path="/system/security" element={<SecurityAccess />} />
           <Route path="/system/logs" element={<SystemLogs />} />

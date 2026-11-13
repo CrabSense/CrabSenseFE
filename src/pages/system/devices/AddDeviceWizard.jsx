@@ -9,14 +9,14 @@ const TYPES = [
   ["controller", "Controller / ESP32"],
 ];
 
-function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated }) {
+function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialKind }) {
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
-    kind: "controller",
+    kind: initialKind || "controller",
     deviceCode: "",
     name: "",
-    deviceType: "esp32",
+    deviceType: initialKind === "camera" ? "camera" : "esp32",
     ipAddress: "",
     macAddress: "",
     streamUrl: "",
@@ -84,8 +84,8 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated }) {
         {error ? <p className="mt-3 text-sm text-[#FFB4B4]">{error}</p> : null}
         {step === 1 ? (
           <div className="mt-4 grid gap-2">
-            {TYPES.map(([id, label]) => (
-              <button key={id} type="button" onClick={() => set("kind", id)} className={form.kind === id ? "rounded-xl bg-[#77FF00] px-3 py-3 text-left font-bold text-[#071007]" : "rounded-xl border border-white/10 px-3 py-3 text-left"}>
+            {TYPES.filter(([id]) => !initialKind || id === initialKind).map(([id, label]) => (
+              <button key={id} type="button" onClick={() => setForm(current => ({ ...current, kind: id, deviceType: id === "camera" ? "camera" : "esp32" }))} className={form.kind === id ? "rounded-xl bg-[#77FF00] px-3 py-3 text-left font-bold text-[#071007]" : "rounded-xl border border-white/10 px-3 py-3 text-left"}>
                 {label}
               </button>
             ))}
@@ -163,6 +163,7 @@ function Text({ label, value, onChange }) {
 
 Text.propTypes = { label: PropTypes.string.isRequired, value: PropTypes.string, onChange: PropTypes.func.isRequired };
 AddDeviceWizard.propTypes = {
+  initialKind: PropTypes.oneOf(["camera", "sensor", "controller"]),
   areas: PropTypes.array.isRequired,
   devices: PropTypes.array.isRequired,
   sensors: PropTypes.array.isRequired,

@@ -21,20 +21,15 @@ import useTranslation from "../../hooks/useTranslation";
 // PAGE TITLE MAPPING
 // ============================================
 
+import { SYSTEM_ADMIN_ITEMS } from "./systemAdminNav";
+
 const PAGE_TITLE_KEYS = {
   "/dashboard": "nav.dashboard",
   "/monitoring": "nav.monitoring",
   "/analytics": "nav.analytics",
   "/farm-management": "nav.farmManagement",
   "/settings": "nav.settings",
-  "/system": "nav.systemOverview",
-  "/system/devices": "nav.deviceManagement",
-  "/system/cameras": "nav.cameraRecording",
-  "/system/ai": "nav.aiServices",
-  "/system/storage": "nav.storageBackup",
-  "/system/deployment": "nav.deployment",
-  "/system/security": "nav.securityAccess",
-  "/system/logs": "nav.systemLogs",
+  ...Object.fromEntries(SYSTEM_ADMIN_ITEMS.map(item => [item.to, item.labelKey])),
 };
 
 // ============================================

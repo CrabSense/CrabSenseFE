@@ -77,7 +77,7 @@ function CameraRecording() {
 
   return (
     <SystemPage
-      title="Camera & Recording"
+      title="Quản lý lịch trình ghi hình"
       description="Camera là thiết bị loại camera hoặc có stream/snapshot. Lịch ghi lưu trên API; file lịch sử lấy từ media video đã có."
     >
       <SystemState loading={loading} error={error} onRetry={load}>
