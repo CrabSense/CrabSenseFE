@@ -168,14 +168,14 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
   const configLogs = logs.filter((log) => CONFIG_ACTIONS.some((action) => String(log.message || "").includes(action)));
 
   return (
-    <aside className="system-device-drawer sticky flex h-[calc(100vh-7rem)] w-[420px] max-w-[440px] shrink-0 flex-col rounded-xl border border-white/10 bg-[#0C140E] p-4">
+    <aside className="system-device-drawer sticky flex h-[calc(100vh-7rem)] w-[420px] max-w-[440px] shrink-0 flex-col rounded-xl border border-[#dcebe8] bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-bold">{row.code}</h2>
-          <p className="text-sm text-[#9AAB9E]">{row.typeLabel}{row.hardware ? ` · ${row.hardware}` : ""} · {row.location}</p>
+          <p className="text-sm text-[#526f79]">{row.typeLabel}{row.hardware ? ` · ${row.hardware}` : ""} · {row.location}</p>
           <p className={`text-sm ${statusClass(row.statusKey)}`}>{STATUS_LABEL[row.statusKey] || row.statusKey}</p>
         </div>
-        <button type="button" onClick={onClose} className="text-sm text-[#9AAB9E]">Đóng</button>
+        <button type="button" onClick={onClose} className="text-sm text-[#526f79]">Đóng</button>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs">
         {TABS.map(([id, label]) => (
@@ -183,16 +183,16 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={tab === id ? "rounded-full bg-[#77FF00] px-2 py-1 font-bold text-[#071007]" : "rounded-full bg-white/5 px-2 py-1"}
+            className={tab === id ? "rounded-full bg-[#147e75] px-2 py-1 font-bold text-white" : "rounded-full bg-[#edf6f3] px-2 py-1"}
           >
             {label}
           </button>
         ))}
       </div>
       <div className="mt-4 min-h-0 flex-1 overflow-y-auto text-sm">
-        {error ? <p className="mb-3 text-[#FFB4B4]">{error}</p> : null}
-        {notice ? <p className="mb-3 text-[#F5C451]">{notice}</p> : null}
-        {row.issues?.length ? <p className="mb-3 text-xs text-[#F5C451]">{row.issues.join(" · ")}. Kiểm tra trước khi giữ cả hai bản ghi.</p> : null}
+        {error ? <p className="mb-3 text-[#b93838]">{error}</p> : null}
+        {notice ? <p className="mb-3 text-[#95600d]">{notice}</p> : null}
+        {row.issues?.length ? <p className="mb-3 text-xs text-[#95600d]">{row.issues.join(" · ")}. Kiểm tra trước khi giữ cả hai bản ghi.</p> : null}
         {tab === "info" ? <InfoTab row={row} detail={detail} schedule={schedule} /> : null}
         {tab === "config" ? (
           row.source === "sensor" && sensorConfig ? (
@@ -217,8 +217,8 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
               <Field label="Đơn vị" value={sensorConfig.unit} onChange={(value) => setSensorConfig({ ...sensorConfig, unit: value })} />
               <Field label="Ngưỡng min" value={String(sensorConfig.minThreshold)} onChange={(value) => setSensorConfig({ ...sensorConfig, minThreshold: value })} />
               <Field label="Ngưỡng max" value={String(sensorConfig.maxThreshold)} onChange={(value) => setSensorConfig({ ...sensorConfig, maxThreshold: value })} />
-              <p className="text-xs text-[#8EA292]">Đây là ngưỡng đang lưu. API chưa có chu kỳ lấy mẫu hay hiệu chuẩn riêng.</p>
-              <button type="submit" className="h-10 rounded-xl bg-[#77FF00] px-3 text-sm font-bold text-[#071007]">Lưu hiệu chuẩn</button>
+              <p className="text-xs text-[#54747e]">Đây là ngưỡng đang lưu. API chưa có chu kỳ lấy mẫu hay hiệu chuẩn riêng.</p>
+              <button type="submit" className="h-10 rounded-xl bg-[#147e75] px-3 text-sm font-bold text-white">Lưu hiệu chuẩn</button>
             </form>
           ) : row.source === "device" && config ? (
             <form onSubmit={saveConfig} className="space-y-2">
@@ -226,12 +226,12 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
               <Field label="IP" value={config.ipAddress} onChange={(value) => setConfig({ ...config, ipAddress: value })} />
               <Field label="MAC" value={config.macAddress} onChange={(value) => setConfig({ ...config, macAddress: value })} />
               <Field label="Vị trí lắp" value={config.installationLocation} onChange={(value) => setConfig({ ...config, installationLocation: value })} />
-              <label className="block text-xs text-[#9AAB9E]">
+              <label className="block text-xs text-[#526f79]">
                 Khu vực
                 <select
                   value={config.farmingAreaId}
                   onChange={(event) => setConfig({ ...config, farmingAreaId: event.target.value })}
-                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                  className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                 >
                   <option value="">Chưa gán</option>
                   {areas.map((area) => <option key={area.id} value={area.id}>{area.name || area.code}</option>)}
@@ -244,9 +244,9 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
                   <Field label="Resolution" value={config.resolution} onChange={(value) => setConfig({ ...config, resolution: value })} />
                 </>
               ) : null}
-              <button type="submit" className="h-10 rounded-xl bg-[#77FF00] px-3 text-sm font-bold text-[#071007]">Lưu cấu hình</button>
+              <button type="submit" className="h-10 rounded-xl bg-[#147e75] px-3 text-sm font-bold text-white">Lưu cấu hình</button>
             </form>
-          ) : <p className="text-[#9AAB9E]">Cảm biến chưa có form sửa trên trang này.</p>
+          ) : <p className="text-[#526f79]">Cảm biến chưa có form sửa trên trang này.</p>
         ) : null}
         {tab === "diagnostics" ? (
           <DiagnosticsTab row={row} detail={detail} diagnostics={diagnostics} connection={connection} />
@@ -265,31 +265,31 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
               value={firmwareDraft}
               onChange={(event) => setFirmwareDraft(event.target.value)}
               placeholder="Phiên bản firmware"
-              className="h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0B120C] px-2 text-xs"
+              className="h-9 min-w-0 flex-1 rounded-lg border border-[#dcebe8] bg-[#f7fbfa] px-2 text-xs"
             />
-            <button type="button" onClick={() => run("firmware")} className="rounded-lg border border-white/15 px-2 text-xs">Cập nhật firmware</button>
+            <button type="button" onClick={() => run("firmware")} className="rounded-lg border border-[#c9dfd9] px-2 text-xs">Cập nhật firmware</button>
           </div>
-          <div className="rounded-xl border border-[#FF8D8D]/40 bg-[#2A1212] p-3">
-            <p className="text-xs font-semibold text-[#FFB4B4]">Thao tác nguy hiểm</p>
+          <div className="rounded-xl border border-[#e9b5b5] bg-[#fff1f1] p-3">
+            <p className="text-xs font-semibold text-[#b93838]">Thao tác nguy hiểm</p>
             {pendingDanger ? (
               <div className="mt-2 space-y-2 text-xs">
                 <p>{pendingDanger === "remove" ? `Gỡ ${row.code} khỏi hệ thống? Sensor gắn sẽ được tách ra.` : `Chuyển ${row.code} sang bảo trì?`}</p>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => run(pendingDanger)} className="rounded-lg bg-[#FF8D8D] px-2 py-1 font-semibold text-[#1A0909]">Xác nhận</button>
-                  <button type="button" onClick={() => setPendingDanger(null)} className="rounded-lg border border-white/15 px-2 py-1">Hủy</button>
+                  <button type="button" onClick={() => run(pendingDanger)} className="rounded-lg bg-[#b93838] px-2 py-1 font-semibold text-white">Xác nhận</button>
+                  <button type="button" onClick={() => setPendingDanger(null)} className="rounded-lg border border-[#c9dfd9] px-2 py-1">Hủy</button>
                 </div>
               </div>
             ) : (
               <div className="mt-2 flex gap-2 text-xs">
-                <button type="button" onClick={() => setPendingDanger("disable")} className="rounded-lg border border-[#FF8D8D]/40 px-2 py-1 text-[#FFB4B4]">Vô hiệu hóa</button>
-                <button type="button" onClick={() => setPendingDanger("remove")} className="rounded-lg border border-[#FF8D8D]/40 px-2 py-1 text-[#FFB4B4]">Gỡ thiết bị</button>
+                <button type="button" onClick={() => setPendingDanger("disable")} className="rounded-lg border border-[#e9b5b5] px-2 py-1 text-[#b93838]">Vô hiệu hóa</button>
+                <button type="button" onClick={() => setPendingDanger("remove")} className="rounded-lg border border-[#e9b5b5] px-2 py-1 text-[#b93838]">Gỡ thiết bị</button>
               </div>
             )}
           </div>
         </div>
       ) : null}
       {row.type === "camera" ? (
-        <Link to="/system/cameras" className="mt-3 text-xs font-semibold text-[#77FF00]">Lịch ghi hình ở Camera & Ghi hình</Link>
+        <Link to="/system/cameras" className="mt-3 text-xs font-semibold text-[#13796e]">Lịch ghi hình ở Camera & Ghi hình</Link>
       ) : null}
     </aside>
   );
@@ -321,7 +321,7 @@ function InfoTab({ row, detail, schedule }) {
       </dl>
       {row.type === "controller" ? <ControllerInventory key={row.id} deviceId={row.id} /> : null}
       {row.type === "controller" ? <ChildLists detail={detail} sensorCount={row.raw.sensorCount} actuatorCount={row.raw.actuatorCount} /> : null}
-      {row.type === "controller" ? <p className="text-xs text-[#8EA292]">Bật/tắt bơm hoặc van không nằm ở trang này.</p> : null}
+      {row.type === "controller" ? <p className="text-xs text-[#54747e]">Bật/tắt bơm hoặc van không nằm ở trang này.</p> : null}
     </div>
   );
 }
@@ -349,20 +349,20 @@ function ControllerInventory({ deviceId }) {
         <h3 className="font-semibold text-sm">Cổng controller</h3>
         <button type="button" disabled={loading} onClick={() => setRevision((v) => v + 1)} className="system-secondary-button">Làm mới</button>
       </div>
-      <p className="mt-1 text-xs text-[#9AAB9E]">Danh mục phần cứng do controller báo. Chỉ xem, không gửi lệnh điều khiển.</p>
-      {loading ? <p role="status" className="mt-3 text-xs text-[#9AAB9E]">Đang tải cổng...</p> : error ? <p role="alert" className="mt-3 text-xs text-[#FFB4B4]">{error}</p> : (
+      <p className="mt-1 text-xs text-[#526f79]">Danh mục phần cứng do controller báo. Chỉ xem, không gửi lệnh điều khiển.</p>
+      {loading ? <p role="status" className="mt-3 text-xs text-[#526f79]">Đang tải cổng...</p> : error ? <p role="alert" className="mt-3 text-xs text-[#b93838]">{error}</p> : (
         <>
-          <p className="my-2 text-xs text-[#9AAB9E]">Model: {inventory?.hardwareModel || "—"} · Manifest: {inventory?.capabilityVersion ?? "—"} · {ports.length} cổng</p>
-          {!ports.length ? <p className="text-xs text-[#9AAB9E]">Controller chưa báo danh mục cổng.</p> : (
+          <p className="my-2 text-xs text-[#526f79]">Model: {inventory?.hardwareModel || "—"} · Manifest: {inventory?.capabilityVersion ?? "—"} · {ports.length} cổng</p>
+          {!ports.length ? <p className="text-xs text-[#526f79]">Controller chưa báo danh mục cổng.</p> : (
             <ul className="space-y-2 text-xs">
               {ports.map((port) => {
                 const equipment = (inventory?.equipment || []).filter((item) => item.controllerPortId === port.id);
                 const sensors = (inventory?.sensors || []).filter((item) => item.controllerPortId === port.id);
-                return <li key={port.id} className="rounded-lg border border-white/10 bg-[#101810] p-2">
-                  <div className="flex flex-wrap justify-between gap-1"><strong>{port.portCode}</strong><span className={port.isPresent ? "text-[#77FF00]" : "text-[#F5C451]"}>{port.isPresent ? "Hiện diện" : "Không hiện diện"}</span></div>
-                  <p className="mt-1 text-[#C6D7C9]">{port.type} · GPIO {port.gpio}{port.secondaryGpio != null ? " / " + port.secondaryGpio : ""} · Kênh {port.channel ?? "—"}</p>
-                  <p className="mt-1 text-[#9AAB9E]">Commissioning: {port.commissioningStatus || "—"} · Báo trạng thái: {port.reportedOn == null ? "—" : port.reportedOn ? "ON" : "OFF"}</p>
-                  <p className="mt-1 text-[#9AAB9E]">Thiết bị: {[...equipment.map((item) => item.name), ...sensors.map((item) => item.sensorCode)].filter(Boolean).join(", ") || "Chưa liên kết"}</p>
+                return <li key={port.id} className="rounded-lg border border-[#dcebe8] bg-white p-2">
+                  <div className="flex flex-wrap justify-between gap-1"><strong>{port.portCode}</strong><span className={port.isPresent ? "text-[#13796e]" : "text-[#95600d]"}>{port.isPresent ? "Hiện diện" : "Không hiện diện"}</span></div>
+                  <p className="mt-1 text-[#355b6a]">{port.type} · GPIO {port.gpio}{port.secondaryGpio != null ? " / " + port.secondaryGpio : ""} · Kênh {port.channel ?? "—"}</p>
+                  <p className="mt-1 text-[#526f79]">Commissioning: {port.commissioningStatus || "—"} · Báo trạng thái: {port.reportedOn == null ? "—" : port.reportedOn ? "ON" : "OFF"}</p>
+                  <p className="mt-1 text-[#526f79]">Thiết bị: {[...equipment.map((item) => item.name), ...sensors.map((item) => item.sensorCode)].filter(Boolean).join(", ") || "Chưa liên kết"}</p>
                 </li>;
               })}
             </ul>
@@ -379,36 +379,36 @@ function CameraPreview({ code, snapshot, stream }) {
   if (stream && /^https?:/i.test(stream) && !/^rtsp:/i.test(stream)) {
     return <video src={stream} controls muted className="h-36 w-full rounded-xl bg-black" />;
   }
-  return <p className="text-xs text-[#8EA292]">{stream ? "Stream RTSP không phát trong trình duyệt. Chưa có snapshotUrl." : "Camera chưa có snapshot hoặc stream để xem trước."}</p>;
+  return <p className="text-xs text-[#54747e]">{stream ? "Stream RTSP không phát trong trình duyệt. Chưa có snapshotUrl." : "Camera chưa có snapshot hoặc stream để xem trước."}</p>;
 }
 
 function ChildLists({ detail, sensorCount, actuatorCount }) {
-  if (!detail) return <p className="text-xs text-[#9AAB9E]">Đang tải {sensorCount ?? "?"} sensor và {actuatorCount ?? "?"} actuator.</p>;
+  if (!detail) return <p className="text-xs text-[#526f79]">Đang tải {sensorCount ?? "?"} sensor và {actuatorCount ?? "?"} actuator.</p>;
   return (
     <div className="space-y-3">
       <section>
-        <h3 className="text-xs font-semibold tracking-[0.08em] text-[#8EA292] uppercase">Sensor gắn · {detail.sensors?.length ?? 0}</h3>
+        <h3 className="text-xs font-semibold tracking-[0.08em] text-[#54747e] uppercase">Sensor gắn · {detail.sensors?.length ?? 0}</h3>
         {detail.sensors?.length ? (
           <ul className="mt-2 space-y-1 text-xs">
             {detail.sensors.map((sensor) => (
-              <li key={sensor.id} className="rounded-lg bg-white/5 px-2 py-1">
+              <li key={sensor.id} className="rounded-lg bg-[#edf6f3] px-2 py-1">
                 <span className="font-semibold">{sensor.sensorCode}</span> · {sensor.sensorType || "sensor"} · {sensor.latestValue ?? "—"} {sensor.unit || ""} · {formatAgo(sensor.lastSeenAt)}
               </li>
             ))}
           </ul>
-        ) : <p className="mt-1 text-xs text-[#9AAB9E]">Không có sensor gắn DeviceId này.</p>}
+        ) : <p className="mt-1 text-xs text-[#526f79]">Không có sensor gắn DeviceId này.</p>}
       </section>
       <section>
-        <h3 className="text-xs font-semibold tracking-[0.08em] text-[#8EA292] uppercase">Actuator · {detail.actuators?.length ?? 0}</h3>
+        <h3 className="text-xs font-semibold tracking-[0.08em] text-[#54747e] uppercase">Actuator · {detail.actuators?.length ?? 0}</h3>
         {detail.actuators?.length ? (
           <ul className="mt-2 space-y-1 text-xs">
             {detail.actuators.map((actuator) => (
-              <li key={actuator.id} className="rounded-lg bg-white/5 px-2 py-1">
+              <li key={actuator.id} className="rounded-lg bg-[#edf6f3] px-2 py-1">
                 {actuator.name || actuator.code} · {actuator.type || "relay"} · kênh {actuator.relayChannel || "—"} · {actuator.isOn ? "On" : "Off"}
               </li>
             ))}
           </ul>
-        ) : <p className="mt-1 text-xs text-[#9AAB9E]">Không có actuator gắn RelayDeviceId này.</p>}
+        ) : <p className="mt-1 text-xs text-[#526f79]">Không có actuator gắn RelayDeviceId này.</p>}
       </section>
     </div>
   );
@@ -428,11 +428,11 @@ function DiagnosticsTab({ row, detail, diagnostics, connection }) {
     );
   }
   const data = diagnostics || detail;
-  if (!data) return <p className="text-[#9AAB9E]">Đang tải chẩn đoán.</p>;
+  if (!data) return <p className="text-[#526f79]">Đang tải chẩn đoán.</p>;
   return (
     <div className="space-y-3">
       {connection ? (
-        <p className={connection.reachable ? "text-[#77FF00]" : "text-[#F5C451]"}>{connection.message}</p>
+        <p className={connection.reachable ? "text-[#13796e]" : "text-[#95600d]"}>{connection.message}</p>
       ) : null}
       <dl className="grid grid-cols-2 gap-2">
         <Item label="Heartbeat" value={formatWhen(data.lastSeenAt || row.lastSeen)} />
@@ -442,29 +442,29 @@ function DiagnosticsTab({ row, detail, diagnostics, connection }) {
         <Item label="Đo gần nhất" value={formatWhen(data.latestMeasurementAt)} />
       </dl>
       <section>
-        <h3 className="text-xs font-semibold text-[#8EA292]">Lần đo gần nhất của sensor gắn</h3>
-        <p className="mt-1 text-xs text-[#8EA292]">API chỉ lưu một mốc heartbeat của thiết bị. Danh sách dưới là thời điểm đo, không phải lịch sử heartbeat đầy đủ.</p>
+        <h3 className="text-xs font-semibold text-[#54747e]">Lần đo gần nhất của sensor gắn</h3>
+        <p className="mt-1 text-xs text-[#54747e]">API chỉ lưu một mốc heartbeat của thiết bị. Danh sách dưới là thời điểm đo, không phải lịch sử heartbeat đầy đủ.</p>
         {diagnostics?.recentMeasurements?.length ? (
           <ul className="mt-2 space-y-1 text-xs">
             {diagnostics.recentMeasurements.map((at) => <li key={at}>{formatWhen(at)}</li>)}
           </ul>
-        ) : <p className="mt-1 text-xs text-[#9AAB9E]">Chưa có lần đo.</p>}
+        ) : <p className="mt-1 text-xs text-[#526f79]">Chưa có lần đo.</p>}
       </section>
     </div>
   );
 }
 
 function LogsTab({ logs, configLogs, loaded }) {
-  if (!loaded) return <p className="text-[#9AAB9E]">Đang tải nhật ký.</p>;
+  if (!loaded) return <p className="text-[#526f79]">Đang tải nhật ký.</p>;
   return (
     <div className="space-y-4">
       <section>
-        <h3 className="text-xs font-semibold tracking-[0.08em] text-[#8EA292] uppercase">Nhật ký cấu hình</h3>
-        {configLogs.length ? <LogList logs={configLogs} /> : <p className="mt-1 text-xs text-[#9AAB9E]">Chưa có thao tác cấu hình được ghi.</p>}
+        <h3 className="text-xs font-semibold tracking-[0.08em] text-[#54747e] uppercase">Nhật ký cấu hình</h3>
+        {configLogs.length ? <LogList logs={configLogs} /> : <p className="mt-1 text-xs text-[#526f79]">Chưa có thao tác cấu hình được ghi.</p>}
       </section>
       <section>
-        <h3 className="text-xs font-semibold tracking-[0.08em] text-[#8EA292] uppercase">Nhật ký thiết bị</h3>
-        {logs.length ? <LogList logs={logs} /> : <p className="mt-1 text-xs text-[#9AAB9E]">Không có nhật ký.</p>}
+        <h3 className="text-xs font-semibold tracking-[0.08em] text-[#54747e] uppercase">Nhật ký thiết bị</h3>
+        {logs.length ? <LogList logs={logs} /> : <p className="mt-1 text-xs text-[#526f79]">Không có nhật ký.</p>}
       </section>
     </div>
   );
@@ -475,7 +475,7 @@ function LogList({ logs }) {
     <ul className="mt-2 space-y-2 text-xs">
       {logs.map((log) => (
         <li key={`${log.id}-${log.at}`}>
-          <span className="text-[#8EA292]">{formatWhen(log.at)}</span> {log.message}
+          <span className="text-[#54747e]">{formatWhen(log.at)}</span> {log.message}
         </li>
       ))}
     </ul>
@@ -484,9 +484,9 @@ function LogList({ logs }) {
 
 function Field({ label, value, onChange }) {
   return (
-    <label className="block text-xs text-[#9AAB9E]">
+    <label className="block text-xs text-[#526f79]">
       {label}
-      <input value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm text-[#F4F7F4]" />
+      <input value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm text-[#153b56]" />
     </label>
   );
 }
@@ -494,7 +494,7 @@ function Field({ label, value, onChange }) {
 function Item({ label, value }) {
   return (
     <div>
-      <dt className="text-[#8EA292]">{label}</dt>
+      <dt className="text-[#54747e]">{label}</dt>
       <dd className="break-all">{value ?? "—"}</dd>
     </div>
   );
@@ -502,7 +502,7 @@ function Item({ label, value }) {
 
 function Action({ label, onClick }) {
   return (
-    <button type="button" onClick={onClick} className="rounded-lg border border-white/15 px-2 py-1">{label}</button>
+    <button type="button" onClick={onClick} className="rounded-lg border border-[#c9dfd9] px-2 py-1">{label}</button>
   );
 }
 

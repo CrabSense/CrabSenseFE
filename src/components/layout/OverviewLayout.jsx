@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Activity, Menu, X, LogOut, Search, UserRound, Bell, ChevronRight } from "lucide-react";
 import authService from "../../services/authService";
 import useTranslation from "../../hooks/useTranslation";
@@ -10,6 +10,8 @@ import { SYSTEM_ADMIN_GROUPS, SYSTEM_ADMIN_ITEMS } from "./systemAdminNav";
 export default function OverviewLayout() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const currentPage = SYSTEM_ADMIN_ITEMS.find(item => item.to === pathname);
   const user = authService.getStoredUser();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -20,6 +22,7 @@ export default function OverviewLayout() {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [open]);
+  useEffect(() => { setOpen(false); setSearch(""); }, [pathname]);
   const matches = SYSTEM_ADMIN_ITEMS.filter(({ labelKey }) => t(labelKey).toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   const logout = async () => {
     if (loggingOut) return;
@@ -29,7 +32,7 @@ export default function OverviewLayout() {
     finally { navigate("/login", { replace: true }); }
   };
   return (
-    <div className="min-h-dvh bg-[#edf6f5] text-[#153b56] [color-scheme:light]">
+    <div className="system-admin-light min-h-dvh bg-[#edf6f5] text-[#153b56] [color-scheme:light]">
       <ScrollToTop />
       {open && <button type="button" aria-label={t("nav.closeNavigation")} onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-[#153b56]/40 min-[901px]:hidden" />}
       <aside id="overview-sidebar" className={`fixed inset-y-3 left-3 z-50 flex w-[258px] flex-col overflow-hidden rounded-[24px] border border-white bg-[#fffffa] shadow-[0_8px_30px_rgba(22,72,80,0.1)] transition-transform min-[901px]:translate-x-0 ${open ? "translate-x-0" : "-translate-x-[110%]"}`}>
@@ -55,7 +58,7 @@ export default function OverviewLayout() {
       <div className="min-w-0 min-[901px]:ml-[282px]">
         <header className="sticky top-0 z-30 flex flex-wrap items-center gap-3 border-b border-[#dcebe9] bg-[#f8fcfb]/95 px-4 py-3 backdrop-blur-lg sm:px-6">
           <button type="button" onClick={() => setOpen(true)} aria-label={t("nav.openNavigation")} aria-controls="overview-sidebar" aria-expanded={open} className="rounded-xl border border-[#d4e7e3] p-2 min-[901px]:hidden"><Menu size={20}/></button>
-          <h1 className="mr-auto text-lg font-extrabold tracking-tight sm:text-[24px]">{t("nav.systemOverview")}</h1>
+          <h1 className="min-w-0 mr-auto text-lg font-extrabold tracking-tight sm:text-[24px]">{t(currentPage?.labelKey || "nav.systemOverview")}</h1>
           <div className="relative order-3 w-full sm:order-none sm:w-[220px] xl:w-[300px]">
             <Search size={17} className="absolute left-3 top-3 text-[#66858d]" aria-hidden="true"/>
             <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==="Escape")setSearch("");}} aria-label="Tìm trang quản trị" placeholder="Tìm trang quản trị..." className="h-10 w-full rounded-full border border-[#d6e6e7] bg-white pl-9 pr-4 text-sm outline-none focus:border-[#168b7e]"/>

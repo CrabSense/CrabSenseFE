@@ -48,14 +48,14 @@ function SystemLogs() {
             <button
               type="button"
               onClick={() => setTab("logs")}
-              className={tab === "logs" ? "rounded-full bg-[#77FF00] px-3 py-1 text-xs font-bold text-[#071007]" : "rounded-full bg-white/5 px-3 py-1 text-xs"}
+              className={tab === "logs" ? "rounded-full bg-[#147e75] px-3 py-1 text-xs font-bold text-white" : "rounded-full bg-[#edf6f3] px-3 py-1 text-xs"}
             >
               Logs
             </button>
             <button
               type="button"
               onClick={() => setTab("audit")}
-              className={tab === "audit" ? "rounded-full bg-[#77FF00] px-3 py-1 text-xs font-bold text-[#071007]" : "rounded-full bg-white/5 px-3 py-1 text-xs"}
+              className={tab === "audit" ? "rounded-full bg-[#147e75] px-3 py-1 text-xs font-bold text-white" : "rounded-full bg-[#edf6f3] px-3 py-1 text-xs"}
             >
               Audit
             </button>
@@ -67,12 +67,12 @@ function SystemLogs() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Tìm nội dung"
-                  className="h-10 rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                  className="h-10 rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                 />
                 <select
                   value={source}
                   onChange={(event) => setSource(event.target.value)}
-                  className="h-10 rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                  className="h-10 rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                 >
                   {SOURCES.map((item) => (
                     <option key={item || "all"} value={item}>{item || "all sources"}</option>
@@ -81,7 +81,7 @@ function SystemLogs() {
                 <select
                   value={severity}
                   onChange={(event) => setSeverity(event.target.value)}
-                  className="h-10 rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                  className="h-10 rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                 >
                   <option value="">all severity</option>
                   <option value="INFO">INFO</option>

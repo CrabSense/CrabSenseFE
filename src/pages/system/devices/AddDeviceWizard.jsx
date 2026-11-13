@@ -75,17 +75,17 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
 
   return (
     <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#101810] p-5">
+      <div className="w-full max-w-lg rounded-2xl border border-[#dcebe8] bg-white p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">Thêm thiết bị</h2>
-          <button type="button" onClick={onClose} className="text-sm text-[#9AAB9E]">Đóng</button>
+          <button type="button" onClick={onClose} className="text-sm text-[#526f79]">Đóng</button>
         </div>
-        <p className="mt-1 text-xs text-[#8EA292]">Bước {step}/4 · API chưa có lệnh test connection trước khi lưu.</p>
-        {error ? <p className="mt-3 text-sm text-[#FFB4B4]">{error}</p> : null}
+        <p className="mt-1 text-xs text-[#54747e]">Bước {step}/4 · API chưa có lệnh test connection trước khi lưu.</p>
+        {error ? <p className="mt-3 text-sm text-[#b93838]">{error}</p> : null}
         {step === 1 ? (
           <div className="mt-4 grid gap-2">
             {TYPES.filter(([id]) => !initialKind || id === initialKind).map(([id, label]) => (
-              <button key={id} type="button" onClick={() => setForm(current => ({ ...current, kind: id, deviceType: id === "camera" ? "camera" : "esp32" }))} className={form.kind === id ? "rounded-xl bg-[#77FF00] px-3 py-3 text-left font-bold text-[#071007]" : "rounded-xl border border-white/10 px-3 py-3 text-left"}>
+              <button key={id} type="button" onClick={() => setForm(current => ({ ...current, kind: id, deviceType: id === "camera" ? "camera" : "esp32" }))} className={form.kind === id ? "rounded-xl bg-[#147e75] px-3 py-3 text-left font-bold text-white" : "rounded-xl border border-[#dcebe8] px-3 py-3 text-left"}>
                 {label}
               </button>
             ))}
@@ -98,9 +98,9 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
                 <Text label="Mã sensor" value={form.sensorCode} onChange={(value) => set("sensorCode", value)} />
                 <Text label="Loại đo" value={form.sensorType} onChange={(value) => set("sensorType", value)} />
                 <Text label="Đơn vị" value={form.unit} onChange={(value) => set("unit", value)} />
-                <label className="text-xs text-[#9AAB9E]">
+                <label className="text-xs text-[#526f79]">
                   Gắn controller
-                  <select value={form.deviceId} onChange={(event) => set("deviceId", event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm">
+                  <select value={form.deviceId} onChange={(event) => set("deviceId", event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
                     <option value="">Không gắn</option>
                     {devices.filter((device) => !String(device.deviceType || "").toLowerCase().includes("camera") && !device.streamUrl).map((device) => <option key={device.id} value={device.id}>{device.deviceCode}</option>)}
                   </select>
@@ -120,9 +120,9 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
         ) : null}
         {step === 3 ? (
           <div className="mt-4 grid gap-2">
-            <label className="text-xs text-[#9AAB9E]">
+            <label className="text-xs text-[#526f79]">
               Khu vực
-              <select value={form.farmingAreaId} onChange={(event) => set("farmingAreaId", event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm">
+              <select value={form.farmingAreaId} onChange={(event) => set("farmingAreaId", event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
                 <option value="">Chưa gán</option>
                 {areas.map((area) => <option key={area.id} value={area.id}>{area.name || area.code}</option>)}
               </select>
@@ -136,15 +136,15 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
             <p>Mã: {form.kind === "sensor" ? form.sensorCode : form.deviceCode}</p>
             <p>IP: {form.ipAddress || "—"}</p>
             <p>MAC: {form.macAddress || "—"}</p>
-            <p className="text-xs text-[#8EA292]">Server từ chối nếu mã thiết bị đã tồn tại.</p>
+            <p className="text-xs text-[#54747e]">Server từ chối nếu mã thiết bị đã tồn tại.</p>
           </div>
         ) : null}
         <div className="mt-5 flex justify-between">
-          <button type="button" disabled={step === 1} onClick={() => setStep((value) => value - 1)} className="rounded-xl border border-white/15 px-3 py-2 text-sm disabled:opacity-40">Trước</button>
+          <button type="button" disabled={step === 1} onClick={() => setStep((value) => value - 1)} className="rounded-xl border border-[#c9dfd9] px-3 py-2 text-sm disabled:opacity-40">Trước</button>
           {step < 4 ? (
-            <button type="button" onClick={() => setStep((value) => value + 1)} className="rounded-xl bg-[#77FF00] px-3 py-2 text-sm font-bold text-[#071007]">Tiếp</button>
+            <button type="button" onClick={() => setStep((value) => value + 1)} className="rounded-xl bg-[#147e75] px-3 py-2 text-sm font-bold text-white">Tiếp</button>
           ) : (
-            <button type="button" onClick={submit} className="rounded-xl bg-[#77FF00] px-3 py-2 text-sm font-bold text-[#071007]">Lưu thiết bị</button>
+            <button type="button" onClick={submit} className="rounded-xl bg-[#147e75] px-3 py-2 text-sm font-bold text-white">Lưu thiết bị</button>
           )}
         </div>
       </div>
@@ -154,9 +154,9 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
 
 function Text({ label, value, onChange }) {
   return (
-    <label className="text-xs text-[#9AAB9E]">
+    <label className="text-xs text-[#526f79]">
       {label}
-      <input value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm text-[#F4F7F4]" />
+      <input value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm text-[#153b56]" />
     </label>
   );
 }

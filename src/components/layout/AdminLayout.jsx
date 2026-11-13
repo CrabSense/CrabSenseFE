@@ -49,10 +49,10 @@ function AdminLayout() {
     setMobileSidebarOpen(false);
   };
 
-  if (location.pathname === "/system") return <OverviewLayout />;
+  if (systemWorkspace) return <OverviewLayout />;
 
   return (
-    <div className={systemWorkspace ? "system-admin-layout min-h-screen bg-[#050806]" : "min-h-screen bg-[#050806]"}>
+    <div className="min-h-screen bg-[#050806]">
       {/* RESET SCROLL WHEN ROUTE CHANGES */}
       <ScrollToTop />
 

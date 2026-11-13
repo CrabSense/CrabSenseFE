@@ -94,21 +94,21 @@ function AiServices() {
     >
       <SystemState loading={loading} error={error} onRetry={load}>
         <div className="space-y-4">
-          {actionError ? <p className="text-sm text-[#FFB4B4]">{actionError}</p> : null}
+          {actionError ? <p className="text-sm text-[#b93838]">{actionError}</p> : null}
           <Panel title="Register service">
             <form onSubmit={createService} className="grid gap-3 md:grid-cols-4">
               {["name", "modelName", "version", "deviceLabel"].map((key) => (
-                <label key={key} className="text-xs text-[#9AAB9E]">
+                <label key={key} className="text-xs text-[#526f79]">
                   {key}
                   <input
                     required={key !== "deviceLabel"}
                     value={form[key]}
                     onChange={(event) => setForm({ ...form, [key]: event.target.value })}
-                    className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm text-[#F4F7F4]"
+                    className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm text-[#153b56]"
                   />
                 </label>
               ))}
-              <button type="submit" className="h-10 self-end rounded-xl bg-[#77FF00] text-sm font-bold text-[#071007]">
+              <button type="submit" className="h-10 self-end rounded-xl bg-[#147e75] text-sm font-bold text-white">
                 Thêm dịch vụ
               </button>
             </form>
@@ -146,12 +146,12 @@ function AiServices() {
               ]}
             />
             {selectedId ? (
-              <label className="mt-3 block text-xs text-[#9AAB9E]">
+              <label className="mt-3 block text-xs text-[#526f79]">
                 Version to deploy
                 <input
                   value={deployVersion}
                   onChange={(event) => setDeployVersion(event.target.value)}
-                  className="mt-1 h-10 max-w-xs rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm text-[#F4F7F4]"
+                  className="mt-1 h-10 max-w-xs rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm text-[#153b56]"
                 />
               </label>
             ) : null}

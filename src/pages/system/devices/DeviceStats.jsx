@@ -23,12 +23,12 @@ function DeviceStats({ rows, activeType, onSelect }) {
             onClick={() => onSelect(card.id)}
             className={[
               "rounded-2xl border px-4 py-4 text-left",
-              active ? "border-[#77FF00]/50 bg-[#77FF00]/10" : "border-white/10 bg-[#101810]",
+              active ? "border-[#63b5a3] bg-[#e4f5ed]" : "border-[#dcebe8] bg-white",
             ].join(" ")}
           >
-            <p className="text-[11px] font-semibold tracking-[0.08em] text-[#8EA292] uppercase">{card.label}</p>
+            <p className="text-[11px] font-semibold tracking-[0.08em] text-[#54747e] uppercase">{card.label}</p>
             <p className="mt-2 text-[26px] font-bold">{online} / {scoped.length}</p>
-            <p className="mt-1 text-xs text-[#8EA292]">{offline} offline · {warning} cảnh báo</p>
+            <p className="mt-1 text-xs text-[#54747e]">{offline} offline · {warning} cảnh báo</p>
           </button>
         );
       })}

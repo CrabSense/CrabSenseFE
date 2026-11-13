@@ -21,15 +21,15 @@ export function statusBucket(status) {
 export function statusClass(status) {
   const value = String(status || "").toLowerCase();
   if (["online", "connected", "active", "running", "healthy", "success"].includes(value)) {
-    return "text-[#77FF00]";
+    return "text-[#13796e]";
   }
   if (["offline", "disconnected", "error", "critical", "failed"].includes(value)) {
-    return "text-[#FF8D8D]";
+    return "text-[#b93838]";
   }
   if (["warning", "degraded", "maintenance"].includes(value)) {
-    return "text-[#F5C451]";
+    return "text-[#95600d]";
   }
-  return "text-[#C6D7C9]";
+  return "text-[#355b6a]";
 }
 
 export function formatWhen(value) {

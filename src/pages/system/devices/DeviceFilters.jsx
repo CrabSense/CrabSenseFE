@@ -21,7 +21,7 @@ function DeviceFilters({
         value={query}
         onChange={(event) => onQuery(event.target.value)}
         placeholder="Tên, mã, IP, MAC"
-        className="h-10 min-w-[180px] flex-1 rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+        className="h-10 min-w-[180px] flex-1 rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
       />
       {!fixedType && <Select value={typeFilter} onChange={onType} options={[["all", "Mọi loại"], ["camera", "Camera"], ["sensor", "Cảm biến"], ["controller", "Bộ điều khiển"]]} />}
       <Select value={statusFilter} onChange={onStatus} options={[["all", "Mọi trạng thái"], ["online", "Online"], ["offline", "Offline"], ["warning", "Cảnh báo"], ["maintenance", "Bảo trì"]]} />
@@ -36,7 +36,7 @@ function Select({ value, onChange, options }) {
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-10 rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+      className="h-10 rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
     >
       {options.map(([optionValue, label]) => (
         <option key={optionValue} value={optionValue}>{label}</option>

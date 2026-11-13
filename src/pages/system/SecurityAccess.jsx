@@ -106,7 +106,7 @@ function SecurityAccess() {
     >
       <SystemState loading={loading} error={error} onRetry={load}>
         <div className="space-y-4">
-          {actionError ? <p className="text-sm text-[#FFB4B4]">{actionError}</p> : null}
+          {actionError ? <p className="text-sm text-[#b93838]">{actionError}</p> : null}
           <KpiGrid
             items={[
               { label: "Failed logins 24h", value: overview?.failedLogins ?? 0, hint: "OperationLogs LoginFailed" },
@@ -133,7 +133,7 @@ function SecurityAccess() {
                   key: "end",
                   label: "Action",
                   render: (row) => (
-                    <button type="button" onClick={() => terminate(row.userId)} className="text-[#FFB4B4]">
+                    <button type="button" onClick={() => terminate(row.userId)} className="text-[#b93838]">
                       Terminate
                     </button>
                   ),
@@ -148,14 +148,14 @@ function SecurityAccess() {
                 value={keyName}
                 onChange={(event) => setKeyName(event.target.value)}
                 placeholder="Tên khóa"
-                className="h-10 rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                className="h-10 rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
               />
-              <button type="submit" className="rounded-xl bg-[#77FF00] px-4 text-sm font-bold text-[#071007]">
+              <button type="submit" className="rounded-xl bg-[#147e75] px-4 text-sm font-bold text-white">
                 Create key
               </button>
             </form>
             {revealedKey ? (
-              <p className="mb-3 break-all rounded-xl border border-[#F5C451]/40 bg-[#F5C451]/10 p-3 font-mono text-sm text-[#F5C451]">
+              <p className="mb-3 break-all rounded-xl border border-[#edd29b] bg-[#fff7df] p-3 font-mono text-sm text-[#95600d]">
                 Sao chép ngay. Khóa này không hiện lại: {revealedKey}
               </p>
             ) : null}
@@ -175,7 +175,7 @@ function SecurityAccess() {
                     row.revoked ? null : (
                       <div className="flex gap-3">
                         <button type="button" onClick={() => rotate(row.id)}>Rotate</button>
-                        <button type="button" onClick={() => revoke(row.id)} className="text-[#FFB4B4]">
+                        <button type="button" onClick={() => revoke(row.id)} className="text-[#b93838]">
                           Revoke
                         </button>
                       </div>
@@ -187,16 +187,16 @@ function SecurityAccess() {
           {policy ? (
             <Panel title="Policies">
               <form onSubmit={savePolicy} className="grid gap-3 md:grid-cols-3">
-                <label className="text-xs text-[#9AAB9E]">
+                <label className="text-xs text-[#526f79]">
                   Session days
                   <input
                     type="number"
                     value={policy.sessionDays}
                     onChange={(event) => setPolicy({ ...policy, sessionDays: event.target.value })}
-                    className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                    className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                   />
                 </label>
-                <label className="text-xs text-[#9AAB9E]">
+                <label className="text-xs text-[#526f79]">
                   Failed login alert threshold
                   <input
                     type="number"
@@ -204,7 +204,7 @@ function SecurityAccess() {
                     onChange={(event) =>
                       setPolicy({ ...policy, failedLoginAlertThreshold: event.target.value })
                     }
-                    className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                    className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                   />
                 </label>
                 <label className="flex items-end gap-2 text-sm">
@@ -217,7 +217,7 @@ function SecurityAccess() {
                   />
                   Require confirm restore
                 </label>
-                <button type="submit" className="h-10 rounded-xl bg-[#77FF00] text-sm font-bold text-[#071007]">
+                <button type="submit" className="h-10 rounded-xl bg-[#147e75] text-sm font-bold text-white">
                   Lưu chính sách
                 </button>
               </form>

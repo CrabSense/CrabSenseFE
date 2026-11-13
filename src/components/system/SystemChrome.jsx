@@ -26,7 +26,7 @@ SystemPageHeader.propTypes = { title: PropTypes.string.isRequired, description: 
 
 export function SystemPage({ title, description, actions, children }) {
   return (
-    <div className="system-workspace mx-auto w-full min-w-0 max-w-[1800px] text-[#F4F7F4]">
+    <div className="system-workspace mx-auto w-full min-w-0 max-w-[1800px] text-[#153b56]">
       <SystemPageHeader title={title} description={description} actions={actions} />
       {children}
     </div>
@@ -46,16 +46,16 @@ export function KpiGrid({ items }) {
       {items.map((item) => (
         <article
           key={item.label}
-          className="system-kpi rounded-xl border border-white/10 bg-[#101810] px-4 py-4"
+          className="system-kpi rounded-xl border border-[#dcebe8] bg-white px-4 py-4"
         >
-          <p className="text-[11px] font-semibold tracking-[0.08em] text-[#8EA292] uppercase">
+          <p className="text-[11px] font-semibold tracking-[0.08em] text-[#54747e] uppercase">
             {item.label}
           </p>
           <p className="mt-2 text-[26px] font-bold tracking-[-0.5px]">
             {item.value}
           </p>
           {item.hint ? (
-            <p className="mt-1 text-xs text-[#8EA292]">{item.hint}</p>
+            <p className="mt-1 text-xs text-[#54747e]">{item.hint}</p>
           ) : null}
         </article>
       ))}
@@ -75,8 +75,8 @@ KpiGrid.propTypes = {
 
 export function Panel({ title, children }) {
   return (
-    <section className="system-panel rounded-xl border border-white/10 bg-[#101810] p-4">
-      <h2 className="system-panel-title text-sm font-semibold text-[#D7E6DA]">
+    <section className="system-panel rounded-xl border border-[#dcebe8] bg-white p-4">
+      <h2 className="system-panel-title text-sm font-semibold text-[#244b60]">
         {title}
       </h2>
       {children}
@@ -91,12 +91,12 @@ Panel.propTypes = {
 
 export function MissingApi({ title, endpoints }) {
   return (
-    <section className="rounded-2xl border border-dashed border-[#77FF00]/25 bg-[#77FF00]/[0.03] p-4">
-      <h2 className="text-sm font-bold text-[#D7E6DA]">{title}</h2>
-      <p className="mt-1 text-sm text-[#9AAB9E]">
+    <section className="rounded-2xl border border-dashed border-[#a4d5c5] bg-[#f0faf5] p-4">
+      <h2 className="text-sm font-bold text-[#244b60]">{title}</h2>
+      <p className="mt-1 text-sm text-[#526f79]">
         API này chưa có trên backend. Không hiển thị số liệu giả.
       </p>
-      <ul className="mt-3 space-y-1 font-mono text-[12px] text-[#C6D7C9]">
+      <ul className="mt-3 space-y-1 font-mono text-[12px] text-[#355b6a]">
         {endpoints.map((endpoint) => (
           <li key={endpoint}>{endpoint}</li>
         ))}
@@ -119,7 +119,7 @@ export function DataTable({ columns, rows, empty }) {
     <div className="system-table-scroll overflow-x-auto" tabIndex={0} role="region" aria-label="Bảng dữ liệu hệ thống">
       <table className="system-table w-full min-w-[640px] text-left text-sm">
         <thead>
-          <tr className="border-b border-white/10 text-[11px] tracking-[0.08em] text-[#8EA292] uppercase">
+          <tr className="border-b border-[#dcebe8] text-[11px] tracking-[0.08em] text-[#54747e] uppercase">
             {columns.map((column) => (
               <th scope="col" key={column.key} className="px-2 py-2 font-semibold">
                 {column.label}
@@ -129,7 +129,7 @@ export function DataTable({ columns, rows, empty }) {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-b border-white/[0.06]">
+            <tr key={row.id} className="border-b border-[#e5efed]">
               {columns.map((column) => (
                 <td key={column.key} className="px-2 py-3 align-middle">
                   {column.render ? column.render(row) : row[column.key]}
@@ -155,14 +155,14 @@ export function SystemState({ loading, error, onRetry, children }) {
   }
   if (error) {
     return (
-      <div role="alert" className="system-error rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+      <div role="alert" className="system-error rounded-xl border border-[#e9b5b5] bg-[#fff1f1] p-4">
         <AlertCircle size={20} aria-hidden="true" />
-        <p className="text-sm text-[#FFD0D0]">{error}</p>
+        <p className="text-sm text-[#b93838]">{error}</p>
         {onRetry ? (
           <button
             type="button"
             onClick={onRetry}
-            className="mt-3 rounded-lg bg-[#FF8D8D] px-3 py-2 text-sm font-semibold text-[#1A0909]"
+            className="mt-3 rounded-lg bg-[#b93838] px-3 py-2 text-sm font-semibold text-white"
           >
             Thử lại
           </button>

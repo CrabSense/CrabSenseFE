@@ -214,7 +214,7 @@ function DeviceManagement({ kind = "all" }) {
   const issues = duplicateSummary(devices);
 
   return (
-    <div className="system-workspace system-device-workspace mx-auto flex w-full min-w-0 max-w-[1800px] items-start gap-4 text-[#F4F7F4]">
+    <div className="system-workspace system-device-workspace mx-auto flex w-full min-w-0 max-w-[1800px] items-start gap-4 text-[#153b56]">
       <div className="min-w-0 w-full flex-1">
         <SystemPageHeader title={({ camera: "Quản lý Camera", sensor: "Quản lý Sensor", controller: "Quản lý Controller" })[kind] || "Quản lý thiết bị"} description="Quản lý đăng ký, cấu hình và trạng thái thiết bị. Lịch ghi hình nằm ở tab riêng." actions={<>
           <button type="button" onClick={() => load(true)} className="system-secondary-button">Làm mới</button>
@@ -223,9 +223,9 @@ function DeviceManagement({ kind = "all" }) {
         </>} />
         <SystemState loading={loading} error={error} onRetry={() => load()}>
           <div className="space-y-4">
-            {notice ? <p className="rounded-2xl border border-[#77FF00]/30 bg-[#132015] px-4 py-3 text-sm text-[#D5E4D8]">{notice}</p> : null}
+            {notice ? <p className="rounded-2xl border border-[#a4d5c5] bg-[#e8f6ee] px-4 py-3 text-sm text-[#286454]">{notice}</p> : null}
             {issues.codes.length || issues.ips.length ? (
-              <div className="rounded-2xl border border-[#F5C451]/40 bg-[#2A2410] p-4 text-sm text-[#F5C451]">
+              <div className="rounded-2xl border border-[#edd29b] bg-[#fff7df] p-4 text-sm text-[#95600d]">
                 {issues.codes.map((list) => (
                   <p key={list[0].deviceCode}>Mã {list[0].deviceCode} có {list.length} bản ghi. Gỡ bản trùng. Bản ghi mới với cùng mã sẽ bị từ chối.</p>
                 ))}
@@ -257,7 +257,7 @@ function DeviceManagement({ kind = "all" }) {
               areas={areaOptions}
               firmwares={firmwareOptions}
             />
-            <section className="system-panel rounded-xl border border-white/10 bg-[#101810] p-4">
+            <section className="system-panel rounded-xl border border-[#dcebe8] bg-white p-4">
               <DeviceTable
                 rows={filtered}
                 page={page}
@@ -294,34 +294,34 @@ function DeviceManagement({ kind = "all" }) {
       ) : null}
       {pending ? (
         <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#101810] p-5">
+          <div className="w-full max-w-md rounded-2xl border border-[#dcebe8] bg-white p-5">
             <h2 className="text-lg font-bold">{pending.row.code}</h2>
-            {pending.type === "restart" ? <p className="mt-2 text-sm text-[#C6D7C9]">Gửi lệnh restart. Nếu thiết bị offline, lệnh nằm trong hàng đợi.</p> : null}
+            {pending.type === "restart" ? <p className="mt-2 text-sm text-[#355b6a]">Gửi lệnh restart. Nếu thiết bị offline, lệnh nằm trong hàng đợi.</p> : null}
             {pending.type === "firmware" ? (
-              <label className="mt-3 block text-xs text-[#9AAB9E]">
+              <label className="mt-3 block text-xs text-[#526f79]">
                 Phiên bản firmware
-                <input value={pending.firmware} onChange={(event) => setPending({ ...pending, firmware: event.target.value })} className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm text-[#F4F7F4]" />
+                <input value={pending.firmware} onChange={(event) => setPending({ ...pending, firmware: event.target.value })} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm text-[#153b56]" />
               </label>
             ) : null}
             {pending.type === "copy" ? (
-              <label className="mt-3 block text-xs text-[#9AAB9E]">
+              <label className="mt-3 block text-xs text-[#526f79]">
                 Thiết bị nhận
-                <select value={pending.targetId} onChange={(event) => setPending({ ...pending, targetId: event.target.value })} className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm">
+                <select value={pending.targetId} onChange={(event) => setPending({ ...pending, targetId: event.target.value })} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
                   <option value="">Chọn thiết bị cùng loại</option>
                   {copyTargets.map((item) => <option key={item.id} value={item.id}>{item.deviceCode || item.sensorCode}</option>)}
                 </select>
               </label>
             ) : null}
-            {pending.type === "disable" ? <p className="mt-2 text-sm text-[#C6D7C9]">Vô hiệu hóa {pending.row.code}. Thiết bị ngừng tham gia cho đến khi được kích hoạt lại.</p> : null}
-            {pending.type === "enable" ? <p className="mt-2 text-sm text-[#C6D7C9]">Kích hoạt lại {pending.row.code}.</p> : null}
+            {pending.type === "disable" ? <p className="mt-2 text-sm text-[#355b6a]">Vô hiệu hóa {pending.row.code}. Thiết bị ngừng tham gia cho đến khi được kích hoạt lại.</p> : null}
+            {pending.type === "enable" ? <p className="mt-2 text-sm text-[#355b6a]">Kích hoạt lại {pending.row.code}.</p> : null}
             {pending.type === "remove" ? (
-              <p className="mt-2 text-sm text-[#FFB4B4]">
+              <p className="mt-2 text-sm text-[#b93838]">
                 Gỡ {pending.row.code}? Sensor gắn: {pending.row.raw.sensorCount ?? 0}. Actuator gắn: {pending.row.raw.actuatorCount ?? 0}. Các liên kết được tách trước khi xóa.
               </p>
             ) : null}
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={() => setPending(null)} className="rounded-xl border border-white/15 px-3 py-2 text-sm">Hủy</button>
-              <button type="button" onClick={confirmPending} className={pending.type === "remove" || pending.type === "disable" ? "rounded-xl bg-[#FF8D8D] px-3 py-2 text-sm font-bold text-[#1A0909]" : "rounded-xl bg-[#77FF00] px-3 py-2 text-sm font-bold text-[#071007]"}>Xác nhận</button>
+              <button type="button" onClick={() => setPending(null)} className="rounded-xl border border-[#c9dfd9] px-3 py-2 text-sm">Hủy</button>
+              <button type="button" onClick={confirmPending} className={pending.type === "remove" || pending.type === "disable" ? "rounded-xl bg-[#b93838] px-3 py-2 text-sm font-bold text-white" : "rounded-xl bg-[#147e75] px-3 py-2 text-sm font-bold text-white"}>Xác nhận</button>
             </div>
           </div>
         </div>

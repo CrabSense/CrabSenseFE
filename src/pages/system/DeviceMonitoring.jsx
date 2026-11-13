@@ -44,15 +44,15 @@ export default function DeviceMonitoring() {
   return <SystemPage title="Giám sát thiết bị" description="Theo dõi trạng thái kết nối, lần cuối nhận dữ liệu và cảnh báo kỹ thuật. Tự làm mới mỗi 30 giây." actions={<button type="button" className="system-secondary-button" onClick={() => load()}>Làm mới</button>}>
     <SystemState loading={loading} error={!data ? error : ""} onRetry={load}>
       <div className="space-y-4">
-        {error && <p className="text-sm text-[#FFB4B4]">{error} — đang hiển thị dữ liệu lần tải trước.</p>}
-        <p className="text-xs text-[#9AAB9E]">Cập nhật: {data ? formatWhen(data.updated) : "—"}</p>
+        {error && <p className="text-sm text-[#b93838]">{error} — đang hiển thị dữ liệu lần tải trước.</p>}
+        <p className="text-xs text-[#526f79]">Cập nhật: {data ? formatWhen(data.updated) : "—"}</p>
         <KpiGrid items={statuses.map(label => ({ label, value: data ? rows.filter(row => String(row.status).toLowerCase() === label.toLowerCase()).length : "—" }))}/>
         <Panel title="Trạng thái thiết bị">
           <div className="mb-3 flex flex-wrap gap-2">
-            <select aria-label="Loại thiết bị" value={kind} onChange={e => setKind(e.target.value)} className="rounded-xl border border-white/10 bg-[#0B120C] px-3 py-2 text-sm">
+            <select aria-label="Loại thiết bị" value={kind} onChange={e => setKind(e.target.value)} className="rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 py-2 text-sm">
               <option value="all">Tất cả loại</option>{Object.entries(kindNames).map(([key, name]) => <option key={key} value={key}>{name}</option>)}
             </select>
-            <select aria-label="Trạng thái" value={status} onChange={e => setStatus(e.target.value)} className="rounded-xl border border-white/10 bg-[#0B120C] px-3 py-2 text-sm">
+            <select aria-label="Trạng thái" value={status} onChange={e => setStatus(e.target.value)} className="rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 py-2 text-sm">
               <option value="all">Tất cả trạng thái</option>{statuses.map(value => <option key={value}>{value}</option>)}
             </select>
           </div>
@@ -66,7 +66,7 @@ export default function DeviceMonitoring() {
         <Panel title="Cảnh báo kỹ thuật đang mở"><DataTable rows={data?.alerts || []} empty="Không có cảnh báo đang mở." columns={[
           { key: "message", label: "Nội dung" }, { key: "severity", label: "Mức độ" },
           { key: "status", label: "Trạng thái" }, { key: "lastOccurredAt", label: "Thời gian", render: row => formatWhen(row.lastOccurredAt || row.createdAt) },
-        ]}/><Link to="/system/logs" className="mt-3 inline-block text-sm text-[#77FF00]">Xem nhật ký hệ thống</Link></Panel>
+        ]}/><Link to="/system/logs" className="mt-3 inline-block text-sm text-[#13796e]">Xem nhật ký hệ thống</Link></Panel>
       </div>
     </SystemState>
   </SystemPage>;

@@ -44,10 +44,10 @@ function DeviceActions({ row, onAction }) {
       {menu ? (
         <>
           <button type="button" aria-label="Đóng menu" className="fixed inset-0 z-[140] cursor-default" onClick={() => setMenu(null)} />
-          <div className="fixed z-[150] w-[280px] overflow-y-auto rounded-xl border border-white/10 bg-[#101810] p-2 shadow-2xl" style={{ top: menu.top, left: menu.left, maxHeight: 320 }}>
+          <div className="fixed z-[150] w-[280px] overflow-y-auto rounded-xl border border-[#dcebe8] bg-white p-2 shadow-2xl" style={{ top: menu.top, left: menu.left, maxHeight: 320 }}>
             {menuGroups(row).map(([group, items]) => (
               <div key={group} className="mb-2 last:mb-0">
-                <p className="px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-[#8EA292] uppercase">{group}</p>
+                <p className="px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-[#54747e] uppercase">{group}</p>
                 {items.map((item) => (
                   <button
                     key={item.id}
@@ -58,10 +58,10 @@ function DeviceActions({ row, onAction }) {
                       setMenu(null);
                       onAction(row, item.id);
                     }}
-                    className="block w-full rounded-lg px-2 py-1.5 text-left text-xs enabled:hover:bg-white/5 disabled:cursor-not-allowed disabled:text-[#6E7C72]"
+                    className="block w-full rounded-lg px-2 py-1.5 text-left text-xs enabled:hover:bg-[#edf6f3] disabled:cursor-not-allowed disabled:text-[#64818b]"
                   >
                     {item.label}
-                    {item.reason ? <span className="mt-0.5 block text-[10px] text-[#8EA292]">{item.reason}</span> : null}
+                    {item.reason ? <span className="mt-0.5 block text-[10px] text-[#54747e]">{item.reason}</span> : null}
                   </button>
                 ))}
               </div>
@@ -75,7 +75,7 @@ function DeviceActions({ row, onAction }) {
 
 function IconButton({ label, onClick, children }) {
   return (
-    <button type="button" title={label} aria-label={label} onClick={onClick} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 text-[#D5E4D8]">
+    <button type="button" title={label} aria-label={label} onClick={onClick} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#c9dfd9] text-[#286454]">
       {children}
     </button>
   );

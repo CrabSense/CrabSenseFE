@@ -85,7 +85,7 @@ function StorageBackup() {
           type="button"
           disabled={busy}
           onClick={runBackup}
-          className="rounded-xl bg-[#77FF00] px-4 py-2 text-sm font-bold text-[#071007] disabled:opacity-60"
+          className="rounded-xl bg-[#147e75] px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
         >
           Backup Now
         </button>
@@ -93,8 +93,8 @@ function StorageBackup() {
     >
       <SystemState loading={loading} error={error && !schedule && !backups.length ? error : ""} onRetry={load}>
         <div className="space-y-4">
-          {error ? <p className="text-sm text-[#FFB4B4]">{error}</p> : null}
-          {actionError ? <p className="text-sm text-[#FFB4B4]">{actionError}</p> : null}
+          {error ? <p className="text-sm text-[#b93838]">{error}</p> : null}
+          {actionError ? <p className="text-sm text-[#b93838]">{actionError}</p> : null}
           <KpiGrid items={[
             { label: "Bản sao lưu Database", value: backups.length },
             { label: "Kết quả sao lưu tự động", value: schedule?.lastResult || "—" },
@@ -130,32 +130,32 @@ function StorageBackup() {
                   />
                   Enabled
                 </label>
-                <label className="text-xs text-[#9AAB9E]">
+                <label className="text-xs text-[#526f79]">
                   Frequency
                   <input
                     value={schedule.frequency || ""}
                     onChange={(event) => setSchedule({ ...schedule, frequency: event.target.value })}
-                    className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                    className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                   />
                 </label>
-                <label className="text-xs text-[#9AAB9E]">
+                <label className="text-xs text-[#526f79]">
                   Time
                   <input
                     value={schedule.backupTime || ""}
                     onChange={(event) => setSchedule({ ...schedule, backupTime: event.target.value })}
-                    className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                    className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                   />
                 </label>
-                <label className="text-xs text-[#9AAB9E]">
+                <label className="text-xs text-[#526f79]">
                   Retention days
                   <input
                     type="number"
                     value={schedule.retentionDays ?? 30}
                     onChange={(event) => setSchedule({ ...schedule, retentionDays: event.target.value })}
-                    className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-[#0B120C] px-3 text-sm"
+                    className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                   />
                 </label>
-                <button type="submit" disabled={busy} className="h-10 rounded-xl bg-[#77FF00] text-sm font-bold text-[#071007]">
+                <button type="submit" disabled={busy} className="h-10 rounded-xl bg-[#147e75] text-sm font-bold text-white">
                   Lưu lịch
                 </button>
               </form>
@@ -188,7 +188,7 @@ function StorageBackup() {
                       type="button"
                       disabled={busy}
                       onClick={() => runRestore(row.fileName)}
-                      className="text-[#F5C451]"
+                      className="text-[#95600d]"
                     >
                       {restoreName === row.fileName ? "Xác nhận restore" : "Restore"}
                     </button>
