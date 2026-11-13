@@ -73,7 +73,7 @@ const systemAdminService = {
   },
 
   async getAlerts(activeOnly = false) {
-    return unwrapList(await fetchAPI(`/alerts?activeOnly=${activeOnly}`));
+    return unwrapList(await fetchAPI(`/system/alerts?activeOnly=${activeOnly}`));
   },
 
   async getAlertCount() {
