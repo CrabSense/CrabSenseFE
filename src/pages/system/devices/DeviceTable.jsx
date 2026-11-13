@@ -12,7 +12,7 @@ function DeviceTable({ rows, page, pageSize, onPage, onPageSize, selectedId, onO
   return (
     <div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="system-table w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-white/10 text-[11px] tracking-[0.08em] text-[#8EA292] uppercase">
               {["Mã / tên", "Loại", "Khu vực", "Kết nối", "Trạng thái", "Last seen", "Thao tác"].map((label) => (

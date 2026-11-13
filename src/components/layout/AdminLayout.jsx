@@ -8,6 +8,7 @@ import ScrollToTop from "./ScrollToTop.jsx";
 
 function AdminLayout() {
   const location = useLocation();
+  const systemWorkspace = location.pathname === "/system" || location.pathname.startsWith("/system/");
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -48,7 +49,7 @@ function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050806]">
+    <div className={systemWorkspace ? "system-admin-layout min-h-screen bg-[#050806]" : "min-h-screen bg-[#050806]"}>
       {/* RESET SCROLL WHEN ROUTE CHANGES */}
       <ScrollToTop />
 

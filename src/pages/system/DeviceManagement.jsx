@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import systemAdminService from "../../services/systemAdminService";
 import farmingService from "../../services/farmingService";
-import { SystemState } from "../../components/system/SystemChrome";
+import { SystemPageHeader, SystemState } from "../../components/system/SystemChrome";
 import DeviceStats from "./devices/DeviceStats";
 import DeviceFilters from "./devices/DeviceFilters";
 import DeviceTable from "./devices/DeviceTable";
@@ -213,21 +213,13 @@ function DeviceManagement() {
   const issues = duplicateSummary(devices);
 
   return (
-    <div className="mx-auto flex w-full min-w-0 max-w-[1600px] items-start gap-4 text-[#F4F7F4]">
-      <div className="min-w-0 flex-1">
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[28px] font-bold tracking-[-0.6px]">Quản lý thiết bị</h1>
-            <p className="mt-1 max-w-[640px] text-sm text-[#9AAB9E]">
-              Camera, cảm biến và bộ điều khiển đang có trên API. Lịch ghi hình chi tiết nằm ở Camera & Ghi hình.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => load(true)} className="h-10 rounded-xl border border-white/15 px-3 text-sm">Làm mới</button>
-            <button type="button" onClick={exportCsv} className="h-10 rounded-xl border border-white/15 px-3 text-sm">Xuất dữ liệu</button>
-            <button type="button" onClick={() => setCreating(true)} className="h-10 rounded-xl bg-[#77FF00] px-3 text-sm font-bold text-[#071007]">+ Thêm thiết bị</button>
-          </div>
-        </div>
+    <div className="system-workspace system-device-workspace mx-auto flex w-full min-w-0 max-w-[1800px] items-start gap-4 text-[#F4F7F4]">
+      <div className="min-w-0 w-full flex-1">
+        <SystemPageHeader title="Quản lý thiết bị" description="Camera, cảm biến và bộ điều khiển. Lịch ghi hình chi tiết nằm ở Camera & Ghi hình." actions={<>
+          <button type="button" onClick={() => load(true)} className="system-secondary-button">Làm mới</button>
+          <button type="button" onClick={exportCsv} className="system-secondary-button">Xuất dữ liệu</button>
+          <button type="button" onClick={() => setCreating(true)} className="system-primary-button">+ Thêm thiết bị</button>
+        </>} />
         <SystemState loading={loading} error={error} onRetry={() => load()}>
           <div className="space-y-4">
             {notice ? <p className="rounded-2xl border border-[#77FF00]/30 bg-[#132015] px-4 py-3 text-sm text-[#D5E4D8]">{notice}</p> : null}
@@ -263,7 +255,7 @@ function DeviceManagement() {
               areas={areaOptions}
               firmwares={firmwareOptions}
             />
-            <section className="rounded-2xl border border-white/10 bg-[#101810] p-4">
+            <section className="system-panel rounded-xl border border-white/10 bg-[#101810] p-4">
               <DeviceTable
                 rows={filtered}
                 page={page}

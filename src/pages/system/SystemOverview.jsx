@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 import systemAdminService from "../../services/systemAdminService";
 import useTranslation from "../../hooks/useTranslation";
 import { useSettings } from "../../context/SettingsContext";
-import { SystemState } from "../../components/system/SystemChrome";
+import { SystemPageHeader, SystemState } from "../../components/system/SystemChrome";
 import {
   countBuckets,
   deviceKind,
@@ -149,23 +149,15 @@ function SystemOverview() {
   const stoppedAi = aiServices.filter((service) => service.status !== "Running");
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] font-bold tracking-[-0.6px]">{t("nav.systemOverview")}</h1>
-          <p className="mt-1 text-sm text-[#9AAB9E]">CrabSense Infrastructure Monitoring</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 text-sm">
+    <div className="system-workspace mx-auto w-full min-w-0 max-w-[1800px] text-[#F4F7F4]">
+      <SystemPageHeader title={t("nav.systemOverview")} description="CrabSense Infrastructure Monitoring" actions={
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           <StatusPill status={overall} />
           <span className="text-[#9AAB9E]">Cập nhật {formatWhen(health?.checkedAtUtc || metrics?.sampledAtUtc)}</span>
-          <button type="button" onClick={load} className="rounded-full border border-white/15 px-3 py-1 text-xs">
-            Làm mới
-          </button>
-          <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-[#C6D7C9]">
-            Tự làm mới {refreshSeconds}s
-          </span>
+          <button type="button" onClick={load} className="system-secondary-button">Làm mới</button>
+          <span className="rounded-md bg-white/5 px-3 py-1 text-xs text-[#C6D7C9]">Tự làm mới {refreshSeconds}s</span>
         </div>
-      </div>
+      } />
 
       <SystemState loading={loading} error={error} onRetry={load}>
         <div className="space-y-4">
@@ -175,7 +167,7 @@ function SystemOverview() {
             </p>
           ) : null}
 
-          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          <section className="system-kpi-grid">
             <Kpi label="System Health" value={overall} hint="Healthy / Degraded / Critical / Unknown" />
             <Kpi
               label="Devices Online"
@@ -344,7 +336,7 @@ function percent(used, total) {
 
 function Kpi({ label, value, hint }) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-[#101810] px-4 py-4">
+    <article className="system-kpi rounded-xl border border-white/10 bg-[#101810] px-4 py-4">
       <p className="text-[11px] font-semibold tracking-[0.08em] text-[#8EA292] uppercase">{label}</p>
       <p className="mt-2 text-[26px] font-bold tracking-[-0.5px]">{value}</p>
       {hint ? <p className="mt-1 text-xs text-[#8EA292]">{hint}</p> : null}
@@ -354,7 +346,7 @@ function Kpi({ label, value, hint }) {
 
 function Card({ title, action, to, children, className = "" }) {
   return (
-    <section className={`rounded-2xl border border-white/10 bg-[#101810] p-4 ${className}`}>
+    <section className={`system-panel rounded-xl border border-white/10 bg-[#101810] p-4 ${className}`}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-sm font-bold tracking-[0.04em] text-[#D7E6DA] uppercase">{title}</h2>
         {to ? (

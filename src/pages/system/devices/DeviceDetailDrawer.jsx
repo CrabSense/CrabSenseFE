@@ -168,7 +168,7 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
   const configLogs = logs.filter((log) => CONFIG_ACTIONS.some((action) => String(log.message || "").includes(action)));
 
   return (
-    <aside className="sticky top-4 flex h-[calc(100vh-7rem)] w-[420px] max-w-[440px] shrink-0 flex-col rounded-2xl border border-white/10 bg-[#0C140E] p-4">
+    <aside className="system-device-drawer sticky flex h-[calc(100vh-7rem)] w-[420px] max-w-[440px] shrink-0 flex-col rounded-xl border border-white/10 bg-[#0C140E] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-bold">{row.code}</h2>

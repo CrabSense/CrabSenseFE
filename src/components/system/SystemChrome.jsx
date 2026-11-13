@@ -1,19 +1,33 @@
 import PropTypes from "prop-types";
+import { useLocation } from "react-router-dom";
+import { Activity, Cpu, Cctv, Brain, HardDrive, Rocket, Shield, ScrollText, RefreshCw, AlertCircle, Inbox } from "lucide-react";
+import "./system-desktop.css";
+
+const pageIcons = { "/system": Activity, "/system/devices": Cpu, "/system/cameras": Cctv, "/system/ai": Brain, "/system/storage": HardDrive, "/system/deployment": Rocket, "/system/security": Shield, "/system/logs": ScrollText };
+
+export function SystemPageHeader({ title, description, actions }) {
+  const { pathname } = useLocation();
+  const Icon = pageIcons[pathname] || Activity;
+  return (
+    <header className="system-page-header">
+      <div className="system-page-identity">
+        <div className="system-page-icon"><Icon size={22} aria-hidden="true" /></div>
+        <div className="min-w-0">
+          <div className="system-page-eyebrow">CRABSENSE / SYSTEM ADMIN</div>
+          <h1>{title}</h1>
+          {description && <p>{description}</p>}
+        </div>
+      </div>
+      {actions && <div className="system-page-actions">{actions}</div>}
+    </header>
+  );
+}
+SystemPageHeader.propTypes = { title: PropTypes.string.isRequired, description: PropTypes.string, actions: PropTypes.node };
 
 export function SystemPage({ title, description, actions, children }) {
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[1600px] text-[#F4F7F4]">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] font-bold tracking-[-0.6px]">{title}</h1>
-          {description ? (
-            <p className="mt-2 max-w-[720px] text-sm leading-6 text-[#9AAB9E]">
-              {description}
-            </p>
-          ) : null}
-        </div>
-        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
-      </div>
+    <div className="system-workspace mx-auto w-full min-w-0 max-w-[1800px] text-[#F4F7F4]">
+      <SystemPageHeader title={title} description={description} actions={actions} />
       {children}
     </div>
   );
@@ -28,11 +42,11 @@ SystemPage.propTypes = {
 
 export function KpiGrid({ items }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="system-kpi-grid">
       {items.map((item) => (
         <article
           key={item.label}
-          className="rounded-2xl border border-white/10 bg-[#101810] px-4 py-4"
+          className="system-kpi rounded-xl border border-white/10 bg-[#101810] px-4 py-4"
         >
           <p className="text-[11px] font-semibold tracking-[0.08em] text-[#8EA292] uppercase">
             {item.label}
@@ -61,8 +75,8 @@ KpiGrid.propTypes = {
 
 export function Panel({ title, children }) {
   return (
-    <section className="rounded-2xl border border-white/10 bg-[#101810] p-4">
-      <h2 className="mb-3 text-sm font-bold tracking-[0.04em] text-[#D7E6DA] uppercase">
+    <section className="system-panel rounded-xl border border-white/10 bg-[#101810] p-4">
+      <h2 className="system-panel-title text-sm font-semibold text-[#D7E6DA]">
         {title}
       </h2>
       {children}
@@ -98,16 +112,16 @@ MissingApi.propTypes = {
 
 export function DataTable({ columns, rows, empty }) {
   if (!rows.length) {
-    return <p className="text-sm text-[#9AAB9E]">{empty}</p>;
+    return <div className="system-empty" role="status"><Inbox size={20} aria-hidden="true" /><p>{empty || "Không có dữ liệu."}</p></div>;
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] text-left text-sm">
+    <div className="system-table-scroll overflow-x-auto" tabIndex={0} role="region" aria-label="Bảng dữ liệu hệ thống">
+      <table className="system-table w-full min-w-[640px] text-left text-sm">
         <thead>
           <tr className="border-b border-white/10 text-[11px] tracking-[0.08em] text-[#8EA292] uppercase">
             {columns.map((column) => (
-              <th key={column.key} className="px-2 py-2 font-semibold">
+              <th scope="col" key={column.key} className="px-2 py-2 font-semibold">
                 {column.label}
               </th>
             ))}
@@ -137,11 +151,12 @@ DataTable.propTypes = {
 
 export function SystemState({ loading, error, onRetry, children }) {
   if (loading) {
-    return <p className="text-sm text-[#9AAB9E]">Đang tải dữ liệu từ API...</p>;
+    return <div className="system-loading" role="status"><RefreshCw size={18} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Đang tải dữ liệu từ API...</div>;
   }
   if (error) {
     return (
-      <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
+      <div role="alert" className="system-error rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+        <AlertCircle size={20} aria-hidden="true" />
         <p className="text-sm text-[#FFD0D0]">{error}</p>
         {onRetry ? (
           <button
