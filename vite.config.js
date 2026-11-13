@@ -8,6 +8,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Pages project sites live under the repository path, not the origin root.
+  base: process.env.VITE_GITHUB_PAGES === "true" ? "/CrabSenseFE/" : "/",
 
   resolve: {
     alias: {

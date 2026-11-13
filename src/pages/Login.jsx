@@ -95,7 +95,7 @@ function BrandColumn({ t }) {
         <div className="grid w-full grid-cols-1 items-end min-[960px]:grid-cols-[2fr_7fr]">
           <span className="hidden min-[960px]:block" />
           <img
-            src="/login/logo.png"
+            src={import.meta.env.BASE_URL + "login/logo.png"}
             alt="CrabSense"
             className="mx-auto block h-[132px] w-auto max-w-full object-contain min-[960px]:h-[180px]"
           />
@@ -135,7 +135,7 @@ function BrandColumn({ t }) {
           <span className="hidden min-[960px]:block" />
           <span className="hidden min-[960px]:block" />
           <img
-            src="/login/Sologan_Login.png"
+            src={import.meta.env.BASE_URL + "login/Sologan_Login.png"}
             alt=""
             className="ml-auto block h-[100px] w-auto max-w-[220px] origin-bottom-right -rotate-[3.5deg] object-contain object-right min-[960px]:ml-3 min-[960px]:h-[150px] min-[960px]:max-w-none"
           />
@@ -255,7 +255,7 @@ function Login() {
 
       <div className="relative overflow-hidden rounded-[28px] border border-white/90 bg-[#FFFFF8] shadow-[0_14px_32px_rgba(0,0,0,0.12),0_6px_20px_rgba(13,92,61,0.08)]">
         <KnockoutImage
-          src="/login/background_right.png"
+          src={import.meta.env.BASE_URL + "login/background_right.png"}
           className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[72px] object-cover object-right min-[640px]:block"
         />
 
@@ -452,7 +452,7 @@ function Login() {
       </svg>
 
       <img
-        src="/login/Nen_Login.png"
+        src={import.meta.env.BASE_URL + "login/Nen_Login.png"}
         alt=""
         className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[55%_center]"
       />
@@ -467,18 +467,18 @@ function Login() {
 
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[58%] min-[960px]:block">
         <KnockoutImage
-          src="/login/background_right.png"
+          src={import.meta.env.BASE_URL + "login/background_right.png"}
           className="h-full w-full object-contain object-bottom-right"
         />
       </div>
 
       <KnockoutImage
-        src="/login/slogan_right_tv.png"
+        src={import.meta.env.BASE_URL + "login/slogan_right_tv.png"}
         alt=""
         className="pointer-events-none absolute top-7 right-9 hidden h-[88px] min-[960px]:block"
       />
       <KnockoutImage
-        src="/login/slogan_right-en.png"
+        src={import.meta.env.BASE_URL + "login/slogan_right-en.png"}
         alt=""
         className="pointer-events-none absolute right-7 bottom-16 hidden h-20 min-[960px]:block"
       />

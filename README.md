@@ -145,3 +145,13 @@ Lọc Excel cột Platform = **Web** → đưa từng dòng (Mã MH / Thành ph�
 - Mobile: [CrabSenseApp](https://github.com/CrabSense/CrabSenseApp)
 - Edge HDF5 gateway (trại nuôi): [CrabSenseKiosk](https://github.com/CrabSense/CrabSenseKiosk) — **không** chứa UI thanh toán/hóa đơn
 - Wallboard / thu ngân / bán hàng PC: fullscreen trên **repo này (FE)**
+
+## GitHub Pages deployment
+
+The workflow `.github/workflows/deploy-pages.yml` builds PRs without deploying, and publishes the Vite `dist` directory on pushes to `main` or a manual run. Production Pages URL: https://crabsense.github.io/CrabSenseFE/.
+
+1. In repository Settings → Pages → Build and deployment → Source, select GitHub Actions.
+2. In Settings → Secrets and variables → Actions → Variables, add `VITE_API_BASE_URL` with the real public HTTPS backend API root (including /api, no credentials). Example: `https://api.example.com/api`. The backend must allow origin `https://crabsense.github.io` in its CORS configuration. An unset variable permits the static site to build but API calls fail with a configuration message; no requests go to localhost from the Pages site.
+3. In Actions → Deploy FE to GitHub Pages, run the workflow on main if needed. Check the deployment environment URL after success.
+
+Pages builds use `/CrabSenseFE/` and hash routes (e.g. `/CrabSenseFE/#/login`) so direct reloads work. Local development and other builds retain BrowserRouter and root paths. Only static frontend files are hosted; the .NET backend and database run separately. Vite variables are public in the built bundle; never place passwords, tokens or private keys in them.
