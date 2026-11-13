@@ -59,6 +59,7 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
       macAddress: row.raw.macAddress || "",
       installationLocation: row.raw.installationLocation || "",
       farmingAreaId: row.raw.farmingAreaId || "",
+      farmingRowId: row.raw.farmingRowId || "",
       streamUrl: row.raw.streamUrl || "",
       snapshotUrl: row.raw.snapshotUrl || "",
       resolution: row.raw.resolution || "",
@@ -116,8 +117,9 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
         setNotice("Đã xếp lệnh khởi động lại. Audit log đã ghi.");
       }
       if (action === "enable") {
-        await systemAdminService.updateDevice(row.id, { status: "Online" });
-        setNotice("Đã kích hoạt. Audit log đã ghi.");
+        if (row.type === "camera") await systemAdminService.enableCamera(row.id);
+        else await systemAdminService.updateDevice(row.id, { status: "Online" });
+        setNotice(row.type === "camera" ? "Đã cho phép hoạt động; chờ heartbeat xác thực." : "Đã kích hoạt. Audit log đã ghi.");
       }
       if (action === "firmware") {
         if (!firmwareDraft.trim()) {
@@ -153,10 +155,14 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
         ipAddress: config.ipAddress,
         macAddress: config.macAddress,
         installationLocation: config.installationLocation,
-        farmingAreaId: config.farmingAreaId || null,
-        streamUrl: config.streamUrl,
-        snapshotUrl: config.snapshotUrl,
-        resolution: config.resolution,
+        farmingAreaId: config.farmingAreaId || "00000000-0000-0000-0000-000000000000",
+        ...(row.type === "camera" ? {
+          farmingRowId: config.farmingRowId || "00000000-0000-0000-0000-000000000000",
+          // Hidden legacy credentials must not be erased by unrelated edits.
+          ...(config.streamUrl !== (row.raw.streamUrl || "") ? { streamUrl: config.streamUrl } : {}),
+          ...(config.snapshotUrl !== (row.raw.snapshotUrl || "") ? { snapshotUrl: config.snapshotUrl } : {}),
+          resolution: config.resolution,
+        } : {}),
       });
       setNotice("Đã lưu cấu hình. Audit log đã ghi.");
       onChanged();
@@ -230,15 +236,22 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
                 Khu vực
                 <select
                   value={config.farmingAreaId}
-                  onChange={(event) => setConfig({ ...config, farmingAreaId: event.target.value })}
+                  onChange={(event) => setConfig({ ...config, farmingAreaId: event.target.value, farmingRowId: "" })}
                   className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm"
                 >
                   <option value="">Chưa gán</option>
-                  {areas.map((area) => <option key={area.id} value={area.id}>{area.name || area.code}</option>)}
+                  {areas.filter(area => area.isActive || area.id === config.farmingAreaId).map((area) => <option key={area.id} value={area.id}>{area.name || area.code}</option>)}
                 </select>
               </label>
               {row.type === "camera" ? (
                 <>
+                  <label className="block text-xs text-[#526f79]">Dãy nuôi
+                    <select value={config.farmingRowId} onChange={event => setConfig({...config, farmingRowId: event.target.value})} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
+                      <option value="">Không gán dãy</option>
+                      {(areas.find(area => area.id === config.farmingAreaId)?.rows || []).filter(item => item.isActive || item.id === config.farmingRowId).map(item => <option key={item.id} value={item.id}>{item.name || item.code}</option>)}
+                    </select>
+                  </label>
+                  <p className="text-xs text-[#526f79]">URL không chứa thông tin đăng nhập hoặc query. Camera cần xác thực phải qua Camera Agent.</p>
                   <Field label="Stream URL" value={config.streamUrl} onChange={(value) => setConfig({ ...config, streamUrl: value })} />
                   <Field label="Snapshot URL" value={config.snapshotUrl} onChange={(value) => setConfig({ ...config, snapshotUrl: value })} />
                   <Field label="Resolution" value={config.resolution} onChange={(value) => setConfig({ ...config, resolution: value })} />
@@ -256,11 +269,11 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
       {row.source === "device" ? (
         <div className="mt-3 space-y-3">
           <div className="flex flex-wrap gap-2 text-xs">
-            <Action label="Test connection" onClick={() => run("test")} />
-            <Action label="Khởi động lại" onClick={() => run("restart")} />
+            <Action label={row.type === "camera" ? "Kiểm tra kết nối" : "Test connection"} onClick={() => run("test")} />
+            {row.type !== "camera" && <Action label="Khởi động lại" onClick={() => run("restart")} />}
             <Action label="Kích hoạt" onClick={() => run("enable")} />
           </div>
-          <div className="flex gap-2">
+          {row.type !== "camera" && <div className="flex gap-2">
             <input
               value={firmwareDraft}
               onChange={(event) => setFirmwareDraft(event.target.value)}
@@ -268,7 +281,7 @@ function DeviceDetailDrawer({ row, areas, schedule, tabRequest, onClose, onChang
               className="h-9 min-w-0 flex-1 rounded-lg border border-[#dcebe8] bg-[#f7fbfa] px-2 text-xs"
             />
             <button type="button" onClick={() => run("firmware")} className="rounded-lg border border-[#c9dfd9] px-2 text-xs">Cập nhật firmware</button>
-          </div>
+          </div>}
           <div className="rounded-xl border border-[#e9b5b5] bg-[#fff1f1] p-3">
             <p className="text-xs font-semibold text-[#b93838]">Thao tác nguy hiểm</p>
             {pendingDanger ? (

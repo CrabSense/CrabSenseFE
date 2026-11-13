@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
 import systemAdminService from "../../services/systemAdminService";
-import farmingService from "../../services/farmingService";
 import { SystemPageHeader, SystemState } from "../../components/system/SystemChrome";
 import DeviceStats from "./devices/DeviceStats";
 import DeviceFilters from "./devices/DeviceFilters";
@@ -41,7 +40,7 @@ function DeviceManagement({ kind = "all" }) {
       const [deviceRows, sensorRows, areaRows, scheduleRows] = await Promise.all([
         systemAdminService.getDevices(),
         systemAdminService.getSensors(),
-        farmingService.getAreas({ isActive: true }).catch(() => []),
+        systemAdminService.getDeviceLocations(),
         systemAdminService.getRecordingSchedules().catch(() => []),
       ]);
       setDevices(deviceRows);
@@ -145,8 +144,9 @@ function DeviceManagement({ kind = "all" }) {
       }
       if (type === "enable") {
         if (row.source === "sensor") await systemAdminService.updateSensor(row.id, { isActive: true });
+        else if (row.type === "camera") await systemAdminService.enableCamera(row.id);
         else await systemAdminService.updateDevice(row.id, { status: "Online" });
-        setNotice(`${row.code} đã được kích hoạt lại.`);
+        setNotice(row.type === "camera" ? `${row.code} đã cho phép hoạt động; chờ heartbeat xác thực.` : `${row.code} đã được kích hoạt lại.`);
       }
       if (type === "remove") {
         if (row.source === "sensor") await systemAdminService.deleteSensor(row.id);

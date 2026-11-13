@@ -1,6 +1,5 @@
 export function menuGroups(row) {
   const maintenance = row.statusKey === "maintenance" || (row.source === "sensor" && row.raw?.isActive === false);
-  const offline = row.statusKey === "offline";
   const device = row.source === "device";
   const groups = [
     ["Xem", []],
@@ -15,13 +14,13 @@ export function menuGroups(row) {
   add("Xem", "logs", "Xem nhật ký", device, device ? "" : "Nhật ký nằm trên bộ điều khiển, chưa có API riêng cho sensor.");
 
   if (row.type === "camera") {
-    add("Xem", "preview", "Xem trực tiếp", true);
+    add("Xem", "preview", "Xem nguồn hình ảnh đã cấu hình", true);
     add(
       "Xem",
       "rtsp",
-      "Kiểm tra luồng RTSP",
-      device && !maintenance && !offline && Boolean(row.raw.streamUrl),
-      !row.raw.streamUrl ? "Chưa có stream URL." : offline ? "Thiết bị offline. Lệnh cần kết nối đang khóa." : "",
+      "Kiểm tra kết nối Camera",
+      false,
+      "Chưa tích hợp Camera Agent để xác minh stream RTSP.",
     );
     add("Xem", "recording", "Chuyển sang trang ghi hình", true);
   }
@@ -42,8 +41,8 @@ export function menuGroups(row) {
     "Cấu hình",
     "firmware",
     "Cập nhật firmware",
-    device && !maintenance,
-    device ? "Ghi phiên bản trên server. API chưa tải file firmware." : "Sensor không có phiên bản firmware.",
+    device && !maintenance && row.type !== "camera",
+    row.type === "camera" ? "Chưa tích hợp cập nhật firmware Camera." : device ? "Chỉ ghi nhận yêu cầu firmware, không xác nhận đã cập nhật." : "Sensor không có phiên bản firmware.",
   );
   add("Cấu hình", "copy", "Sao chép cấu hình", !maintenance, "Chỉ sao chép thông số. Không sao chép mã, IP hoặc MAC.");
   if (row.type === "camera") add("Cấu hình", "stream", "Chỉnh thông số stream", device && !maintenance);
@@ -57,8 +56,8 @@ export function menuGroups(row) {
     "Hệ thống",
     "restart",
     "Khởi động lại",
-    device && !maintenance,
-    !device ? "Sensor không nhận lệnh restart." : offline ? "Lệnh được xếp hàng cho đến khi thiết bị nhận." : "",
+    false,
+    !device ? "Sensor không nhận lệnh restart." : "Edge Protocol hiện chưa hỗ trợ restart an toàn.",
   );
   add("Hệ thống", maintenance ? "enable" : "disable", maintenance ? "Kích hoạt" : "Vô hiệu hóa", true);
   add("Hệ thống", "remove", "Gỡ thiết bị", true, "Cần xác nhận. Sensor và actuator gắn sẽ được tách ra.");

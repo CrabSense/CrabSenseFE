@@ -78,7 +78,7 @@ function CameraRecording() {
   return (
     <SystemPage
       title="Quản lý lịch trình ghi hình"
-      description="Camera là thiết bị loại camera hoặc có stream/snapshot. Lịch ghi lưu trên API; file lịch sử lấy từ media video đã có."
+      description="Lưu cấu hình lịch ghi trên API. Camera Agent chưa tích hợp; chưa thể xác nhận đang ghi hình."
     >
       <SystemState loading={loading} error={error} onRetry={load}>
         <div className="space-y-4">
@@ -111,6 +111,8 @@ function CameraRecording() {
                     <p className={statusClass(camera.status)}>{camera.status || "—"}</p>
                     <p className="text-[#355b6a]">
                       {camera.mode} · giữ {camera.retentionDays} ngày
+                    </p>
+                    <p className="text-xs text-[#526f79]">Runtime: {camera.runtimeStatus === "NotIntegrated" ? "Chưa tích hợp" : camera.runtimeStatus || "Chưa xác minh"}
                     </p>
                     <button
                       type="button"
@@ -152,8 +154,9 @@ function CameraRecording() {
                   />
                 </label>
                 <label className="text-xs text-[#526f79] md:col-span-3">
-                  Weekly schedule JSON
+                  Lịch tuần JSON (day 1–7, thứ Hai đến Chủ nhật)
                   <textarea
+                    placeholder={JSON.stringify({timezone:"Asia/Ho_Chi_Minh",slots:[{day:1,start:"08:00",end:"17:00"}]})}
                     value={form.weeklyScheduleJson}
                     onChange={(event) => setForm({ ...form, weeklyScheduleJson: event.target.value })}
                     className="mt-1 min-h-20 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 py-2 text-sm text-[#153b56]"
@@ -167,7 +170,7 @@ function CameraRecording() {
             </Panel>
           ) : null}
 
-          <Panel title="Recording history">
+          <Panel title="Video Camera đã lưu (không xác nhận do lịch ghi tạo)">
             <DataTable
               empty="Chưa có file video trong media."
               rows={history}

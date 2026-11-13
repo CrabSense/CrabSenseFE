@@ -12,6 +12,14 @@ function unwrapData(response) {
 }
 
 const systemAdminService = {
+  async getDeviceLocations() {
+    return unwrapList(await fetchAPI("/system/device-locations"));
+  },
+
+  async enableCamera(id) {
+    return unwrapData(await fetchAPI(`/cameras/${id}/enable`, { method: "POST" }));
+  },
+
   async getDevices() {
     return unwrapList(await fetchAPI("/devices"));
   },

@@ -20,6 +20,9 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
     ipAddress: "",
     macAddress: "",
     streamUrl: "",
+    snapshotUrl: "",
+    resolution: "",
+    farmingRowId: "",
     sensorCode: "",
     sensorType: "ph",
     unit: "",
@@ -62,6 +65,9 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
           macAddress: form.macAddress.trim() || null,
           firmwareVersion: form.firmwareVersion.trim() || null,
           farmingAreaId: form.farmingAreaId || null,
+          farmingRowId: form.kind === "camera" ? form.farmingRowId || null : null,
+          snapshotUrl: form.kind === "camera" ? form.snapshotUrl.trim() || null : null,
+          resolution: form.kind === "camera" ? form.resolution.trim() || null : null,
           installationLocation: form.installationLocation.trim() || null,
           streamUrl: form.kind === "camera" ? form.streamUrl.trim() || null : null,
         });
@@ -113,7 +119,12 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
                 <Text label="IP" value={form.ipAddress} onChange={(value) => set("ipAddress", value)} />
                 <Text label="MAC" value={form.macAddress} onChange={(value) => set("macAddress", value)} />
                 <Text label="Firmware" value={form.firmwareVersion} onChange={(value) => set("firmwareVersion", value)} />
-                {form.kind === "camera" ? <Text label="Stream URL" value={form.streamUrl} onChange={(value) => set("streamUrl", value)} /> : null}
+                {form.kind === "camera" ? <>
+                  <Text label="Stream URL" value={form.streamUrl} onChange={(value) => set("streamUrl", value)} />
+                  <Text label="Snapshot URL" value={form.snapshotUrl} onChange={(value) => set("snapshotUrl", value)} />
+                  <Text label="Độ phân giải" value={form.resolution} onChange={(value) => set("resolution", value)} />
+                  <p className="text-xs text-[#526f79]">Không nhập tài khoản, mật khẩu hoặc query trong URL.</p>
+                </> : null}
               </>
             )}
           </div>
@@ -122,11 +133,17 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
           <div className="mt-4 grid gap-2">
             <label className="text-xs text-[#526f79]">
               Khu vực
-              <select value={form.farmingAreaId} onChange={(event) => set("farmingAreaId", event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
+              <select value={form.farmingAreaId} onChange={(event) => setForm(current => ({...current, farmingAreaId: event.target.value, farmingRowId: ""}))} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
                 <option value="">Chưa gán</option>
-                {areas.map((area) => <option key={area.id} value={area.id}>{area.name || area.code}</option>)}
+                {areas.filter(area => area.isActive).map((area) => <option key={area.id} value={area.id}>{area.name || area.code}</option>)}
               </select>
             </label>
+            {form.kind === "camera" && <label className="text-xs text-[#526f79]">Dãy nuôi
+              <select value={form.farmingRowId} onChange={event => set("farmingRowId", event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
+                <option value="">Không gán dãy</option>
+                {(areas.find(area => area.id === form.farmingAreaId)?.rows || []).filter(item => item.isActive).map(item => <option key={item.id} value={item.id}>{item.name || item.code}</option>)}
+              </select>
+            </label>}
             {form.kind !== "sensor" ? <Text label="Vị trí lắp đặt" value={form.installationLocation} onChange={(value) => set("installationLocation", value)} /> : null}
           </div>
         ) : null}
