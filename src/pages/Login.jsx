@@ -7,7 +7,7 @@ import useTranslation from "../hooks/useTranslation";
 import "./Login.css";
 
 const REMEMBERED_USERNAME_KEY = "crabsense.rememberedUsername";
-const LOGO = import.meta.env.BASE_URL + "login/crabsense-brand.webp";
+const LOGO = import.meta.env.BASE_URL + "login/logo.png";
 
 function Login() {
   const navigate = useNavigate();
@@ -105,7 +105,7 @@ function Login() {
       <div className="login-shell">
         <header className="login-topbar">
           <div className="login-brand-lockup">
-            <img src={LOGO} alt="" width="64" height="35" />
+            <img src={LOGO} alt=""  />
             <span>Crab<span className="login-accent">Sense</span></span>
           </div>
           <span className="login-portal"><ShieldCheck size={16} aria-hidden="true" /> {t("nav.adminPortal")}</span>
@@ -115,7 +115,7 @@ function Login() {
           <section className="login-brand-panel" aria-label="CrabSense">
             <div className="login-brand-inner">
               <div className="login-logo-tile">
-                <img src={LOGO} alt="CrabSense — green and blue infinity crab logo" width="256" height="140" />
+                <img src={LOGO} alt="CrabSense"  />
               </div>
               <div className="login-brand-copy">
                 <p className="login-eyebrow">SMART AQUACULTURE · AI + IoT</p>
