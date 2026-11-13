@@ -319,11 +319,60 @@ function InfoTab({ row, detail, schedule }) {
         {row.type === "controller" ? <Item label="RSSI" value={detail?.rssiDbm ?? row.raw.rssiDbm ?? "—"} /> : null}
         {row.type === "controller" ? <Item label="Pin" value={detail?.batteryLevel ?? row.raw.batteryLevel ?? "—"} /> : null}
       </dl>
+      {row.type === "controller" ? <ControllerInventory key={row.id} deviceId={row.id} /> : null}
       {row.type === "controller" ? <ChildLists detail={detail} sensorCount={row.raw.sensorCount} actuatorCount={row.raw.actuatorCount} /> : null}
       {row.type === "controller" ? <p className="text-xs text-[#8EA292]">Bật/tắt bơm hoặc van không nằm ở trang này.</p> : null}
     </div>
   );
 }
+
+function ControllerInventory({ deviceId }) {
+  const [inventory, setInventory] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError("");
+    systemAdminService.getControllerPorts(deviceId).then((result) => {
+      if (active) setInventory(result);
+    }).catch((err) => {
+      if (active) { setInventory(null); setError(err?.message || "Không tải được danh mục cổng."); }
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [deviceId, revision]);
+  const ports = inventory?.ports || [];
+  return (
+    <section className="system-panel rounded-xl border p-3">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-semibold text-sm">Cổng controller</h3>
+        <button type="button" disabled={loading} onClick={() => setRevision((v) => v + 1)} className="system-secondary-button">Làm mới</button>
+      </div>
+      <p className="mt-1 text-xs text-[#9AAB9E]">Danh mục phần cứng do controller báo. Chỉ xem, không gửi lệnh điều khiển.</p>
+      {loading ? <p role="status" className="mt-3 text-xs text-[#9AAB9E]">Đang tải cổng...</p> : error ? <p role="alert" className="mt-3 text-xs text-[#FFB4B4]">{error}</p> : (
+        <>
+          <p className="my-2 text-xs text-[#9AAB9E]">Model: {inventory?.hardwareModel || "—"} · Manifest: {inventory?.capabilityVersion ?? "—"} · {ports.length} cổng</p>
+          {!ports.length ? <p className="text-xs text-[#9AAB9E]">Controller chưa báo danh mục cổng.</p> : (
+            <ul className="space-y-2 text-xs">
+              {ports.map((port) => {
+                const equipment = (inventory?.equipment || []).filter((item) => item.controllerPortId === port.id);
+                const sensors = (inventory?.sensors || []).filter((item) => item.controllerPortId === port.id);
+                return <li key={port.id} className="rounded-lg border border-white/10 bg-[#101810] p-2">
+                  <div className="flex flex-wrap justify-between gap-1"><strong>{port.portCode}</strong><span className={port.isPresent ? "text-[#77FF00]" : "text-[#F5C451]"}>{port.isPresent ? "Hiện diện" : "Không hiện diện"}</span></div>
+                  <p className="mt-1 text-[#C6D7C9]">{port.type} · GPIO {port.gpio}{port.secondaryGpio != null ? " / " + port.secondaryGpio : ""} · Kênh {port.channel ?? "—"}</p>
+                  <p className="mt-1 text-[#9AAB9E]">Commissioning: {port.commissioningStatus || "—"} · Báo trạng thái: {port.reportedOn == null ? "—" : port.reportedOn ? "ON" : "OFF"}</p>
+                  <p className="mt-1 text-[#9AAB9E]">Thiết bị: {[...equipment.map((item) => item.name), ...sensors.map((item) => item.sensorCode)].filter(Boolean).join(", ") || "Chưa liên kết"}</p>
+                </li>;
+              })}
+            </ul>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+ControllerInventory.propTypes = { deviceId: PropTypes.string.isRequired };
 
 function CameraPreview({ code, snapshot, stream }) {
   if (snapshot) return <img src={snapshot} alt={code} className="h-36 w-full rounded-xl object-cover" />;
