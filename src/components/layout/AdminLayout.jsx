@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import Sidebar from "./Sidebar.jsx";
+import OverviewLayout from "./OverviewLayout.jsx";
 import AdminHeader from "./AdminHeader.jsx";
 import PageScrollbar from "./PageScrollbar.jsx";
 import ScrollToTop from "./ScrollToTop.jsx";
@@ -47,6 +48,8 @@ function AdminLayout() {
   const handleCloseMobile = () => {
     setMobileSidebarOpen(false);
   };
+
+  if (location.pathname === "/system") return <OverviewLayout />;
 
   return (
     <div className={systemWorkspace ? "system-admin-layout min-h-screen bg-[#050806]" : "min-h-screen bg-[#050806]"}>
