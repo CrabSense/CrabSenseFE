@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import { Activity, ArrowRight, Bell, Brain, CalendarClock, Cctv, CheckCircle2, Clock, Cpu, Database, HardDrive, MapPin, RefreshCw, Server, Shield, TriangleAlert, Wifi, WifiOff, Wrench } from "lucide-react";
+import { Activity, ArrowRight, Bell, Brain, Cctv, CheckCircle2, Clock, Cpu, Database, HardDrive, MapPin, RefreshCw, Server, Shield, TriangleAlert, Wifi, WifiOff, Wrench } from "lucide-react";
 import systemAdminService from "../../services/systemAdminService";
 import { useSettings } from "../../context/SettingsContext";
 import { deviceKind, formatWhen, formatBytes } from "./deviceModel";

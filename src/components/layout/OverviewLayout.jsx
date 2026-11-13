@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Activity, Brain, Cctv, Cpu, Gauge, HardDrive, Rocket, ScrollText, Shield, Menu, X, LogOut, Search, UserRound, Bell, ChevronRight } from "lucide-react";
 import authService from "../../services/authService";
@@ -23,11 +23,18 @@ export default function OverviewLayout() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event) => { if (event.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
   const matches = nav.filter(([, key]) => t(key).toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   const logout = async () => {
     if (loggingOut) return;
     setLoggingOut(true);
     try { await authService.logout(); }
+    catch (error) { console.error("Logout failed:", error); }
     finally { navigate("/login", { replace: true }); }
   };
   return (
@@ -39,7 +46,7 @@ export default function OverviewLayout() {
           <button type="button" onClick={() => setOpen(false)} aria-label={t("nav.closeNavigation")} className="absolute right-2 top-2 rounded-lg p-2 min-[901px]:hidden"><X size={19}/></button>
           <img src={import.meta.env.BASE_URL + "login/logo.png"} alt="CrabSense" className="mx-auto h-[76px] w-auto max-w-full object-contain" />
           <div className="mt-1 text-[26px] font-extrabold tracking-tight text-[#153b56]">CrabSense</div>
-          <p className="mt-1 text-[11px] font-medium leading-snug text-[#526f79]">Nền tảng nuôi cua lột thông minh</p>
+          <p className="mt-1 text-[11px] font-medium leading-snug text-[#526f79]">{t("login.farmTitle")}</p>
           <p className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-[#138779]">System Administrator</p>
         </div>
         <nav aria-label={t("nav.mainNavigation")} className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
@@ -48,7 +55,7 @@ export default function OverviewLayout() {
         <div className="relative shrink-0 overflow-hidden border-t border-[#dceee8] bg-gradient-to-br from-[#e9f7ef] to-[#bce5d5] px-4 py-4">
           <div aria-hidden="true" className="absolute -bottom-16 -right-16 h-40 w-48 rounded-[50%] border-8 border-white/50"/>
           <div className="relative flex items-center gap-2 text-[#13796e]"><Activity size={19}/><span className="text-xs font-bold">CrabSense</span></div>
-          <p className="relative mt-1 text-[11px] leading-relaxed text-[#416d69]">An Intelligent Platform for Soft-Shell Crab Farming</p>
+          <p className="relative mt-1 text-[11px] leading-relaxed text-[#416d69]">{t("login.tagline")}</p>
         </div>
       </aside>
       <div className="min-w-0 min-[901px]:ml-[266px]">
