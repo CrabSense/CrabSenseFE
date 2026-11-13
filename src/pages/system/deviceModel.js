@@ -1,7 +1,7 @@
 export function deviceKind(device) {
   const type = String(device?.deviceType || "").toLowerCase();
   if (
-    type.includes("camera") ||
+    type.includes("cam") ||
     device?.streamUrl ||
     device?.snapshotUrl
   ) {

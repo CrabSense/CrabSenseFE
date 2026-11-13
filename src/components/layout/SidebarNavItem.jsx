@@ -1,12 +1,12 @@
 import { NavLink } from "react-router-dom";
 
-function SidebarNavItem({ to, icon: Icon, label, collapsed = false, onClick }) {
+function SidebarNavItem({ to, icon: Icon, label, collapsed = false, onClick, multiline = false }) {
   return (
     <NavLink
       to={to}
       end
       onClick={onClick}
-      title={collapsed ? label : undefined}
+      title={label}
       aria-label={label}
       className={({ isActive }) =>
         [
@@ -77,7 +77,7 @@ function SidebarNavItem({ to, icon: Icon, label, collapsed = false, onClick }) {
           <span
             className={[
               "absolute left-12 right-5",
-              "truncate whitespace-nowrap",
+              multiline ? "whitespace-normal break-words text-[12px] leading-tight" : "truncate whitespace-nowrap",
 
               "transition-opacity",
               "duration-[180ms]",

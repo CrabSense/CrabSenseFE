@@ -403,6 +403,7 @@ function Sidebar({
                     icon={item.icon}
                     label={t(item.labelKey)}
                     collapsed={collapsed}
+                    multiline={isSystemAdmin}
                     onClick={onCloseMobile}
                   />
                   </div>
