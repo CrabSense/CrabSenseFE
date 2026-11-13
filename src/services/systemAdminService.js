@@ -219,6 +219,25 @@ const systemAdminService = {
     );
   },
 
+  async getRecordingLibrary(params = {}, signal) {
+    const query = new URLSearchParams();
+    Object.entries({page:1,pageSize:25,...params}).forEach(([key,value])=>{
+      if(value!==""&&value!=null)query.set(key,String(value));
+    });
+    const data=unwrapData(await fetchAPI(`/cameras/recordings?${query}`,{signal}));
+    if(!data||!Array.isArray(data.items)||!Number.isFinite(data.totalCount))throw new Error("BE chưa trả dữ liệu phân trang. Kiểm tra phiên bản API.");
+    return data;
+  },
+  async getRecordingDetail(id,signal){
+    return unwrapData(await fetchAPI(`/cameras/recordings/${encodeURIComponent(id)}`,{signal}));
+  },
+  async getRecordingBlob(id,download,signal,maxBytes){
+    return fetchAPI(`/cameras/recordings/${encodeURIComponent(id)}/${download?"download":"content"}`,{signal},{responseType:"blob",maxBytes});
+  },
+  async deleteRecording(id){
+    return unwrapData(await fetchAPI(`/cameras/recordings/${encodeURIComponent(id)}?confirm=true`,{method:"DELETE"}));
+  },
+
   async getRecordings(deviceId) {
     const suffix = deviceId ? `?deviceId=${deviceId}` : "";
     return unwrapList(await fetchAPI(`/cameras/recordings${suffix}`));

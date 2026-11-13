@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import { useSearchParams } from "react-router-dom";
+import { CalendarClock, Film } from "lucide-react";
+import RecordingHistory from "./RecordingHistory";
+import "./recording-history.css";
 
 import systemAdminService from "../../services/systemAdminService";
-import { DataTable, Panel, SystemPage, SystemState } from "../../components/system/SystemChrome";
-import { formatBytes, formatWhen, statusClass } from "./deviceModel";
+import { Panel, SystemPage, SystemState } from "../../components/system/SystemChrome";
+import { statusClass } from "./deviceModel";
 
 const MODES = ["Disabled", "Continuous", "MotionDetection", "AiEvent", "Scheduled"];
 
-function CameraRecording() {
+function RecordingSchedule() {
   const [cameras, setCameras] = useState([]);
-  const [history, setHistory] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,12 +23,7 @@ function CameraRecording() {
     setLoading(true);
     setError("");
     try {
-      const [schedules, recordings] = await Promise.all([
-        systemAdminService.getRecordingSchedules(),
-        systemAdminService.getRecordings(),
-      ]);
-      setCameras(schedules);
-      setHistory(recordings);
+      setCameras(await systemAdminService.getRecordingSchedules());
     } catch (loadError) {
       setError(loadError?.message || "Không tải được camera.");
     } finally {
@@ -76,10 +74,6 @@ function CameraRecording() {
   };
 
   return (
-    <SystemPage
-      title="Quản lý lịch trình ghi hình"
-      description="Lưu cấu hình lịch ghi trên API. Camera Agent chưa tích hợp; chưa thể xác nhận đang ghi hình."
-    >
       <SystemState loading={loading} error={error} onRetry={load}>
         <div className="space-y-4">
           <p className="text-sm text-[#355b6a]">
@@ -170,21 +164,8 @@ function CameraRecording() {
             </Panel>
           ) : null}
 
-          <Panel title="Video Camera đã lưu (không xác nhận do lịch ghi tạo)">
-            <DataTable
-              empty="Chưa có file video trong media."
-              rows={history}
-              columns={[
-                { key: "createdAt", label: "Time", render: (row) => formatWhen(row.createdAt) },
-                { key: "fileName", label: "File" },
-                { key: "category", label: "Category" },
-                { key: "sizeBytes", label: "Size", render: (row) => formatBytes(row.sizeBytes) },
-              ]}
-            />
-          </Panel>
         </div>
       </SystemState>
-    </SystemPage>
   );
 }
 
@@ -208,4 +189,17 @@ NumberField.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-export default CameraRecording;
+export default function CameraRecording(){
+  const [params,setParams]=useSearchParams();
+  const tab=params.get("tab")==="history"?"history":"schedule";
+  const changeTab=value=>setParams(prev=>{const next=new URLSearchParams(prev);if(value==="history")next.set("tab","history");else next.delete("tab");return next;},{replace:true});
+  return <SystemPage title="Quản lý lịch trình ghi hình" description="Cấu hình lịch ghi và tra cứu video Camera đã lưu trong hệ thống.">
+    <div className="recording-workspace">
+      <div className="rec-tabs" role="group" aria-label="Chế độ quản lý ghi hình">
+        <button type="button" aria-pressed={tab==="schedule"} onClick={()=>changeTab("schedule")}><CalendarClock size={18}/> Lịch trình ghi hình</button>
+        <button type="button" aria-pressed={tab==="history"} onClick={()=>changeTab("history")}><Film size={18}/> Lịch sử ghi hình</button>
+      </div>
+      {tab==="history"?<RecordingHistory key={params.get("deviceId")||"all"} initialDeviceId={params.get("deviceId")||""}/>:<RecordingSchedule/>}
+    </div>
+  </SystemPage>;
+}
