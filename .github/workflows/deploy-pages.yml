@@ -1,0 +1,71 @@
+name: Deploy FE to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_GITHUB_PAGES: "true"
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Validate public API configuration
+        run: |
+          node --input-type=module <<'NODE'
+          const value = process.env.VITE_API_BASE_URL?.trim();
+          if (!value) {
+            console.warn("::warning::VITE_API_BASE_URL is unset. Static UI will deploy, but API calls are unavailable.");
+            process.exit(0);
+          }
+          const url = new URL(value);
+          if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash ||
+              ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) || !url.pathname.replace(/\/+$/, "").endsWith("/api")) {
+            throw new Error("VITE_API_BASE_URL must be a public HTTPS API root ending in /api, without credentials, query or fragment.");
+          }
+          NODE
+      - run: npm ci
+      - run: npm run build
+      - name: Verify Pages output
+        run: |
+          test -s dist/index.html
+          grep -q '/CrabSenseFE/assets/' dist/index.html
+          test -s dist/login/logo.png
+          touch dist/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: dist
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,5 +1,11 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5080/api";
+const IS_PAGES = import.meta.env.VITE_GITHUB_PAGES === "true";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || (IS_PAGES ? "" : "http://localhost:5080/api")).replace(/\/+$/, "");
+
+function requireApiBase() {
+  if (!API_BASE_URL) {
+    throw new Error("Backend API is not configured. Set VITE_API_BASE_URL in GitHub Actions and redeploy.");
+  }
+}
 
 let refreshPromise = null;
 
@@ -33,7 +39,11 @@ const saveAuthData = (data) => {
 const redirectToLogin = () => {
   clearAuthStorage();
 
-  if (window.location.pathname !== "/login") {
+  if (IS_PAGES) {
+    if (window.location.hash !== "#/login") {
+      window.location.replace(import.meta.env.BASE_URL + "#/login");
+    }
+  } else if (window.location.pathname !== "/login") {
     window.location.replace("/login");
   }
 };
@@ -41,6 +51,7 @@ const redirectToLogin = () => {
 // Dùng fetch trực tiếp ở đây để tránh:
 // fetchAPI -> refresh -> fetchAPI -> refresh -> ...
 export const refreshAccessToken = async () => {
+  requireApiBase();
   const refreshToken = localStorage.getItem("refreshToken");
 
   if (!refreshToken) {
@@ -96,6 +107,7 @@ export const refreshAccessToken = async () => {
 const fetchAPI = async (endpoint, options = {}, configOptions = {}) => {
   const { skipAuth = false, skipRefresh = false } = configOptions;
 
+  requireApiBase();
   const url = `${API_BASE_URL}${endpoint}`;
 
   const makeRequest = async (token = null) => {
