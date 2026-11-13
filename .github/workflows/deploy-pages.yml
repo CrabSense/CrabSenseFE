@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_GITHUB_PAGES: "true"
-      VITE_PAGES_BASE_PATH: ${{ vars.VITE_PAGES_BASE_PATH || '/CrabSenseFE/' }}
-      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+      VITE_PAGES_BASE_PATH: ${{ github.event_name == 'pull_request' && '/' || vars.VITE_PAGES_BASE_PATH || '/CrabSenseFE/' }}
+      VITE_API_BASE_URL: ${{ github.event_name == 'pull_request' && 'https://api.example.com/api' || vars.VITE_API_BASE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,6 +55,14 @@ jobs:
           grep -Fq "${VITE_PAGES_BASE_PATH}assets/" dist/index.html
           test -s dist/login/logo.png
           touch dist/.nojekyll
+      - name: Verify project-site build on PR
+        if: github.event_name == 'pull_request'
+        env:
+          VITE_PAGES_BASE_PATH: /CrabSenseFE/
+        run: |
+          npm run build
+          grep -Fq '/CrabSenseFE/assets/' dist/index.html
+          test -s dist/login/logo.png
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
