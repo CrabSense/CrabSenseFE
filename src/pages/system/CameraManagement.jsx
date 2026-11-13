@@ -6,6 +6,7 @@ import systemAdminService from "../../services/systemAdminService";
 import { SystemPage, SystemState } from "../../components/system/SystemChrome";
 import { formatWhen } from "./deviceModel";
 import "./camera-management.css";
+import { buildLocationGroups, locationSummary } from "./cameraLocations.js";
 
 const EMPTY_ID = "00000000-0000-0000-0000-000000000000";
 const STATES = { online: "Online", offline: "Mất kết nối", maintenance: "Bảo trì", error: "Lỗi", unknown: "Chưa xác định" };
@@ -57,14 +58,14 @@ function validateCameraSource(value, snapshot = false) {
   } catch { return false; }
 }
 
-function CameraForm({ camera, areas, onClose, onSaved }) {
+function CameraForm({ camera, areas, initialArea = "", initialRow = "", onClose, onSaved }) {
   const ref = useRef(null);
   const busyRef = useRef(false);
   const [form, setForm] = useState(() => ({
     deviceCode: camera?.deviceCode || "", name: camera?.name || "", deviceType: cameraFormType(camera?.deviceType),
     ipAddress: camera?.ipAddress || "", macAddress: camera?.macAddress || "", streamUrl: camera?.streamUrl || "",
     snapshotUrl: camera?.snapshotUrl || "", resolution: camera?.resolution || "", firmwareVersion: camera?.firmwareVersion || "",
-    farmingAreaId: camera?.farmingAreaId || "", farmingRowId: camera?.farmingRowId || "", installationLocation: camera?.installationLocation || "",
+    farmingAreaId: camera?.farmingAreaId || initialArea, farmingRowId: camera?.farmingRowId || initialRow, installationLocation: camera?.installationLocation || "",
     note: camera?.note || "",
   }));
   const [customResolution, setCustomResolution] = useState(() => Boolean(camera?.resolution && !RESOLUTIONS.includes(camera.resolution)));
@@ -171,7 +172,51 @@ function CameraForm({ camera, areas, onClose, onSaved }) {
     </form>
   </dialog>;
 }
-CameraForm.propTypes = {camera:PropTypes.object,areas:PropTypes.array.isRequired,onClose:PropTypes.func.isRequired,onSaved:PropTypes.func.isRequired};
+CameraForm.propTypes = {camera:PropTypes.object,areas:PropTypes.array.isRequired,initialArea:PropTypes.string,initialRow:PropTypes.string,onClose:PropTypes.func.isRequired,onSaved:PropTypes.func.isRequired};
+
+function LocationCameraCard({ camera, selected, onChoose, onEdit, canEdit }) {
+  return <article className={`cam-location-card ${selected?"selected":""}`}>
+    <button type="button" className="cam-location-card-main" onClick={()=>onChoose(camera)} aria-label={"Xem chi tiết "+camera.deviceCode}>
+      <div className="cam-location-preview"><Video size={27}/><span>Chưa xác minh hình ảnh</span><StatusPill camera={camera}/></div>
+      <div className="cam-location-card-info"><strong>{camera.deviceCode}</strong><span>{camera.name||"Camera"}</span><small>{camera.installationLocation||"Chưa khai báo vị trí lắp đặt"}</small><small><Clock size={12}/> {formatWhen(camera.lastSeenAt)}</small></div>
+    </button>
+    <div className="cam-location-card-actions"><button type="button" onClick={()=>onChoose(camera)}><Eye size={15}/> Chi tiết</button><button type="button" disabled={!canEdit} onClick={()=>onEdit(camera)}><MapPin size={15}/> Gán vị trí</button></div>
+  </article>;
+}
+LocationCameraCard.propTypes={camera:PropTypes.object.isRequired,selected:PropTypes.bool,onChoose:PropTypes.func.isRequired,onEdit:PropTypes.func.isRequired,canEdit:PropTypes.bool};
+
+function CameraLocationView({ cameras, filtered, areas, area, row, onArea, onChoose, onEdit, onAdd, selectedId, locationError }) {
+  const summary=locationSummary(cameras,areas);
+  const groups=buildLocationGroups(cameras,filtered,areas,area,row);
+  const [closed,setClosed]=useState({});
+  const toggle=id=>setClosed(prev=>({...prev,[id]:!prev[id]}));
+  const counts=items=>({online:items.filter(c=>statusKey(c)==="online").length,offline:items.filter(c=>statusKey(c)==="offline").length,maintenance:items.filter(c=>statusKey(c)==="maintenance").length,error:items.filter(c=>statusKey(c)==="error").length,unknown:items.filter(c=>statusKey(c)==="unknown").length});
+  return <div className="cam-location-view">
+    <div className="cam-location-summary">
+      {[[MapPin,"Khu nuôi",locationError?"—":areas.length],[Video,"Đã gán khu",summary.assigned],[CircleAlert,"Chưa gán khu",summary.unassigned]].map(([Icon,label,value])=><div key={label}><span className="cam-location-summary-icon"><Icon size={21}/></span><span><small>{label}</small><strong>{value}</strong></span></div>)}
+    </div>
+    {locationError?<p className="cam-note" role="alert">Không tải được danh mục khu/dãy. Chỉ hiển thị vị trí đã lưu trên Camera; không thể xác định khu hoặc dãy nào còn trống.</p>:<>
+      <div className="cam-location-picker"><h3>Chọn khu nuôi</h3><div role="group" aria-label="Chọn khu nuôi">
+        <button type="button" aria-pressed={area==="all"} onClick={()=>onArea("all")}><strong>Tất cả khu</strong><small>{cameras.length} Camera</small></button>
+        {areas.map(a=><button key={a.id} type="button" aria-pressed={area===a.id} onClick={()=>onArea(a.id)}><strong>{a.name||a.code}{a.isActive===false?" · Ngừng hoạt động":""}</strong><small>{cameras.filter(c=>c.farmingAreaId===a.id).length} Camera</small></button>)}
+        <button type="button" aria-pressed={area==="none"} onClick={()=>onArea("none")}><strong>Chưa gán khu</strong><small>{summary.unassigned} Camera</small></button>
+      </div></div>
+    </>}
+    {groups.length?groups.map(group=>{
+      const stat=counts(group.all);
+      return <section key={group.id} className="cam-area-group">
+        <header className="cam-area-head"><div><h3><MapPin size={17}/>{group.name}</h3><p>{group.all.length} Camera · {stat.online} Online · {stat.offline} Offline · {stat.maintenance} Bảo trì{stat.error?` · ${stat.error} Lỗi`:""}{stat.unknown?` · ${stat.unknown} Chưa xác định`:""}</p></div><button type="button" className="cam-icon" aria-expanded={!closed[group.id]} aria-label={(closed[group.id]?"Mở ":"Thu gọn ")+group.name} onClick={()=>toggle(group.id)}><ChevronRight size={18} className={closed[group.id]?"":"cam-location-chevron"}/></button></header>
+        {!closed[group.id]&&<div className="cam-area-rows">
+          {!group.rows.length&&<div className="cam-location-empty"><Video size={23}/><strong>{group.all.length?"Không có Camera phù hợp bộ lọc":"Khu này chưa có Camera"}</strong>{!group.all.length&&group.canAssign&&!locationError&&<button className="system-secondary-button" type="button" onClick={()=>onAdd(group.id,"")}>Thêm Camera vào khu</button>}</div>}
+          {group.rows.map(r=><section key={r.id} className="cam-row-group"><header><div><h4>{r.name}{r.inactive?" · Ngừng hoạt động":""}</h4><small>{r.all.length} Camera{r.items.length!==r.all.length?` · ${r.items.length} phù hợp`:""}</small></div>{group.canAssign&&r.canAssign&&!locationError&&<button type="button" className="cam-icon" aria-label={"Thêm Camera vào "+r.name} title="Thêm Camera" onClick={()=>onAdd(group.id,r.id==="none"?"":r.id)}><Plus size={18}/></button>}</header>
+            {r.items.length?<div className="cam-location-cards">{r.items.map(camera=><LocationCameraCard key={camera.id} camera={camera} selected={camera.id===selectedId} onChoose={onChoose} onEdit={onEdit} canEdit={!locationError}/>)}</div>:<div className="cam-location-empty"><Video size={23}/><span>{r.all.length?"Không có Camera phù hợp bộ lọc":"Chưa có Camera trong "+(r.id==="none"?"nhóm này":"dãy này")}</span></div>}
+          </section>)}
+        </div>}
+      </section>;
+    }):<div className="cam-empty"><MapPin size={30}/><strong>Không có khu hoặc Camera phù hợp</strong><span>Thay đổi bộ lọc hoặc thêm Camera.</span></div>}
+  </div>;
+}
+CameraLocationView.propTypes={cameras:PropTypes.array.isRequired,filtered:PropTypes.array.isRequired,areas:PropTypes.array.isRequired,area:PropTypes.string.isRequired,row:PropTypes.string.isRequired,onArea:PropTypes.func.isRequired,onChoose:PropTypes.func.isRequired,onEdit:PropTypes.func.isRequired,onAdd:PropTypes.func.isRequired,selectedId:PropTypes.string,locationError:PropTypes.bool.isRequired};
 
 function CameraDetails({ camera, schedule, tab, onTab, onClose, onEdit, onReload, canEdit }) {
   const [detail,setDetail]=useState(null);
@@ -300,7 +345,8 @@ export default function CameraManagement(){
   };
   const areaRows=area==="all"?areas.flatMap(a=>a.rows||[]):areas.find(a=>a.id===area)?.rows||[];
   const editCamera=c=>{if(!locationError)setEdit({camera:c});};
-  const grouped=Object.entries(filtered.reduce((acc,c)=>{const key=cameraPlace(c);(acc[key]??=[]).push(c);return acc;},Object.create(null)));
+  const chooseArea=value=>{setArea(value);setRow("all");setPage(1);};
+  const addAtLocation=(areaId,rowId)=>{if(!locationError)setEdit({camera:null,initialArea:areaId,initialRow:rowId});};
   return <SystemPage title="Quản lý Camera" description="Đăng ký, cấu hình và giám sát Camera trong hệ thống CrabSense." actions={<><button type="button" className="system-secondary-button cam-btn" disabled={refreshing} onClick={load}><RefreshCw size={16} className={refreshing?"animate-spin":""}/> Làm mới</button><button type="button" className="system-secondary-button cam-btn" disabled={!data} onClick={exportCsv}><Download size={16}/> Xuất CSV</button><button type="button" className="system-primary-button cam-btn" disabled={!data||locationError} onClick={()=>setEdit({camera:null})}><Plus size={18}/> Thêm Camera</button></>}>
     <div className="camera-management">
       <SystemState loading={loading} error={!data?error:""} onRetry={load}>
@@ -312,20 +358,20 @@ export default function CameraManagement(){
         <div className="cam-layout">
           <section className="cam-list-panel">
             <div className="cam-filters"><label className="cam-search"><Search size={17}/><input aria-label="Tìm Camera" placeholder="Tìm tên, mã Camera hoặc IP…" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/></label>
-              <label>Khu nuôi<select aria-label="Khu nuôi" value={area} onChange={e=>{setArea(e.target.value);setRow("all");setPage(1);}}><option value="all">Tất cả</option><option value="none">Chưa gán</option>{areas.map(a=><option key={a.id} value={a.id}>{a.name||a.code}</option>)}</select></label>
-              <label>Dãy nuôi<select aria-label="Dãy nuôi" value={row} onChange={e=>{setRow(e.target.value);setPage(1);}}><option value="all">Tất cả</option>{areaRows.map(r=><option key={r.id} value={r.id}>{r.name||r.code}</option>)}</select></label>
+              <label>Khu nuôi<select aria-label="Khu nuôi" value={area} onChange={e=>chooseArea(e.target.value)}><option value="all">Tất cả</option><option value="none">Chưa gán</option>{areas.map(a=><option key={a.id} value={a.id}>{a.name||a.code}</option>)}</select></label>
+              <label>Dãy nuôi<select aria-label="Dãy nuôi" value={row} disabled={area==="none"||locationError} onChange={e=>{setRow(e.target.value);setPage(1);}}><option value="all">Tất cả</option>{areaRows.map(r=><option key={r.id} value={r.id}>{r.name||r.code}</option>)}</select></label>
               <label>Trạng thái<select aria-label="Trạng thái" value={status} onChange={e=>{setStatus(e.target.value);setPage(1);}}><option value="all">Tất cả</option>{Object.entries(STATES).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
             </div>
             <div className="cam-list-heading"><h2>{view==="list"?"Danh sách Camera":"Camera theo khu / dãy"}</h2><span>{filtered.length} kết quả</span></div>
             {view==="list"?<><div className="cam-table-scroll" tabIndex={0} role="region" aria-label="Danh sách Camera"><table className="cam-table"><thead><tr><th scope="col">Mã / tên Camera</th><th scope="col">Vị trí</th><th scope="col">IP / Stream</th><th scope="col">Trạng thái</th><th scope="col">Ghi hình</th><th scope="col">Kết nối gần nhất</th><th scope="col">Thao tác</th></tr></thead><tbody>{visible.map(c=><tr key={c.id} className={c.id===selectedId?"selected":""}><td><button type="button" className="cam-device" onClick={()=>choose(c)}><span className="cam-device-icon"><Camera size={20}/></span><span><strong>{c.deviceCode}</strong><small>{c.name||"Camera"}</small></span></button></td><td><span className="cam-cell-main">{cameraPlace(c)}</span><small>{display(c.installationLocation)}</small></td><td><span className="cam-cell-main">{display(c.ipAddress)}</span><small>{protocol(c.streamUrl)} · {display(c.resolution)}</small></td><td><StatusPill camera={c}/></td><td><span className="cam-pill cam-neutral">{recordingLabel(scheduleById.get(c.id))}</span><small>{scheduleById.get(c.id)?.runtimeStatus==="NotIntegrated"?"Chưa tích hợp":""}</small></td><td>{formatWhen(c.lastSeenAt)}</td><td><div className="cam-actions"><button type="button" className="cam-icon" title="Xem chi tiết" aria-label={"Xem "+c.deviceCode} onClick={()=>choose(c)}><Eye size={17}/></button><button type="button" className="cam-icon" disabled={locationError} title="Chỉnh sửa" aria-label={"Sửa "+c.deviceCode} onClick={()=>editCamera(c)}><Pencil size={16}/></button><div className="cam-more"><button type="button" className="cam-icon" aria-expanded={menu===c.id} aria-label={"Thao tác "+c.deviceCode} onClick={()=>setMenu(menu===c.id?null:c.id)}><MoreHorizontal size={19}/></button>{menu===c.id&&<div className="cam-menu"><button type="button" onClick={()=>choose(c,"health")}>Chẩn đoán</button><button type="button" onClick={()=>choose(c,"events")}>Nhật ký</button><button type="button" onClick={()=>choose(c,"config")}>Cấu hình</button></div>}</div></div></td></tr>)}</tbody></table></div>
               {!visible.length&&<div className="cam-empty"><Video size={30}/><strong>{cameras.length?"Không có Camera phù hợp":"Chưa có Camera đăng ký"}</strong><span>{cameras.length?"Thay đổi bộ lọc để xem kết quả.":"Thêm Camera để bắt đầu quản lý thiết bị."}</span>{!cameras.length&&!locationError&&<button className="system-primary-button" type="button" onClick={()=>setEdit({camera:null})}>Thêm Camera</button>}</div>}
-              <div className="cam-pagination"><span>Hiển thị {filtered.length?(current-1)*size+1:0}–{Math.min(current*size,filtered.length)} / {filtered.length} Camera</span><div><label>Số dòng <select value={size} onChange={e=>{setSize(Number(e.target.value));setPage(1);}}>{[5,10,20,50].map(n=><option key={n}>{n}</option>)}</select></label><button type="button" className="cam-icon" aria-label="Trang trước" disabled={current===1} onClick={()=>setPage(current-1)}><ChevronLeft size={18}/></button><span className="cam-page-number">{current} / {pages}</span><button type="button" className="cam-icon" aria-label="Trang sau" disabled={current===pages} onClick={()=>setPage(current+1)}><ChevronRight size={18}/></button></div></div></>:<div className="cam-location-groups">{grouped.length?grouped.map(([place,items])=><section key={place}><h3><MapPin size={17}/>{place}<span>{items.length}</span></h3><div>{items.map(c=><button type="button" key={c.id} onClick={()=>choose(c)} className={c.id===selectedId?"active":""}><Camera size={21}/><span><strong>{c.deviceCode}</strong><small>{c.name}</small></span><StatusPill camera={c}/></button>)}</div></section>):<div className="cam-empty">Không có Camera phù hợp.</div>}</div>}
+              <div className="cam-pagination"><span>Hiển thị {filtered.length?(current-1)*size+1:0}–{Math.min(current*size,filtered.length)} / {filtered.length} Camera</span><div><label>Số dòng <select value={size} onChange={e=>{setSize(Number(e.target.value));setPage(1);}}>{[5,10,20,50].map(n=><option key={n}>{n}</option>)}</select></label><button type="button" className="cam-icon" aria-label="Trang trước" disabled={current===1} onClick={()=>setPage(current-1)}><ChevronLeft size={18}/></button><span className="cam-page-number">{current} / {pages}</span><button type="button" className="cam-icon" aria-label="Trang sau" disabled={current===pages} onClick={()=>setPage(current+1)}><ChevronRight size={18}/></button></div></div></>:<CameraLocationView cameras={cameras} filtered={filtered} areas={areas} area={area} row={row} onArea={chooseArea} onChoose={choose} onEdit={editCamera} onAdd={addAtLocation} selectedId={selectedId} locationError={locationError}/>}
           </section>
           {selected&&<CameraDetails key={selected.id} camera={selected} schedule={scheduleById.get(selected.id)} tab={tab} onTab={setTab} onClose={()=>setSelectedId(null)} onEdit={editCamera} onReload={load} canEdit={!locationError}/>}
         </div>
         <p className="cam-hint cam-bottom-note">Trạng thái kết nối lấy từ BE. Ghi hình là cấu hình đã lưu, không phải trạng thái đang quay thực tế.</p>
       </SystemState>
-      {edit&&<CameraForm camera={edit.camera} areas={areas} onClose={()=>setEdit(null)} onSaved={()=>{setNotice(edit.camera?"Đã lưu cấu hình Camera.":"Đã đăng ký Camera; chờ heartbeat.");load();}}/>}
+      {edit&&<CameraForm camera={edit.camera} areas={areas} initialArea={edit.initialArea} initialRow={edit.initialRow} onClose={()=>setEdit(null)} onSaved={()=>{setNotice(edit.camera?"Đã lưu cấu hình Camera.":"Đã đăng ký Camera; chờ heartbeat.");load();}}/>}
     </div>
   </SystemPage>;
 }

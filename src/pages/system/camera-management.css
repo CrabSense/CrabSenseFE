@@ -53,3 +53,30 @@
 .cam-required-note{margin-right:auto;color:#597580;font-size:11px}
 .cam-camera-form .cam-dialog-foot{z-index:2}
 @media(max-width:600px){.cam-form-methods{grid-template-columns:1fr}.cam-form-section{padding:11px}.cam-form-title-icon{width:40px;height:40px}.cam-required-note{flex-basis:100%}.cam-camera-form .cam-dialog-foot{flex-wrap:wrap}}
+
+/* Location hierarchy: area picker, empty rows and compact camera cards. */
+.cam-location-view{padding:4px 16px 16px;display:grid;gap:14px}
+.cam-location-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cam-location-summary>div{display:flex;gap:10px;align-items:center;border:1px solid var(--cam-border);border-radius:12px;padding:12px;background:#f8fcfa;min-width:0}
+.cam-location-summary-icon{display:grid;place-items:center;width:38px;height:38px;background:#e4f5ed;color:var(--cam-accent);border-radius:10px;flex:none}
+.cam-location-summary small,.cam-location-summary strong{display:block}.cam-location-summary small{font-size:11px;color:var(--cam-muted)}.cam-location-summary strong{font-size:22px;line-height:1.2;color:var(--cam-ink)}
+.cam-location-picker h3{font-size:13px;font-weight:700;margin:0 0 9px}
+.cam-location-picker>div{display:flex;flex-wrap:wrap;gap:8px}
+.cam-location-picker button{min-width:112px;text-align:left;padding:9px 12px;background:#f5faf7;border:1px solid var(--cam-border);border-radius:10px;color:var(--cam-ink);cursor:pointer}
+.cam-location-picker button[aria-pressed=true]{background:#147e75;color:#fff;border-color:#147e75}
+.cam-location-picker button strong,.cam-location-picker button small{display:block}.cam-location-picker button small{font-size:11px;opacity:.86;margin-top:3px}
+.cam-area-group{border:1px solid var(--cam-border);border-radius:14px;overflow:hidden;background:#fff}
+.cam-area-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 14px;background:#edf7f2;border-bottom:1px solid var(--cam-border)}
+.cam-area-head h3{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:700;margin:0}.cam-area-head h3 svg{color:var(--cam-accent);flex:none}
+.cam-area-head p{font-size:11px;color:var(--cam-muted);margin:4px 0 0}.cam-location-chevron{transform:rotate(90deg)}
+.cam-area-rows{padding:12px;display:grid;gap:11px}.cam-row-group{border:1px solid var(--cam-border);border-radius:11px;background:#f9fcfb;padding:11px;min-width:0}
+.cam-row-group>header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.cam-row-group h4{font-size:13px;font-weight:700;margin:0}.cam-row-group header small{color:var(--cam-muted);font-size:11px}
+.cam-location-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,195px),1fr));gap:10px}
+.cam-location-card{border:1px solid var(--cam-border);border-radius:11px;overflow:hidden;background:#fff;min-width:0}.cam-location-card.selected{outline:2px solid #69bda9;outline-offset:-2px}
+.cam-location-card-main{display:block;width:100%;padding:0;border:0;background:transparent;text-align:left;color:var(--cam-ink);cursor:pointer}
+.cam-location-preview{position:relative;min-height:103px;background:#eaf4ef;display:grid;place-content:center;justify-items:center;gap:5px;color:#6f9f93;padding:27px 7px 9px;text-align:center}
+.cam-location-preview>span:not(.cam-pill){font-size:10px;color:#597580}.cam-location-preview .cam-pill{position:absolute;top:7px;right:7px;font-size:10px;padding:4px 6px}
+.cam-location-card-info{display:grid;gap:3px;padding:10px;overflow-wrap:anywhere}.cam-location-card-info strong{color:#17665e;font-size:13px}.cam-location-card-info>span{font-weight:600}.cam-location-card-info small{font-size:11px;color:var(--cam-muted);display:flex;align-items:center;gap:4px}
+.cam-location-card-actions{display:flex;border-top:1px solid var(--cam-border)}.cam-location-card-actions button{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 3px;border:0;background:#fff;color:var(--cam-accent);font-size:11px;font-weight:600;cursor:pointer}.cam-location-card-actions button+button{border-left:1px solid var(--cam-border)}.cam-location-card-actions button:hover{background:#edf8f3}
+.cam-location-empty{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;min-height:76px;padding:12px;color:var(--cam-muted);font-size:12px;text-align:center;border:1px dashed var(--cam-border);border-radius:9px;background:#fff}.cam-location-empty svg{color:#88b7aa}.cam-location-empty button{margin-left:5px}
+@media(max-width:600px){.cam-location-view{padding:4px 10px 12px}.cam-location-summary{grid-template-columns:1fr;gap:6px}.cam-location-summary>div{padding:8px}.cam-location-summary strong{font-size:18px}.cam-location-cards{grid-template-columns:1fr}}
