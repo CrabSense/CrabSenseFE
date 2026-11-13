@@ -12,6 +12,17 @@ function unwrapData(response) {
 }
 
 const systemAdminService = {
+  async getCameras() { return unwrapList(await fetchAPI("/cameras")); },
+  async getCamera(id) { return unwrapData(await fetchAPI(`/cameras/${id}`)); },
+  async createCamera(body) { return unwrapData(await fetchAPI("/cameras", { method: "POST", body: JSON.stringify(body) })); },
+  async updateCamera(id, body) { return unwrapData(await fetchAPI(`/cameras/${id}`, { method: "PUT", body: JSON.stringify(body) })); },
+  async deleteCamera(id) { return unwrapData(await fetchAPI(`/cameras/${id}`, { method: "DELETE" })); },
+  async disableCamera(id) { return unwrapData(await fetchAPI(`/cameras/${id}/disable`, { method: "POST" })); },
+  async getCameraHealth(id) { return unwrapData(await fetchAPI(`/cameras/${id}/health`)); },
+  async getCameraEvents(id) { return unwrapList(await fetchAPI(`/cameras/${id}/events`)); },
+  async getCameraCapabilities(id) { return unwrapData(await fetchAPI(`/cameras/${id}/capabilities`)); },
+  async testCamera(id) { return unwrapData(await fetchAPI(`/cameras/${id}/test-connection`, { method: "POST" })); },
+
   async getDeviceLocations() {
     return unwrapList(await fetchAPI("/system/device-locations"));
   },
