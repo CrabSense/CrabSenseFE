@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Activity, Menu, X, LogOut, Search, UserRound, Bell, ChevronRight } from "lucide-react";
+import { Activity, Menu, X, LogOut, Search, UserRound, Bell, ChevronRight, ChevronDown } from "lucide-react";
 import authService from "../../services/authService";
 import useTranslation from "../../hooks/useTranslation";
 import ScrollToTop from "./ScrollToTop";
@@ -14,6 +14,8 @@ export default function OverviewLayout() {
   const currentPage = SYSTEM_ADMIN_ITEMS.find(item => item.to === pathname);
   const user = authService.getStoredUser();
   const [open, setOpen] = useState(false);
+  const inDeviceGroup = pathname === "/system/devices" || pathname.startsWith("/system/devices/");
+  const [devicesExpanded, setDevicesExpanded] = useState(inDeviceGroup);
   const [search, setSearch] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
   useEffect(() => {
@@ -23,6 +25,10 @@ export default function OverviewLayout() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [open]);
   useEffect(() => { setOpen(false); setSearch(""); }, [pathname]);
+  // Reveal the active child when opening a direct link or using browser navigation.
+  useEffect(() => {
+    if (pathname === "/system/devices" || pathname.startsWith("/system/devices/")) setDevicesExpanded(true);
+  }, [pathname]);
   const matches = SYSTEM_ADMIN_ITEMS.filter(({ labelKey }) => t(labelKey).toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   const logout = async () => {
     if (loggingOut) return;
@@ -46,7 +52,21 @@ export default function OverviewLayout() {
         <nav aria-label={t("nav.mainNavigation")} className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
           {SYSTEM_ADMIN_GROUPS.map(group => <section key={group.labelKey} className="mb-4 last:mb-0">
             <h2 className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-wider text-[#64818b]">{t(group.labelKey)}</h2>
-            {group.items.map(({to,labelKey,icon:Icon,child}) => <NavLink key={to} to={to} end onClick={() => setOpen(false)} className={({isActive}) => `flex min-h-10 items-center gap-2.5 rounded-xl px-3 py-2 text-[12px] font-semibold no-underline transition-colors ${child ? "ml-4" : ""} ${isActive ? "bg-gradient-to-r from-[#147a8f] to-[#2e9b5f] text-white shadow-sm" : "text-[#244b60] hover:bg-[#e6f4ee]"}`}><Icon size={17} aria-hidden="true" className="shrink-0"/><span className="min-w-0 flex-1">{t(labelKey)}</span></NavLink>)}
+            {group.items.filter(item => !item.child).map(({to,labelKey,icon:Icon}) => {
+              if (to === "/system/devices") return (
+                <div key={to}>
+                  <button type="button" aria-expanded={devicesExpanded} aria-controls="system-device-submenu" onClick={() => setDevicesExpanded(value => !value)} className={`flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[12px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-[#147e75] ${inDeviceGroup ? "bg-[#e4f5ed] text-[#13796e]" : "text-[#244b60] hover:bg-[#e6f4ee]"}`}>
+                    <Icon size={17} aria-hidden="true" className="shrink-0"/>
+                    <span className="min-w-0 flex-1">{t(labelKey)}</span>
+                    <ChevronDown size={15} aria-hidden="true" className={`shrink-0 transition-transform motion-reduce:transition-none ${devicesExpanded ? "rotate-180" : ""}`}/>
+                  </button>
+                  <div id="system-device-submenu" hidden={!devicesExpanded} className="ml-5 mt-1 border-l border-[#d5e9e2] pl-2">
+                    {group.items.filter(item => item.child).map(({to:childTo,labelKey:childKey,icon:ChildIcon}) => <NavLink key={childTo} to={childTo} end onClick={() => setOpen(false)} className={({isActive}) => `flex min-h-9 items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-semibold no-underline transition-colors ${isActive ? "bg-gradient-to-r from-[#147a8f] to-[#2e9b5f] text-white shadow-sm" : "text-[#244b60] hover:bg-[#e6f4ee]"}`}><ChildIcon size={16} aria-hidden="true" className="shrink-0"/><span className="min-w-0 flex-1">{t(childKey)}</span></NavLink>)}
+                  </div>
+                </div>
+              );
+              return <NavLink key={to} to={to} end onClick={() => setOpen(false)} className={({isActive}) => `flex min-h-10 items-center gap-2.5 rounded-xl px-3 py-2 text-[12px] font-semibold no-underline transition-colors ${isActive ? "bg-gradient-to-r from-[#147a8f] to-[#2e9b5f] text-white shadow-sm" : "text-[#244b60] hover:bg-[#e6f4ee]"}`}><Icon size={17} aria-hidden="true" className="shrink-0"/><span className="min-w-0 flex-1">{t(labelKey)}</span></NavLink>;
+            })}
           </section>)}
         </nav>
         <div className="relative shrink-0 overflow-hidden border-t border-[#dceee8] bg-gradient-to-br from-[#e9f7ef] to-[#bce5d5] px-4 py-4">
