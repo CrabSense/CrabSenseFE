@@ -254,17 +254,23 @@ function Login() {
       />
 
       <div className="relative overflow-hidden rounded-[28px] border border-white/90 bg-[#FFFFF8] shadow-[0_14px_32px_rgba(0,0,0,0.12),0_6px_20px_rgba(13,92,61,0.08)]">
-        <KnockoutImage
-          src={import.meta.env.BASE_URL + "login/background_right.png"}
-          className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[72px] object-cover object-right min-[640px]:block"
-        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 hidden w-[64px] overflow-hidden min-[640px]:block"
+        >
+          <div className="absolute -top-16 -right-24 h-[310px] w-[220px] rotate-[18deg] rounded-[50%] border-[12px] border-[#B4E2D2]/70" />
+          <div className="absolute top-8 -right-28 h-[260px] w-[190px] rotate-[18deg] rounded-[50%] border-[2px] border-[#77C9B0]/50" />
+          <div className="absolute top-[48%] right-3 h-5 w-5 rounded-full bg-[#9DDAC6]/60" />
+          <div className="absolute -right-28 bottom-8 h-[240px] w-[220px] -rotate-[25deg] rounded-[45%] bg-gradient-to-br from-[#BDE9D8]/70 to-[#70C9AC]/60" />
+          <div className="absolute -right-20 -bottom-24 h-[220px] w-[200px] -rotate-[25deg] rounded-[45%] border-[3px] border-white/80 bg-[#D4EFE3]/50" />
+        </div>
 
         <form
           onSubmit={handleSubmit}
           noValidate
-          className="relative px-6 pt-[26px] pb-[26px] min-[640px]:pr-20 min-[640px]:pl-8"
+          className="relative px-5 py-7 min-[640px]:px-8 min-[640px]:pr-[76px]"
         >
-          <h2 className="text-center text-[24px] font-extrabold text-[#163A5C]">
+          <h2 className="text-center text-[23px] font-extrabold leading-tight text-[#163A5C] min-[640px]:text-[25px]">
             {t("login.welcome")}
           </h2>
           <p className="mt-2 text-center text-[13px] leading-[1.4] text-[#5A6B75]">
@@ -349,7 +355,7 @@ function Login() {
             </button>
           </div>
 
-          <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <label
               htmlFor="login-remember"
               className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-[#5A6B75]"
@@ -361,7 +367,7 @@ function Login() {
                 onChange={(event) => setRememberMe(event.target.checked)}
                 className="h-[18px] w-[18px] shrink-0 accent-[#0D5C3D]"
               />
-              <span className="truncate">{t("login.rememberMe")}</span>
+              <span className="leading-snug">{t("login.rememberMe")}</span>
             </label>
             <button
               type="button"
@@ -427,7 +433,7 @@ function Login() {
 
           <button
             type="button"
-            className="mt-3.5 flex h-12 w-full items-center justify-center gap-1.5 rounded-[13px] border border-[#C5D2CA] bg-white text-[13px] font-semibold text-[#163A5C]"
+            className="mt-3.5 flex min-h-12 w-full items-center justify-center gap-1.5 rounded-[13px] border border-[#C5D2CA] bg-white px-3 py-2 text-center text-[13px] font-semibold text-[#163A5C]"
           >
             {t("login.register")}
             <ArrowRight size={18} aria-hidden="true" />
