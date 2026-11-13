@@ -16,6 +16,10 @@ const systemAdminService = {
     return unwrapList(await fetchAPI("/devices"));
   },
 
+  async getControllerPorts(id) {
+    return unwrapData(await fetchAPI(`/iot/controllers/${id}/ports`));
+  },
+
   async getDevice(id) {
     return unwrapData(await fetchAPI(`/devices/${id}`));
   },
