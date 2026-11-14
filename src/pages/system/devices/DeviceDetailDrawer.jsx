@@ -120,7 +120,7 @@ function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, t
           return;
         }
         await systemAdminService.updateFirmware(row.id, firmwareDraft.trim());
-        setNotice("Đã cập nhật firmware. Audit log đã ghi.");
+        setNotice("Đã ghi nhận yêu cầu firmware; chưa xác nhận firmware trên thiết bị đã thay đổi.");
       }
       if (action === "disable") {
         await systemAdminService.disableDevice(row.id);
@@ -245,7 +245,7 @@ function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, t
         <div className="mt-3 space-y-3">
           <div className="flex flex-wrap gap-2 text-xs">
             <Action label={row.type === "camera" ? "Kiểm tra kết nối" : "Test connection"} onClick={() => run("test")} />
-            {row.type !== "camera" && <Action label="Khởi động lại" onClick={() => run("restart")} />}
+            {row.type !== "camera" && <button type="button" disabled title="Edge Protocol chưa hỗ trợ restart an toàn" className="rounded-lg border border-[#c9dfd9] px-2 py-1 opacity-50">Khởi động lại</button>}
             <Action label="Kích hoạt" onClick={() => run("enable")} />
           </div>
           {row.type !== "camera" && <div className="flex gap-2">
@@ -255,7 +255,7 @@ function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, t
               placeholder="Phiên bản firmware"
               className="h-9 min-w-0 flex-1 rounded-lg border border-[#dcebe8] bg-[#f7fbfa] px-2 text-xs"
             />
-            <button type="button" onClick={() => run("firmware")} className="rounded-lg border border-[#c9dfd9] px-2 text-xs">Cập nhật firmware</button>
+            <button type="button" onClick={() => run("firmware")} className="rounded-lg border border-[#c9dfd9] px-2 text-xs">Ghi nhận yêu cầu firmware</button>
           </div>}
           <div className="rounded-xl border border-[#e9b5b5] bg-[#fff1f1] p-3">
             <p className="text-xs font-semibold text-[#b93838]">Thao tác nguy hiểm</p>
