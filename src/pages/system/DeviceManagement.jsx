@@ -40,9 +40,9 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
     try {
       const [deviceRows, sensorRows, areaRows, scheduleRows] = await Promise.all([
         systemAdminService.getDevices(),
-        systemAdminService.getSensorInventory({}),
+        kind === "controller" ? Promise.resolve([]) : systemAdminService.getSensorInventory({}),
         systemAdminService.getDeviceLocations().then(value => { setLocationError(""); return value; }).catch(err => { setLocationError(err?.message || "Không tải được khu/dãy."); return null; }),
-        systemAdminService.getRecordingSchedules().catch(() => []),
+        kind === "controller" ? Promise.resolve([]) : systemAdminService.getRecordingSchedules().catch(() => []),
       ]);
       setDevices(deviceRows);
       setSensors(sensorRows);
@@ -53,7 +53,7 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [kind]);
 
   useEffect(() => {
     load();
@@ -116,7 +116,7 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
           return;
         }
         await systemAdminService.updateFirmware(row.id, pending.firmware.trim());
-        setNotice(`Đã ghi firmware ${pending.firmware.trim()} cho ${row.code}.`);
+        setNotice(`Đã ghi nhận yêu cầu firmware ${pending.firmware.trim()} cho ${row.code}; chưa xác nhận thiết bị đã cập nhật.`);
       }
       if (type === "copy") {
         if (!pending.targetId) {
@@ -143,8 +143,8 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
       if (type === "enable") {
         if (row.source === "sensor") await systemAdminService.enableSensor(row.id);
         else if (row.type === "camera") await systemAdminService.enableCamera(row.id);
-        else await systemAdminService.updateDevice(row.id, { status: "Online" });
-        setNotice(row.type === "camera" ? `${row.code} đã cho phép hoạt động; chờ heartbeat xác thực.` : `${row.code} đã được kích hoạt lại.`);
+        else await systemAdminService.updateDevice(row.id, { status: "Offline" });
+        setNotice(row.type === "camera" ? `${row.code} đã cho phép hoạt động; chờ heartbeat xác thực.` : `${row.code} đã được cho phép hoạt động; chờ heartbeat xác thực.`);
       }
       if (type === "remove") {
         if (row.source === "sensor") await systemAdminService.deleteSensor(row.id);
