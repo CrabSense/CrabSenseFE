@@ -12,6 +12,7 @@ import SystemOverview from "./pages/system/SystemOverview.jsx";
 import DeviceManagement from "./pages/system/DeviceManagement.jsx";
 import CameraManagement from "./pages/system/CameraManagement.jsx";
 import SensorManagement from "./pages/system/SensorManagement.jsx";
+import ControllerManagement from "./pages/system/ControllerManagement.jsx";
 import CameraRecording from "./pages/system/CameraRecording.jsx";
 import AiServices from "./pages/system/AiServices.jsx";
 import StorageBackup from "./pages/system/StorageBackup.jsx";
@@ -112,7 +113,7 @@ function App() {
           <Route path="/system/devices" element={<DeviceManagement key="all" />} />
           <Route path="/system/devices/cameras" element={<CameraManagement />} />
           <Route path="/system/devices/sensors" element={<SensorManagement />} />
-          <Route path="/system/devices/controllers" element={<DeviceManagement key="controller" kind="controller" />} />
+          <Route path="/system/devices/controllers" element={<ControllerManagement />} />
           <Route path="/system/device-monitoring" element={<DeviceMonitoring />} />
           <Route path="/system/cameras" element={<CameraRecording />} />
           <Route path="/system/ai" element={<AiServices />} />
