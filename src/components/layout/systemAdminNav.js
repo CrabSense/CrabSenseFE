@@ -6,14 +6,14 @@ export const SYSTEM_ADMIN_GROUPS = [
   ] },
   { labelKey: "nav.systemDevicesGroup", items: [
     { to: "/system/devices", labelKey: "nav.deviceManagement", icon: Cpu },
-    { to: "/system/devices/cameras", labelKey: "nav.manageCameras", icon: Cctv, child: true },
-    { to: "/system/devices/sensors", labelKey: "nav.manageSensors", icon: Radio, child: true },
     { to: "/system/devices/controllers", labelKey: "nav.manageControllers", icon: Cpu, child: true },
+    { to: "/system/devices/sensors", labelKey: "nav.manageSensors", icon: Radio, child: true },
+    { to: "/system/devices/cameras", labelKey: "nav.manageCameras", icon: Cctv, child: true },
     { to: "/system/device-monitoring", labelKey: "nav.deviceMonitoring", icon: Activity },
   ] },
   { labelKey: "nav.systemAiGroup", items: [
-    { to: "/system/ai", labelKey: "nav.aiManager", icon: Brain },
     { to: "/system/cameras", labelKey: "nav.recordingSchedule", icon: CalendarClock },
+    { to: "/system/ai", labelKey: "nav.aiManager", icon: Brain },
   ] },
   { labelKey: "nav.systemDataGroup", items: [
     { to: "/system/storage", labelKey: "nav.storageManagement", icon: HardDrive },
