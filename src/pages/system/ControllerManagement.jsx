@@ -326,6 +326,8 @@ function CommandHistory({ row, revision, refresh }) {
           column("status", "Trạng thái", c => <span className={statusClass(c.status === "acknowledged" ? "success" : c.status === "timedout" ? "warning" : c.status)}>{COMMAND_STATES[c.status] || c.status}</span>),
           column("attemptCount", "Lần thử", c => shown(c.attemptCount)),
           column("deliveredAt", "Giao lúc", c => formatWhen(c.deliveredAt)),
+          column("expiresAt", "Hết hạn", c => formatWhen(c.expiresAt)),
+          column("commandSequence", "Sequence", c => shown(c.commandSequence)),
           column("acknowledgedAt", "Phản hồi / lỗi", c => formatWhen(c.acknowledgedAt || c.failedAt || c.supersededAt)),
           column("resultMessage", "Kết quả", c => shown(c.resultMessage)),
           column("inventoryRevision", "Revision", c => shown(c.inventoryRevision)),
@@ -345,6 +347,11 @@ function TechnicalEvents({ row, revision, refresh }) {
   const loadLogs = useCallback(() => api.getDeviceLogs(row.id), [row.id]);
   const ports = useResource(loadPorts, revision);
   const logs = useResource(loadLogs, revision);
+  const loadFailures = useCallback(signal => Promise.all([
+    api.getControllerCommandHistory(row.id, { page: 1, pageSize: 10, status: "failed" }, signal),
+    api.getControllerCommandHistory(row.id, { page: 1, pageSize: 10, status: "timedout" }, signal),
+  ]).then(results => results.flatMap(result => result.items).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))), [row.id]);
+  const failures = useResource(loadFailures, revision);
   const warnings = useMemo(() => {
     const issues = row.issues.map((message, i) => ({ id: "issue-" + i, type: "Danh mục", message }));
     if (!row.lastSeen) issues.push({ id: "heartbeat", type: "Heartbeat", message: "Chưa nhận heartbeat." });
@@ -373,6 +380,16 @@ function TechnicalEvents({ row, revision, refresh }) {
         ]} empty="Chưa có nhật ký kỹ thuật."/>
       </SystemState>
       <p className="mt-3 text-xs text-[#54747e]">Xem kết quả lệnh chi tiết trong tab Lịch sử điều khiển.</p>
+    </Panel>
+    <Panel title="Lệnh thất bại hoặc hết hạn gần đây">
+      <SystemState loading={failures.loading} error={failures.error} onRetry={refresh}>
+        <DataTable rows={failures.value || []} columns={[
+          column("createdAt", "Thời điểm", x => formatWhen(x.createdAt)), column("command", "Lệnh"),
+          column("channel", "Kênh", x => shown(x.channel)), column("status", "Trạng thái", x => COMMAND_STATES[x.status] || x.status),
+          column("resultMessage", "Kết quả", x => shown(x.resultMessage)),
+        ]} empty="Không có lệnh thất bại hoặc hết hạn."/>
+      </SystemState>
+      <p className="mt-3 text-xs text-[#54747e]">Tối đa 10 lệnh mỗi nhóm trạng thái; đây là kết quả lệnh đã lưu, không phải cảnh báo mới.</p>
     </Panel>
   </div>;
 }
