@@ -480,7 +480,7 @@ function Workspace({ tab, controllerId, onChange }) {
   const row = controllerId ? rows.find(r => r.id === controllerId) : rows[0];
   return <SystemPage title="Quản lý Controller" description="Giám sát phần cứng, ánh xạ thiết bị, lịch sử lệnh và cấu hình kỹ thuật." actions={<button className="system-secondary-button" type="button" onClick={refresh}>Làm mới</button>}>
     <Tabs tab={tab} controllerId={row?.id || controllerId} onChange={onChange}/>
-    <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
+    {tab === "provisioning" ? <ControllerProvisioning/> : <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
       {!rows.length ? <Panel title="Chưa có Controller"><Link to={BASE} className="text-[#13796e] underline">Mở danh sách để đăng ký Controller</Link></Panel> : <>
         <div className="ctrl-context">
           <span className="ctrl-context-icon"><Cpu size={24}/></span>
