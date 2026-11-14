@@ -73,8 +73,11 @@ const systemAdminService = {
     return unwrapData(await fetchAPI(`/cameras/${id}/enable`, { method: "POST" }));
   },
 
-  async getDevices() {
-    return unwrapList(await fetchAPI("/devices"));
+  async getDevices(signal) {
+    const data = unwrapData(await fetchAPI("/devices", { signal }));
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.items)) return data.items;
+    throw new Error("API thiết bị trả dữ liệu không đúng định dạng.");
   },
 
   async getControllerPorts(id, signal) {
@@ -266,16 +269,18 @@ const systemAdminService = {
     return unwrapData(await fetchAPI(`/devices/${id}/disable`, { method: "POST" }));
   },
 
-  async getDiagnostics(id) {
-    return unwrapData(await fetchAPI(`/devices/${id}/diagnostics`));
+  async getDiagnostics(id, signal) {
+    return unwrapData(await fetchAPI(`/devices/${encodeURIComponent(id)}/diagnostics`, { signal }));
   },
 
   async testConnection(id) {
     return unwrapData(await fetchAPI(`/devices/${id}/test-connection`, { method: "POST" }));
   },
 
-  async getDeviceLogs(id) {
-    return unwrapList(await fetchAPI(`/devices/${id}/logs`));
+  async getDeviceLogs(id, signal) {
+    const data = unwrapData(await fetchAPI(`/devices/${encodeURIComponent(id)}/logs`, { signal }));
+    if (!Array.isArray(data)) throw new Error("API nhật ký thiết bị trả dữ liệu không đúng định dạng.");
+    return data;
   },
 
   async getRecordingSchedules() {
