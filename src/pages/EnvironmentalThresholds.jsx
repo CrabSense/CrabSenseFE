@@ -1,7 +1,11 @@
 
+import PropTypes from "prop-types";
 import { useCallback, useEffect, useState } from "react";
 import { Plus, RefreshCw, Save, Trash2, X } from "lucide-react";
 import alertThresholdService from "../services/alertThresholdService";
+import authService from "../services/authService";
+import {FARM_ADMINISTRATOR_ROLE} from "../constants/roles";
+import {useSearchParams} from "react-router-dom";
 
 const panel = "rounded-xl border border-[#24382A] bg-[#0D1510] p-5";
 const field = "w-full rounded-lg border border-[#304736] bg-[#050806] px-3 py-2 text-sm text-[#F4F7F4] outline-none focus:border-[#77FF00]";
@@ -15,7 +19,19 @@ const emptyForm = {
   isActive: true,
 };
 
+function SensorOverrides({canEdit,initialId}){
+  const [rows,setRows]=useState([]),[id,setId]=useState(initialId||""),[min,setMin]=useState(""),[max,setMax]=useState(""),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+  const load=useCallback(async()=>{setLoading(true);setError("");try{const data=await alertThresholdService.getSensors();setRows(data);setId(old=>data.some(s=>s.id===old)?old:"");}catch(e){setError(e.message);}finally{setLoading(false);}},[]);
+  useEffect(()=>{load();},[load]);
+  useEffect(()=>{let active=true;setMin("");setMax("");setError("");if(id)alertThresholdService.getSensorThreshold(id).then(v=>{if(active){setMin(v.minThreshold??"");setMax(v.maxThreshold??"");}}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[id]);
+  const save=async(reset=false)=>{if(!id||!canEdit||busy)return;if(reset&&!window.confirm("Bỏ ngưỡng riêng, sử dụng ngưỡng chung?"))return;const a=Number(min),b=Number(max);if(!reset&&(min===""||max===""||!Number.isFinite(a)||!Number.isFinite(b)||a>=b)){setError("Nhập đủ min/max và min < max.");return;}setBusy(true);setError("");setNotice("");try{const v=await alertThresholdService.setSensorThreshold(id,{minThreshold:reset?null:a,maxThreshold:reset?null:b});setMin(v.minThreshold??"");setMax(v.maxThreshold??"");setNotice("Đã lưu ngưỡng Sensor.");}catch(e){setError(e.message);}finally{setBusy(false);}};
+  const selected=rows.find(s=>s.id===id);
+  return <section className={panel}><h2 className="text-lg font-semibold">Ngưỡng riêng theo Sensor</h2><p className="my-2 text-sm text-[#AAC5B0]">Chỉ Sensor thuộc khu được phân quyền. Ngưỡng riêng ưu tiên hơn ngưỡng chung; bỏ cả hai giá trị để dùng ngưỡng chung.</p>{error&&<p role="alert" className="text-red-400">{error}</p>}{notice&&<p role="status" className="text-[#77FF00]">{notice}</p>}<div className="grid gap-3 md:grid-cols-3"><label>Sensor<select className={field} disabled={loading||busy} value={id} onChange={e=>{setId(e.target.value);setNotice("");}}><option value="">Chọn Sensor</option>{rows.map(s=><option key={s.id} value={s.id}>{s.sensorCode} · {s.name||s.sensorType}</option>)}</select></label><label>Min ({selected?.unit||"—"})<input className={field} disabled={!id||!canEdit||busy} type="number" step="any" value={min} onChange={e=>setMin(e.target.value)}/></label><label>Max ({selected?.unit||"—"})<input className={field} disabled={!id||!canEdit||busy} type="number" step="any" value={max} onChange={e=>setMax(e.target.value)}/></label></div><div className="mt-3 flex flex-wrap gap-2">{canEdit&&<><button type="button" className={action} disabled={!id||busy} onClick={()=>save(false)}>Lưu ngưỡng riêng</button><button type="button" className="rounded-lg border border-[#304736] px-3 py-2" disabled={!id||busy} onClick={()=>save(true)}>Dùng ngưỡng chung</button></>}<button type="button" className="rounded-lg border border-[#304736] px-3 py-2" disabled={loading||busy} onClick={load}>Làm mới danh mục</button></div></section>;
+}
+SensorOverrides.propTypes={canEdit:PropTypes.bool.isRequired,initialId:PropTypes.string};
 export default function EnvironmentalThresholds() {
+  const [params]=useSearchParams();
+  const canEdit=[FARM_ADMINISTRATOR_ROLE,"FarmOwner"].includes(authService.getStoredUser()?.role);
   const [thresholds, setThresholds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -163,7 +179,7 @@ export default function EnvironmentalThresholds() {
           <button
             className={action}
             onClick={startCreate}
-            disabled={busy}
+            disabled={busy||!canEdit}
           >
             <Plus size={16} className="mr-2 inline" />
             Add Threshold
@@ -176,6 +192,8 @@ export default function EnvironmentalThresholds() {
         Backend ưu tiên MinThreshold và MaxThreshold riêng
         của cảm biến nếu đã cấu hình.
       </div>
+
+      <SensorOverrides canEdit={canEdit} initialId={params.get("sensorId")}/>
 
       {error && (
         <div role="alert" className="rounded-lg border border-red-500/40 p-3 text-red-400">
@@ -307,14 +325,14 @@ export default function EnvironmentalThresholds() {
                   <td className="space-x-4 whitespace-nowrap p-3">
                     <button
                       className="text-[#77FF00]"
-                      disabled={busy}
+                      disabled={busy||!canEdit}
                       onClick={() => startEdit(item)}
                     >
                       Edit
                     </button>
                     <button
                       className="text-red-400"
-                      disabled={busy}
+                      disabled={busy||!canEdit}
                       onClick={() => handleDelete(item)}
                     >
                       <Trash2 size={15} className="inline" /> Delete

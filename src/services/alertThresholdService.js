@@ -10,6 +10,9 @@ function unwrap(response) {
 }
 
 const alertThresholdService = {
+  async getSensors(){return unwrap(await fetchAPI("/farm/sensors"));},
+  async getSensorThreshold(id){return unwrap(await fetchAPI("/sensors/"+encodeURIComponent(id)+"/thresholds"));},
+  async setSensorThreshold(id,payload){return unwrap(await fetchAPI("/sensors/"+encodeURIComponent(id)+"/thresholds",{method:"PUT",body:JSON.stringify(payload)}));},
   async getAll() {
     const response = await fetchAPI("/alert-thresholds");
     const data = unwrap(response);

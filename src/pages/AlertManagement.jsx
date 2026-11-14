@@ -201,7 +201,7 @@ export default function AlertManagement() {
 
                     {alert.sensorCode && (
                       <p className="mt-1 text-xs text-[#91A394]">
-                        Sensor: {alert.sensorCode}
+                        Sensor: {alert.sensorCode} {alert.sensorId&&<a className="ml-2 underline" href={"#/environmental-thresholds?sensorId="+encodeURIComponent(alert.sensorId)}>Xem ngưỡng</a>}
                       </p>
                     )}
 

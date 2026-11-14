@@ -95,7 +95,7 @@ function Detail({sensor,onClose,onEdit,onBinding,onNavigate,onChanged}){
 Detail.propTypes={sensor:PropTypes.object.isRequired,onClose:PropTypes.func.isRequired,onEdit:PropTypes.func.isRequired,onBinding:PropTypes.func.isRequired,onNavigate:PropTypes.func.isRequired,onChanged:PropTypes.func.isRequired};
 
 export default function SensorManagement(){
-  const [params]=useSearchParams();
+  const [params,setParams]=useSearchParams();
   const initialTab=TABS.some(([id])=>id===params.get("tab"))?params.get("tab"):"list";
   const [sensors,setSensors]=useState([]),[summary,setSummary]=useState(null),[areas,setAreas]=useState([]),[devices,setDevices]=useState([]),[types,setTypes]=useState([]);
   const [catalogAvailable,setCatalogAvailable]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(""),[auxError,setAuxError]=useState(""),[notice,setNotice]=useState(""),[revision,refresh]=useState(0);
@@ -115,8 +115,8 @@ export default function SensorManagement(){
     }).finally(()=>{if(!ctl.signal.aborted)setLoading(false);});
     return()=>ctl.abort();
   },[revision]);
-  useEffect(()=>{if(!params.get("edit")||!selected||!sensors.length)return;const s=sensors.find(s=>s.id===selected);if(s)setModal({kind:"form",sensor:s});},[params,selected,sensors.length]);
-  useEffect(()=>{const deviceId=params.get("deviceId"),portId=params.get("portId");if(!deviceId||!portId)return;const ctl=new AbortController();api.getDiscoveredSensors(deviceId,ctl.signal).then(v=>{if(!ctl.signal.aborted){const p=v.find(p=>p.id===portId);if(p)setModal({kind:"form",initialPort:p});else setNotice("Port không còn khả dụng.");}}).catch(e=>{if(!ctl.signal.aborted)setNotice(e.message);});return()=>ctl.abort();},[params]);
+  useEffect(()=>{if(!params.get("edit")||!selected||!sensors.length)return;const s=sensors.find(s=>s.id===selected);if(s){setModal({kind:"form",sensor:s});setParams(old=>{const next=new URLSearchParams(old);next.delete("edit");return next;},{replace:true});}},[params,selected,sensors,setParams]);
+  useEffect(()=>{const deviceId=params.get("deviceId"),portId=params.get("portId");if(!deviceId||!portId)return;const ctl=new AbortController();api.getDiscoveredSensors(deviceId,ctl.signal).then(v=>{if(!ctl.signal.aborted){const p=v.find(p=>p.id===portId);if(p)setModal({kind:"form",initialPort:p});else setNotice("Port không còn khả dụng.");setParams(old=>{const next=new URLSearchParams(old);next.delete("deviceId");next.delete("portId");return next;},{replace:true});}}).catch(e=>{if(!ctl.signal.aborted)setNotice(e.message);});return()=>ctl.abort();},[params,setParams]);
   const filtered=useMemo(()=>filterSensors(sensors,filters),[sensors,filters]);
   const visiblePage=Math.min(page,Math.max(1,Math.ceil(filtered.length/pageSize)));
   const active=sensors.find(s=>s.id===selected);
