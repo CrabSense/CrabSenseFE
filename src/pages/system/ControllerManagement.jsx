@@ -67,7 +67,13 @@ function Info({ entries }) {
 Info.propTypes = { entries: PropTypes.array.isRequired };
 
 function Monitor({ row, revision, refresh }) {
-  const load = useCallback(() => api.getDiagnostics(row.id), [row.id]);
+  const load = useCallback(signal => api.getDiagnostics(row.id, signal), [row.id]);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const timer = setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 30000);
+    return () => clearInterval(timer);
+  }, [autoRefresh, refresh]);
   const state = useResource(load, revision);
   const [test, setTest] = useState(null);
   const [testing, setTesting] = useState(false);
@@ -88,6 +94,7 @@ function Monitor({ row, revision, refresh }) {
         { label: "RSSI", value: data.rssiDbm == null ? "—" : data.rssiDbm + " dBm" },
       ]}/>
       <Panel title="Kết nối và chẩn đoán">
+        <label className="mb-3 flex items-center gap-2 text-xs"><input type="checkbox" checked={autoRefresh} onChange={e=>setAutoRefresh(e.target.checked)}/> Tự cập nhật mỗi 30 giây khi trang đang mở</label>
         <Info entries={[
           ["Trạng thái BE", data.status], ["Heartbeat gần nhất", formatWhen(data.lastSeenAt)],
           ["IP", data.ipAddress], ["Firmware báo / đã lưu", data.firmwareVersion],
@@ -348,7 +355,7 @@ CommandHistory.propTypes = { row: PropTypes.object.isRequired, revision: PropTyp
 
 function TechnicalEvents({ row, revision, refresh }) {
   const loadPorts = useCallback(signal => api.getControllerPorts(row.id, signal), [row.id]);
-  const loadLogs = useCallback(() => api.getDeviceLogs(row.id), [row.id]);
+  const loadLogs = useCallback(signal => api.getDeviceLogs(row.id, signal), [row.id]);
   const ports = useResource(loadPorts, revision);
   const logs = useResource(loadLogs, revision);
   const loadFailures = useCallback(signal => Promise.all([
@@ -456,7 +463,7 @@ Configuration.propTypes = { row: PropTypes.object.isRequired, revision: PropType
 function Workspace({ tab, controllerId, onChange }) {
   const [revision, setRevision] = useState(0);
   const refresh = useCallback(() => setRevision(v => v + 1), []);
-  const load = useCallback(() => api.getDevices(), []);
+  const load = useCallback(signal => api.getDevices(signal), []);
   const state = useResource(load, revision, true);
   const rows = useMemo(() => mapDeviceRows(state.value || [], []).filter(r => r.type === "controller"), [state.value]);
   const row = controllerId ? rows.find(r => r.id === controllerId) : rows[0];
