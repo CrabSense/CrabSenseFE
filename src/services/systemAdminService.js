@@ -101,6 +101,13 @@ const systemAdminService = {
     }));
   },
 
+  async getControllerEventHistory(id, {kind,page=1,pageSize=25,from,to}={},signal) {
+    const data=await sensorRequest("/iot/controllers/"+encodeURIComponent(id)+"/history",{params:{kind,page,pageSize,from,to},signal});
+    if(!data||!Array.isArray(data.items)||!Number.isFinite(data.totalCount)) throw new Error("API lịch sử phần cứng trả dữ liệu không đúng định dạng.");
+    return data;
+  },
+  getControllerAlerts(id,signal) { return sensorList("/iot/controllers/"+encodeURIComponent(id)+"/alerts",{signal}); },
+  acknowledgeControllerAlert(id,alertId) { return sensorRequest("/iot/controllers/"+encodeURIComponent(id)+"/alerts/"+encodeURIComponent(alertId)+"/acknowledge",{method:"POST"}); },
   async getControllerCommandHistory(id, { page = 1, pageSize = 25, status = "", from = "", to = "", channel = "" } = {}, signal) {
     const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     for (const [key,value] of Object.entries({status,from,to,channel})) if(value) query.set(key,value);
