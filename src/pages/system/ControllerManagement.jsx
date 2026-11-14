@@ -317,7 +317,15 @@ function CommandHistory({ row, revision, refresh }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [status, setStatus] = useState("");
-  const load = useCallback(signal => api.getControllerCommandHistory(row.id, { page, pageSize, status }, signal), [row.id, page, pageSize, status]);
+  const [from,setFrom]=useState(""),[to,setTo]=useState(""),[channel,setChannel]=useState("");
+  const load = useCallback(signal => api.getControllerCommandHistory(row.id, { page, pageSize, status, channel, from:from?new Date(from).toISOString():"", to:to?new Date(to).toISOString():"" }, signal), [row.id, page, pageSize, status,channel,from,to]);
+  const exportPage = data => {
+    const keys=["createdAt","command","channel","status","requestSource","resultMessage","commandSequence"];
+    const cell=v=>'"'+String(v??"").replace(/^[=+@\-\t\r]/,"'  const load = useCallback(signal => api.getControllerCommandHistory(row.id, { page, pageSize, status }, signal), [row.id, page, pageSize, status]);").replaceAll('"','""')+'"';
+    const csv=[keys.join(","),...data.items.map(item=>keys.map(k=>cell(item[k])).join(","))].join("\n");
+    const url=URL.createObjectURL(new Blob(["\uFEFF",csv],{type:"text/csv;charset=utf-8"}));
+    const a=document.createElement("a");a.href=url;a.download="controller-commands-page-"+page+".csv";a.click();URL.revokeObjectURL(url);
+  };
   const state = useResource(load, revision);
   const data = state.value;
   const pages = Math.max(1, Math.ceil((data?.totalCount || 0) / pageSize));
@@ -325,6 +333,9 @@ function CommandHistory({ row, revision, refresh }) {
     <p className="mb-3 text-xs text-[#54747e]">Lệnh được lưu tại Cloud. Phản hồi lệnh không phải bằng chứng thiết bị điện đã thực sự hoạt động.</p>
     <div className="mb-4 flex flex-wrap items-end gap-3">
       <label className="text-xs text-[#526f79]">Trạng thái<select className={fieldClass} value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="">Tất cả</option>{Object.entries(COMMAND_STATES).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+      <label className="text-xs text-[#526f79]">Từ (giờ địa phương)<input type="datetime-local" className={fieldClass} value={from} onChange={e=>{setFrom(e.target.value);setPage(1);}}/></label>
+      <label className="text-xs text-[#526f79]">Đến (không gồm mốc cuối)<input type="datetime-local" className={fieldClass} value={to} onChange={e=>{setTo(e.target.value);setPage(1);}}/></label>
+      <label className="text-xs text-[#526f79]">Kênh SSR<input className={fieldClass} maxLength={64} value={channel} onChange={e=>{setChannel(e.target.value);setPage(1);}}/></label>
       <label className="text-xs text-[#526f79]">Số dòng<select className={fieldClass} value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}>{[10,25,50,100].map(n => <option key={n}>{n}</option>)}</select></label>
     </div>
     <SystemState loading={state.loading} error={state.error} onRetry={refresh}>
@@ -344,7 +355,7 @@ function CommandHistory({ row, revision, refresh }) {
           column("inventoryRevision", "Revision", c => shown(c.inventoryRevision)),
         ]}/>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <span>{data.totalCount} lệnh · Trang {page}/{pages}</span>
+          <span>{data.totalCount} lệnh · Trang {page}/{pages}</span><button className="system-secondary-button" disabled={!data.items.length} onClick={()=>exportPage(data)}>Xuất CSV trang này</button>
           <div className="flex gap-2"><button className="system-secondary-button" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Trước</button><button className="system-secondary-button" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>Sau</button></div>
         </div>
       </>}
