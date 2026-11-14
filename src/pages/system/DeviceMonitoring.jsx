@@ -24,7 +24,7 @@ export default function DeviceMonitoring() {
     setError("");
     try {
       const [devices, sensors, alerts] = await Promise.all([
-        systemAdminService.getDevices(), systemAdminService.getSensors(), systemAdminService.getAlerts(true),
+        systemAdminService.getDevices(), systemAdminService.getSensorInventory({}), systemAdminService.getAlerts(true),
       ]);
       setData({ devices, sensors, alerts, updated: new Date() });
     } catch (err) { setError(err?.message || "Không tải được trạng thái thiết bị."); }
@@ -37,7 +37,7 @@ export default function DeviceMonitoring() {
   }, [load]);
   const rows = data ? [
     ...data.devices.map(item => ({ id: "device-" + item.id, code: item.deviceCode, name: item.name, kind: deviceKind(item), status: statusOf(item, false), lastSeen: item.lastSeenAt })),
-    ...data.sensors.map(item => ({ id: "sensor-" + item.id, code: item.sensorCode, name: item.sensorType, kind: "sensor", status: statusOf(item, true), lastSeen: item.lastSeenAt })),
+    ...data.sensors.map(item => ({ id: "sensor-" + item.id, code: item.sensorCode, name: item.name||item.sensorType, kind: "sensor", status: statusOf(item, true), lastSeen: item.lastSeenAt, sensorId:item.id, location:[item.areaName,item.rowName].filter(Boolean).join(" / "), controller:item.controllerCode, port:item.portCode, value:item.latestValue, unit:item.unit, measuredAt:item.latestMeasuredAt })),
   ] : [];
   const statuses = ["Online", "Offline", "Error", "Maintenance", "Disabled", "Unknown"];
   const filtered = rows.filter(row => (kind === "all" || row.kind === kind) && (status === "all" || String(row.status).toLowerCase() === status.toLowerCase()));
@@ -61,6 +61,7 @@ export default function DeviceMonitoring() {
             { key: "kind", label: "Loại", render: row => kindNames[row.kind] },
             { key: "status", label: "Trạng thái", render: row => <span className={statusClass(row.status)}>{row.status}</span> },
             { key: "lastSeen", label: "Lần cuối kết nối", render: row => formatWhen(row.lastSeen) },
+            {key:"location",label:"Vị trí"},{key:"controller",label:"Controller / Port",render:row=>[row.controller,row.port].filter(Boolean).join(" / ")||"—"},{key:"value",label:"Giá trị",render:row=>row.value==null?"—":row.value+" "+(row.unit||"")},{key:"detail",label:"Chi tiết",render:row=>row.sensorId?<Link to={"/system/devices/sensors?sensorId="+encodeURIComponent(row.sensorId)}>Xem Sensor</Link>:"—"},
           ]}/>
         </Panel>
         <Panel title="Cảnh báo kỹ thuật đang mở"><DataTable rows={data?.alerts || []} empty="Không có cảnh báo đang mở." columns={[

@@ -11,7 +11,7 @@ export function menuGroups(row) {
   };
 
   add("Xem", "diagnostics", "Chẩn đoán", !maintenance, maintenance ? "Đang vô hiệu hóa. Chỉ xem, nhật ký và kích hoạt lại." : "");
-  add("Xem", "logs", "Xem nhật ký", device, device ? "" : "Nhật ký nằm trên bộ điều khiển, chưa có API riêng cho sensor.");
+  add("Xem", "logs", "Xem nhật ký", true);
 
   if (row.type === "camera") {
     add("Xem", "preview", "Xem nguồn hình ảnh đã cấu hình", true);
@@ -26,7 +26,7 @@ export function menuGroups(row) {
   }
   if (row.type === "sensor") {
     add("Xem", "latest", "Xem dữ liệu mới nhất", true);
-    add("Xem", "abnormal", "Kiểm tra dữ liệu bất thường", !maintenance);
+    add("Xem", "abnormal", "Xem tình trạng kỹ thuật", true);
     add("Xem", "mqtt", "Kiểm tra MQTT", false, "API chưa có kiểm tra MQTT.");
   }
   if (row.type === "controller") {
@@ -36,7 +36,7 @@ export function menuGroups(row) {
     add("Xem", "heartbeat", "Kiểm tra heartbeat", !maintenance);
   }
 
-  add("Cấu hình", "assign", "Gán vị trí", device && !maintenance, device ? "" : "Sensor được gắn vào bộ điều khiển khi tạo.");
+  add("Cấu hình", "assign", "Gán vị trí", !maintenance);
   add(
     "Cấu hình",
     "firmware",
@@ -47,8 +47,8 @@ export function menuGroups(row) {
   add("Cấu hình", "copy", "Sao chép cấu hình", !maintenance, "Chỉ sao chép thông số. Không sao chép mã, IP hoặc MAC.");
   if (row.type === "camera") add("Cấu hình", "stream", "Chỉnh thông số stream", device && !maintenance);
   if (row.type === "sensor") {
-    add("Cấu hình", "calibrate", "Hiệu chuẩn cảm biến", !maintenance, "Chỉnh ngưỡng min/max đang lưu trên server.");
-    add("Cấu hình", "sample", "Chỉnh chu kỳ lấy mẫu", false, "API chưa có chu kỳ lấy mẫu.");
+    add("Cấu hình", "calibrate", "Lịch sử hiệu chuẩn", true);
+    add("Cấu hình", "sample", "Chỉnh chu kỳ lấy mẫu", !maintenance);
   }
   if (row.type === "controller") add("Cấu hình", "mapping", "Xem ánh xạ I/O", true, "Chỉ đọc kênh relay đã lưu.");
 

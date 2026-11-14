@@ -31,11 +31,12 @@ SensorTable.propTypes={columns:PropTypes.array.isRequired,rows:PropTypes.array,e
 
 export function SensorHistory({sensor}){
   const today=dayVN(),[draft,setDraft]=useState({from:today,to:today}),[range,setRange]=useState(()=>dateRange(today,today));
+  const [quality,setQuality]=useState("");
   const [page,setPage]=useState(1),[revision,refresh]=useState(0),[error,setError]=useState(""),[exporting,setExporting]=useState(false);
   const exportRef=useRef(null);
-  const history=useSensorData(signal=>api.getSensorMeasurements(sensor.id,{from:range.from,to:range.to,page,pageSize:50},signal),[sensor.id,range,page,revision]);
-  const stats=useSensorData(signal=>api.getSensorStatistics(sensor.id,{from:range.from,to:range.to},signal),[sensor.id,range,revision]);
-  const chart=useSensorData(signal=>api.getSensorChart(sensor.id,range,signal),[sensor.id,range,revision]);
+  const history=useSensorData(signal=>api.getSensorMeasurements(sensor.id,{from:range.from,to:range.to,quality,page,pageSize:50},signal),[sensor.id,range,quality,page,revision]);
+  const stats=useSensorData(signal=>api.getSensorStatistics(sensor.id,{from:range.from,to:range.to,quality},signal),[sensor.id,range,quality,revision]);
+  const chart=useSensorData(signal=>api.getSensorChart(sensor.id,{...range,quality},signal),[sensor.id,range,quality,revision]);
   useEffect(()=>()=>exportRef.current?.abort(),[]);
   const apply=e=>{e.preventDefault();try{setRange(dateRange(draft.from,draft.to));setPage(1);setError("");}catch(e){setError(e.message);}};
   const exportAll=async()=>{
@@ -44,7 +45,7 @@ export function SensorHistory({sensor}){
     try{
       const records=[];let p=1;
       while(true){
-        const res=await api.getSensorMeasurements(sensor.id,{from:range.from,to:range.to,page:p,pageSize:200},ctl.signal);
+        const res=await api.getSensorMeasurements(sensor.id,{from:range.from,to:range.to,quality,page:p,pageSize:200},ctl.signal);
         if(res.totalCount>5000||records.length+res.items.length>5000)throw new Error("Tối đa 5.000 mẫu mỗi lần xuất. Hãy thu hẹp khoảng ngày.");
         records.push(...res.items);if(p>=res.totalPages||!res.items.length)break;p++;
       }
@@ -54,7 +55,7 @@ export function SensorHistory({sensor}){
   const groups=chart.data?.buckets?.reduce((acc,b)=>{const unit=b.unit||"Không rõ đơn vị";(acc[unit]??=[]).push({...b,time:new Date(b.at).getTime()});return acc;},Object.create(null))||{};
   return <div className="sen-stack">
     <section className="sen-panel"><div className="sen-section-head"><div><h2><Activity size={18}/> Lịch sử dữ liệu · {sensor.sensorCode}</h2><p>Khoảng ngày đo theo giờ Việt Nam (UTC+7), không phải ngày nhận.</p></div><button className="system-secondary-button sen-btn" onClick={()=>refresh(n=>n+1)} type="button"><RefreshCw size={16}/> Làm mới</button></div>
-    <form className="sen-inline-form" onSubmit={apply}><Field label="Từ ngày"><input required type="date" value={draft.from} onChange={e=>setDraft(d=>({...d,from:e.target.value}))}/></Field><Field label="Đến ngày"><input required type="date" value={draft.to} onChange={e=>setDraft(d=>({...d,to:e.target.value}))}/></Field><button type="submit" className="system-primary-button">Áp dụng</button><button type="button" className="system-secondary-button sen-btn" disabled={exporting||history.loading||Boolean(history.error)} onClick={exportAll}><Download size={16}/>{exporting?"Đang xuất…":"Xuất CSV"}</button></form>{error&&<p role="alert" className="sen-error">{error}</p>}
+    <form className="sen-inline-form" onSubmit={apply}><Field label="Từ ngày"><input required type="date" value={draft.from} onChange={e=>setDraft(d=>({...d,from:e.target.value}))}/></Field><Field label="Đến ngày"><input required type="date" value={draft.to} onChange={e=>setDraft(d=>({...d,to:e.target.value}))}/></Field><Field label="Chất lượng dữ liệu"><select value={quality} onChange={e=>{setQuality(e.target.value);setPage(1);}}><option value="">Tất cả</option>{Object.entries(QUALITY).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></Field><button type="submit" className="system-primary-button">Áp dụng</button><button type="button" className="system-secondary-button sen-btn" disabled={exporting||history.loading||Boolean(history.error)} onClick={exportAll}><Download size={16}/>{exporting?"Đang xuất…":"Xuất CSV"}</button></form>{error&&<p role="alert" className="sen-error">{error}</p>}
     </section>
     <section className="sen-panel"><h2>Thống kê theo đơn vị</h2><SensorState state={stats} onRetry={()=>refresh(n=>n+1)}>
       {stats.data?.groups?.length?stats.data.groups.map((g,i)=><div key={g.unit||i} className="sen-stat-group"><p>{g.unit||"Không rõ đơn vị"}</p><div className="sen-stat-grid">{[["Số mẫu",g.count],["Nhỏ nhất",g.min],["Lớn nhất",g.max],["Trung bình",g.average]].map(([label,value])=><div key={label}><small>{label}</small><strong>{numberLabel(value)}</strong></div>)}</div></div>):<div className="sen-empty">Chưa có mẫu đo trong khoảng này.</div>}
@@ -100,7 +101,7 @@ function ConfigEditor({sensor,config,onChanged}){
     <p className="sen-note">Đây là cấu hình mong muốn trên BE. Hardware/Kiosk cần hỗ trợ Edge V2 để xác nhận đã áp dụng; không tự báo thành công.</p>
     {error&&<p role="alert" className="sen-error">{error}</p>}{notice&&<p role="status" className="sen-notice">{notice}</p>}
     <div className="sen-form-grid"><Field label="Chu kỳ lấy mẫu (giây) *"><input type="number" required min="1" max="86400" step="1" value={interval} onChange={e=>setInterval(e.target.value)}/></Field><Field label="Timeout mất kết nối (giây) *"><input type="number" required min="1" max="604800" step="1" value={timeout} onChange={e=>setTimeoutValue(e.target.value)}/></Field></div>
-    <div><button type="submit" className="system-primary-button sen-btn" disabled={busy}><CheckCircle2 size={16}/>{busy?"Đang lưu…":"Lưu cấu hình"}</button></div>
+    <div><button type="button" className="system-secondary-button" disabled={busy} onClick={async()=>{if(!window.confirm("Khôi phục chu kỳ mặc định của firmware và timeout BE?"))return;setBusy(true);try{await api.resetSensorConfiguration(sensor.id,config.configurationVersion);onChanged();}catch(e){setError(e.message);}finally{setBusy(false);}}}>Khôi phục mặc định</button> <button type="submit" className="system-primary-button sen-btn" disabled={busy}><CheckCircle2 size={16}/>{busy?"Đang lưu…":"Lưu cấu hình"}</button></div>
   </form>;
 }
 ConfigEditor.propTypes={sensor:PropTypes.object.isRequired,config:PropTypes.object.isRequired,onChanged:PropTypes.func.isRequired};

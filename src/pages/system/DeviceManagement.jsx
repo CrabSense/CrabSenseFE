@@ -40,7 +40,7 @@ function DeviceManagement({ kind = "all" }) {
     try {
       const [deviceRows, sensorRows, areaRows, scheduleRows] = await Promise.all([
         systemAdminService.getDevices(),
-        systemAdminService.getSensors(),
+        systemAdminService.getSensorInventory({}),
         systemAdminService.getDeviceLocations().then(value => { setLocationError(""); return value; }).catch(err => { setLocationError(err?.message || "Không tải được khu/dãy."); return null; }),
         systemAdminService.getRecordingSchedules().catch(() => []),
       ]);
@@ -124,12 +124,9 @@ function DeviceManagement({ kind = "all" }) {
           return;
         }
         if (row.source === "sensor") {
-          await systemAdminService.updateSensor(pending.targetId, {
-            sensorType: row.raw.sensorType,
-            unit: row.raw.unit,
-            minThreshold: row.raw.minThreshold,
-            maxThreshold: row.raw.maxThreshold,
-          });
+          const [source,target]=await Promise.all([systemAdminService.getSensorConfiguration(row.id),systemAdminService.getSensorConfiguration(pending.targetId)]);
+          if(source.samplingIntervalSeconds==null) throw new Error("Sensor nguồn chưa có chu kỳ lấy mẫu.");
+          await systemAdminService.saveSensorConfiguration(pending.targetId,{samplingIntervalSeconds:source.samplingIntervalSeconds,disconnectTimeoutSeconds:source.disconnectTimeoutSeconds,expectedVersion:target.configurationVersion});
         } else {
           await systemAdminService.updateDevice(pending.targetId, {
             resolution: row.raw.resolution || "",
@@ -139,12 +136,12 @@ function DeviceManagement({ kind = "all" }) {
         setNotice(`Đã sao chép thông số từ ${row.code}. Mã, IP và MAC không được sao chép.`);
       }
       if (type === "disable") {
-        if (row.source === "sensor") await systemAdminService.updateSensor(row.id, { isActive: false });
+        if (row.source === "sensor") await systemAdminService.disableSensor(row.id);
         else await systemAdminService.disableDevice(row.id);
         setNotice(`${row.code} đã vô hiệu hóa.`);
       }
       if (type === "enable") {
-        if (row.source === "sensor") await systemAdminService.updateSensor(row.id, { isActive: true });
+        if (row.source === "sensor") await systemAdminService.enableSensor(row.id);
         else if (row.type === "camera") await systemAdminService.enableCamera(row.id);
         else await systemAdminService.updateDevice(row.id, { status: "Online" });
         setNotice(row.type === "camera" ? `${row.code} đã cho phép hoạt động; chờ heartbeat xác thực.` : `${row.code} đã được kích hoạt lại.`);
@@ -163,6 +160,10 @@ function DeviceManagement({ kind = "all" }) {
   };
 
   const onAction = async (row, action) => {
+    if(row.source==="sensor" && ["view","latest","diagnostics","abnormal","logs","config","assign","calibrate","sample"].includes(action)){
+      const tab=["logs"].includes(action)?"events":["config","assign","calibrate","sample"].includes(action)?"config":"list";
+      navigate("/system/devices/sensors?sensorId="+encodeURIComponent(row.id)+"&tab="+tab+(action==="assign"?"&edit=1":""));return;
+    }
     const tabs = {
       view: "info",
       preview: "info",

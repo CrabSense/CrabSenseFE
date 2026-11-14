@@ -8,7 +8,7 @@ import { deviceKind, formatWhen, formatBytes } from "./deviceModel";
 
 const jobs = {
   devices: () => systemAdminService.getDevices(),
-  sensors: () => systemAdminService.getSensors(),
+  sensors: () => systemAdminService.getSensorInventory({}),
   ai: () => systemAdminService.getAiServices(),
   health: () => systemAdminService.getHealth(),
   metrics: () => systemAdminService.getMetrics(),

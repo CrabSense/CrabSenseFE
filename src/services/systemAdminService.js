@@ -27,6 +27,10 @@ async function sensorList(path, options) {
 }
 
 const systemAdminService = {
+  getSensorRasLocations(signal) { return sensorList("/sensors/ras-locations",{signal}); },
+  cancelSensorTest(id,testId) { return sensorRequest(sensorPath(id,"tests/"+encodeURIComponent(testId)+"/cancel"),{method:"POST"}); },
+  resetSensorConfiguration(id,expectedVersion) { return sensorRequest(sensorPath(id,"configuration/reset"),{method:"POST",params:{expectedVersion}}); },
+  acknowledgeSensorAlert(id,alertId) { return sensorRequest(sensorPath(id,"events/"+encodeURIComponent(alertId)+"/acknowledge"),{method:"POST"}); },
   getSensorInventory(params,signal) { return sensorList("/sensors/inventory",{params,signal}); },
   getSensorInventoryDetail(id,signal) { return sensorRequest(sensorPath(id,"inventory"),{signal}); },
   getSensorSummary(signal) { return sensorRequest("/sensors/summary",{signal}); },

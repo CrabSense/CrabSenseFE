@@ -19,8 +19,10 @@ const SourceOptions=()=> <><option value="Controller">Controller</option><option
 
 export default function SensorForm({sensor,areas,devices,types,initialArea="",initialRow="",initialPort=null,onClose,onSaved}){
   const editing=Boolean(sensor),[raw,setRaw]=useState(null),[loading,setLoading]=useState(editing),[method,setMethod]=useState(initialPort?"port":"manual");
-  const [f,setF]=useState({sensorCode:initialPort?.sensorCode||"",name:"",sensorType:"",unit:"",sourceType:"Controller",deviceId:initialPort?.deviceId||"",portId:initialPort?.id||"",busAddress:"",busRegister:"",farmingAreaId:initialArea,farmingRowId:initialRow,installationLocation:""});
+  const [f,setF]=useState({sensorCode:initialPort?.sensorCode||"",name:"",sensorType:"",unit:"",sourceType:"Controller",deviceId:initialPort?.deviceId||"",portId:initialPort?.id||"",busAddress:"",busRegister:"",farmingAreaId:initialArea,farmingRowId:initialRow,installationLocation:"",waterSystemId:"",rasComponentId:""});
   const [ports,setPorts]=useState([]),[portLoading,setPortLoading]=useState(false),[portError,setPortError]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState("");
+  const [systems,setSystems]=useState([]),[rasError,setRasError]=useState("");
+  useEffect(()=>{const ctl=new AbortController();api.getSensorRasLocations(ctl.signal).then(v=>{if(!ctl.signal.aborted)setSystems(v);}).catch(e=>{if(!ctl.signal.aborted)setRasError(e.message);});return()=>ctl.abort();},[]);
   const lock=useRef(false);
   const set=(key,val)=>setF(old=>({...old,[key]:val}));
   useEffect(()=>{
@@ -28,7 +30,7 @@ export default function SensorForm({sensor,areas,devices,types,initialArea="",in
     const ctl=new AbortController();
     api.getSensor(sensor.id,ctl.signal).then(s=>{
       if(ctl.signal.aborted)return;
-      setRaw(s);setF({sensorCode:s.sensorCode,name:s.name||"",sensorType:s.sensorType,unit:s.unit||"",sourceType:s.sourceType||"Legacy",deviceId:s.deviceId||"",portId:s.controllerPortId||s.busPortId||"",busAddress:"",busRegister:"",farmingAreaId:s.farmingAreaId||"",farmingRowId:s.farmingRowId||"",installationLocation:s.installationLocation||""});
+      setRaw(s);setF({sensorCode:s.sensorCode,name:s.name||"",sensorType:s.sensorType,unit:s.unit||"",sourceType:s.sourceType||"Legacy",deviceId:s.deviceId||"",portId:s.controllerPortId||s.busPortId||"",busAddress:"",busRegister:"",farmingAreaId:s.farmingAreaId||"",farmingRowId:s.farmingRowId||"",installationLocation:s.installationLocation||"",waterSystemId:s.waterSystemId||"",rasComponentId:s.rasComponentId||""});
     }).catch(e=>{if(!ctl.signal.aborted)setError(e.message);}).finally(()=>{if(!ctl.signal.aborted)setLoading(false);});
     return()=>ctl.abort();
   },[sensor]);
@@ -55,13 +57,15 @@ export default function SensorForm({sensor,areas,devices,types,initialArea="",in
         const body={name:f.name.trim(),installationLocation:f.installationLocation.trim()};
         if(f.farmingAreaId!==(raw.farmingAreaId||""))body.farmingAreaId=f.farmingAreaId||EMPTY_ID;
         if(f.farmingRowId!==(raw.farmingRowId||""))body.farmingRowId=f.farmingRowId||EMPTY_ID;
+        if(f.waterSystemId!==(raw.waterSystemId||""))body.waterSystemId=f.waterSystemId||EMPTY_ID;
+        if(f.rasComponentId!==(raw.rasComponentId||""))body.rasComponentId=f.rasComponentId||EMPTY_ID;
         // Omit unchanged fields: legacy types/units and inherited location remain intact.
         if(f.sensorType.trim()!==raw.sensorType)body.sensorType=f.sensorType.trim();
         if(f.unit.trim()!==(raw.unit||""))body.unit=f.unit.trim();
         if(f.sourceType!==(raw.sourceType||"Legacy"))body.sourceType=f.sourceType;
         await api.updateSensor(sensor.id,body);
       }else{
-        const body={sensorCode:f.sensorCode.trim(),name:f.name.trim()||null,sensorType:f.sensorType.trim(),unit:f.unit.trim()||null,farmingAreaId:f.farmingAreaId||null,farmingRowId:f.farmingRowId||null};
+        const body={sensorCode:f.sensorCode.trim(),name:f.name.trim()||null,sensorType:f.sensorType.trim(),unit:f.unit.trim()||null,farmingAreaId:f.farmingAreaId||null,farmingRowId:f.farmingRowId||null,waterSystemId:f.waterSystemId||null,rasComponentId:f.rasComponentId||null,installationLocation:f.installationLocation.trim()||null};
         if(method==="port"){
           if(!port)throw new Error("Chọn port hiện có trong manifest của Controller.");
           const binding=bindingPayload(f.deviceId,port,f.busAddress,f.busRegister);
@@ -96,9 +100,10 @@ export default function SensorForm({sensor,areas,devices,types,initialArea="",in
       <div className="sen-form-grid">
         <Field label="Khu nuôi"><select value={f.farmingAreaId||area?.id||""} disabled={!areas.length} onChange={e=>setF(old=>({...old,farmingAreaId:e.target.value,farmingRowId:""}))}><option value="">Không gán trực tiếp / kế thừa thiết bị</option>{f.farmingAreaId&&!areas.some(a=>a.id===f.farmingAreaId)&&<option value={f.farmingAreaId}>Khu đã gán (chưa tải danh mục)</option>}{areas.filter(a=>a.isActive!==false||a.id===f.farmingAreaId).map(a=><option key={a.id} value={a.id}>{a.name||a.code}{a.isActive===false?" (ngừng hoạt động)":""}</option>)}</select></Field>
         <Field label="Dãy nuôi"><select value={f.farmingRowId} disabled={!area} onChange={e=>set("farmingRowId",e.target.value)}><option value="">Không gán trực tiếp</option>{f.farmingRowId&&!areaRows.some(r=>r.id===f.farmingRowId)&&<option value={f.farmingRowId}>Dãy đã gán (chưa tải danh mục)</option>}{areaRows.filter(r=>r.isActive!==false||r.id===f.farmingRowId).map(r=><option key={r.id} value={r.id}>{r.name||r.code}</option>)}</select></Field>
-        {(editing||method==="manual")&&<Field label="Vị trí cụ thể"><input maxLength={200} value={f.installationLocation} onChange={e=>set("installationLocation",e.target.value)} placeholder="VD: Bể lọc số 1"/></Field>}
+        {<Field label="Vị trí cụ thể"><input maxLength={200} value={f.installationLocation} onChange={e=>set("installationLocation",e.target.value)} placeholder="VD: Bể lọc số 1"/></Field>}
       </div>
-      <p className="sen-note">Ngưỡng chất lượng nước thuộc quản lý trại, không chỉnh tại đây. {method==="port"&&!editing?"Vị trí lắp chi tiết có thể cập nhật sau khi đăng ký.":""}</p>
+      <h3>Liên kết hệ thống nước / RAS</h3>{rasError&&<p className="sen-error">{rasError}</p>}<div className="sen-form-grid"><Field label="WaterSystem"><select value={f.waterSystemId} disabled={Boolean(rasError)} onChange={e=>setF(old=>({...old,waterSystemId:e.target.value,rasComponentId:""}))}><option value="">Không gán</option>{f.waterSystemId&&!systems.some(w=>w.id===f.waterSystemId)&&<option value={f.waterSystemId}>Hệ thống đã gán</option>}{systems.filter(w=>w.id===f.waterSystemId||!area||w.farmingAreaId===area.id).map(w=><option key={w.id} value={w.id}>{w.name}</option>)}</select></Field><Field label="RAS Component"><select value={f.rasComponentId} disabled={!f.waterSystemId||Boolean(rasError)} onChange={e=>set("rasComponentId",e.target.value)}><option value="">Toàn hệ thống</option>{f.rasComponentId&&!systems.find(w=>w.id===f.waterSystemId)?.components?.some(c=>c.id===f.rasComponentId)&&<option value={f.rasComponentId}>Thành phần đã gán</option>}{(systems.find(w=>w.id===f.waterSystemId)?.components||[]).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></Field></div>
+      <p className="sen-note">Ngưỡng chất lượng nước thuộc quản lý trại, không chỉnh tại đây. </p>
       <footer><button type="button" className="system-secondary-button" onClick={onClose} disabled={busy}>Hủy</button><button className="system-primary-button" type="submit" disabled={busy||portLoading||(method==="port"&&!editing&&!port)}><CheckCircle2 size={16}/>{busy?"Đang lưu…":"Lưu Sensor"}</button></footer>
     </form>}
   </SensorDialog>;
@@ -112,7 +117,7 @@ export function BindingForm({sensor,devices,onClose,onSaved}){
   useEffect(()=>{
     let active=true;setPorts([]);setError("");
     if(!device){setLoading(false);return()=>{active=false;};}
-    setLoading(true);api.getControllerPorts(device).then(data=>{if(active){if(!Array.isArray(data?.ports))throw new Error("Danh mục port không hợp lệ.");const occupied=new Set((data.sensors||[]).filter(s=>s.id!==sensor.id).map(s=>s.controllerPortId));setPorts(data.ports.filter(p=>p.isPresent&&p.configVersion===data.capabilityVersion&&["DIGITAL_INPUT","ANALOG_INPUT","I2C","RS485","UART"].includes(p.portType)&&(!occupied.has(p.id)||isBus(p))).map(p=>({...p,deviceId:device})));}}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});
+    setLoading(true);api.getControllerPorts(device).then(data=>{if(active){if(!Array.isArray(data?.ports))throw new Error("Danh mục port không hợp lệ.");const occupied=new Set((data.sensors||[]).filter(s=>s.id!==sensor.id).map(s=>s.controllerPortId));setPorts(data.ports.map(p=>({...p,portType:p.portType||p.type})).filter(p=>p.isPresent&&p.configVersion===data.capabilityVersion&&["DIGITAL_INPUT","ANALOG_INPUT","I2C","RS485","UART"].includes(p.portType)&&(!occupied.has(p.id)||isBus(p))).map(p=>({...p,deviceId:device})));}}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
   },[device,sensor.id]);
   const port=ports.find(p=>p.id===portId);

@@ -343,13 +343,15 @@ function ControllerInventory({ deviceId }) {
           {!ports.length ? <p className="text-xs text-[#526f79]">Controller chưa báo danh mục cổng.</p> : (
             <ul className="space-y-2 text-xs">
               {ports.map((port) => {
-                const equipment = (inventory?.equipment || []).filter((item) => item.controllerPortId === port.id);
+                const equipment = (inventory?.equipment || []).filter((item) => item.controllerPortId === port.id || item.busPortId === port.id);
                 const sensors = (inventory?.sensors || []).filter((item) => item.controllerPortId === port.id);
                 return <li key={port.id} className="rounded-lg border border-[#dcebe8] bg-white p-2">
                   <div className="flex flex-wrap justify-between gap-1"><strong>{port.portCode}</strong><span className={port.isPresent ? "text-[#13796e]" : "text-[#95600d]"}>{port.isPresent ? "Hiện diện" : "Không hiện diện"}</span></div>
                   <p className="mt-1 text-[#355b6a]">{port.type} · GPIO {port.gpio}{port.secondaryGpio != null ? " / " + port.secondaryGpio : ""} · Kênh {port.channel ?? "—"}</p>
                   <p className="mt-1 text-[#526f79]">Commissioning: {port.commissioningStatus || "—"} · Báo trạng thái: {port.reportedOn == null ? "—" : port.reportedOn ? "ON" : "OFF"}</p>
-                  <p className="mt-1 text-[#526f79]">Thiết bị: {[...equipment.map((item) => item.name), ...sensors.map((item) => item.sensorCode)].filter(Boolean).join(", ") || "Chưa liên kết"}</p>
+                  <p className="mt-1 text-[#526f79]">Thiết bị: {[...equipment.map((item) => item.name), ...sensors.map((item) => item.sensorCode+(item.busAddress?" ("+item.busAddress+"/"+item.busRegister+")":""))].filter(Boolean).join(", ") || "Chưa liên kết"}</p>
+                  {sensors.map(s=><Link key={s.id} className="mr-2 text-xs text-[#13796e] underline" to={"/system/devices/sensors?sensorId="+encodeURIComponent(s.id)}>Xem {s.sensorCode}</Link>)}
+                  {port.isPresent&&["DIGITAL_INPUT","ANALOG_INPUT","RS485","I2C","UART"].includes(port.type)&&(!sensors.length||["RS485","I2C","UART"].includes(port.type))&&<Link className="text-xs text-[#13796e] underline" to={"/system/devices/sensors?deviceId="+encodeURIComponent(deviceId)+"&portId="+encodeURIComponent(port.id)}>Đăng ký Sensor</Link>}
                 </li>;
               })}
             </ul>

@@ -8,6 +8,8 @@ export const STATUS_LABEL = {
   warning: "Cảnh báo",
   maintenance: "Bảo trì",
   other: "Khác",
+  disabled: "Ngừng sử dụng",
+  unknown: "Chờ dữ liệu",
 };
 
 export function formatAgo(value) {
@@ -45,22 +47,8 @@ function isStale(value) {
   return !Number.isNaN(diff) && diff > STALE_MS;
 }
 
-function sensorWarning(sensor) {
-  const reading = Number(sensor?.latestValue);
-  if (!Number.isFinite(reading)) return false;
-  const min = sensor?.minThreshold;
-  const max = sensor?.maxThreshold;
-  if (min != null && reading < Number(min)) return true;
-  if (max != null && reading > Number(max)) return true;
-  return false;
-}
-
 export function statusKeyOf(row) {
-  if (row.source === "sensor") {
-    if (row.raw?.isActive === false || !row.raw?.lastSeenAt) return "offline";
-    if (sensorWarning(row.raw) || isStale(row.raw.lastSeenAt)) return "warning";
-    return "online";
-  }
+  if (row.source === "sensor") return ({Online:"online",Offline:"offline",Error:"warning",Disabled:"disabled",Unknown:"unknown"})[row.raw?.status]||"unknown";
   const value = String(row.raw?.status || "").toLowerCase();
   if (value === "maintenance") return "maintenance";
   if (["offline", "disconnected", "inactive"].includes(value)) return "offline";
@@ -118,13 +106,13 @@ export function mapDeviceRows(devices, sensors) {
     id: sensor.id,
     source: "sensor",
     code: sensor.sensorCode,
-    name: sensor.sensorCode,
+    name: sensor.name || sensor.sensorCode,
     type: "sensor",
     typeLabel: "Cảm biến",
     hardware: hardwareLabel(sensor.sensorType),
-    area: "",
-    row: "",
-    location: "—",
+    area: sensor.areaName || "",
+    row: sensor.rowName || "",
+    location: [sensor.areaName,sensor.rowName,sensor.installationLocation].filter(Boolean).join(" · ") || "—",
     ip: "",
     mac: "",
     lastSeen: sensor.lastSeenAt,
