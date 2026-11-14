@@ -84,6 +84,12 @@ const systemAdminService = {
     return data;
   },
 
+  async saveControllerCommissioning(deviceId, portId, body) {
+    return unwrapData(await fetchAPI(`/iot/controllers/${encodeURIComponent(deviceId)}/ports/${encodeURIComponent(portId)}/commissioning`, {
+      method: "PUT", body: JSON.stringify(body),
+    }));
+  },
+
   async getControllerCommandHistory(id, { page = 1, pageSize = 25, status = "" } = {}, signal) {
     const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (status) query.set("status", status);
