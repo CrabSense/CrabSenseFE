@@ -29,19 +29,19 @@ const shown = value => value == null || value === "" ? "—" : String(value);
 const stateLabel = value => value == null ? "Chưa có phản hồi" : value ? "ON" : "OFF";
 const column = (key, label, render) => ({ key, label, render });
 
-function useResource(load, revision = 0) {
+function useResource(load, revision = 0, keepValue = false) {
   const [state, setState] = useState({ loading: true, error: "", value: null });
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-    setState({ loading: true, error: "", value: null });
+    setState(previous => ({ loading: true, error: "", value: keepValue ? previous.value : null }));
     Promise.resolve().then(() => load(controller.signal)).then(value => {
       if (active) setState({ loading: false, error: "", value });
     }).catch(error => {
       if (active) setState({ loading: false, error: error?.message || "Không tải được dữ liệu.", value: null });
     });
     return () => { active = false; controller.abort(); };
-  }, [load, revision]);
+  }, [load, revision, keepValue]);
   return state;
 }
 
@@ -122,7 +122,7 @@ function registrationUrl(deviceId, portId) {
   return "/system/devices/sensors?deviceId=" + encodeURIComponent(deviceId) + "&portId=" + encodeURIComponent(portId);
 }
 
-function Ports({ row, inventory }) {
+function Ports({ row, inventory, refresh, refreshing }) {
   const [type, setType] = useState("");
   const [presence, setPresence] = useState("");
   const [search, setSearch] = useState("");
@@ -160,14 +160,66 @@ function Ports({ row, inventory }) {
         column("lastReportedAt", "Báo lúc", p => formatWhen(p.lastReportedAt)),
       ]}/>
     </Panel>
+    <Commissioning row={row} inventory={inventory} refresh={refresh} refreshing={refreshing}/>
   </div>;
 }
-Ports.propTypes = { row: PropTypes.object.isRequired, inventory: PropTypes.object.isRequired };
+Ports.propTypes = { row: PropTypes.object.isRequired, inventory: PropTypes.object.isRequired, refresh: PropTypes.func.isRequired, refreshing: PropTypes.bool };
 
-function RelayMapping({ row, inventory, refresh }) {
+function isRecentOff(port) {
+  const age = Date.now() - new Date(port.lastReportedAt).getTime();
+  return port.isPresent && port.reportedOn === false && Number.isFinite(age) && age >= -60000 && age <= 120000;
+}
+
+function Commissioning({ row, inventory, refresh, refreshing }) {
+  const [portId, setPortId] = useState("");
+  const [status, setStatus] = useState("Verified");
+  const [confirmed, setConfirmed] = useState(false);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const outputs = inventory.ports.filter(p => p.isPresent && p.type === "DIGITAL_OUTPUT");
+  const port = outputs.find(p => p.id === portId);
+  const exact = port && linkedEquipment(inventory, port).filter(e => String(e.relayChannel) === String(port.channel)).length === 1;
+  const locked = inventory.hardwareControlDisabled === true;
+  const eligible = Boolean(locked && port && isRecentOff(port) && (status !== "Verified" || exact) && confirmed && note.trim() && status !== port.commissioningStatus && !refreshing);
+  const save = async e => {
+    e.preventDefault(); if (!eligible || busy) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await api.saveControllerCommissioning(row.id, port.id, {
+        expectedConfigVersion: inventory.capabilityVersion, expectedStatus: port.commissioningStatus,
+        status, physicalCheckConfirmed: confirmed, note: note.trim(),
+      });
+      setMessage("Đã ghi nhận kết quả kiểm tra phần cứng; không gửi lệnh điều khiển.");
+      setConfirmed(false); setNote(""); refresh();
+    } catch (err) { setError(err?.message || "Không lưu được kết quả kiểm tra."); }
+    finally { setBusy(false); }
+  };
+  return <Panel title="Nghiệm thu cổng Output (Commissioning)">
+    <p className="mb-3 text-xs text-[#54747e]">Chỉ ghi nhận kết quả kiểm tra thực tế của kỹ thuật viên; không cấp điện, không kiểm thử tự động. Chỉ cho phép khi khóa điều khiển phần cứng đang bật, GPIO báo OFF trong 2 phút và không còn lệnh đang chạy. Verified yêu cầu một ánh xạ RAS chính xác.</p>
+    {!locked && <p role="alert" className="mb-3 text-sm text-[#95600d]">Chưa xác nhận khóa điều khiển phần cứng đang bật. Tạm khóa cấu hình nghiệm thu.</p>}
+    {!outputs.length ? <p className="text-sm text-[#526f79]">Chưa có output hiện diện để nghiệm thu.</p> : <form onSubmit={save} className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="text-xs text-[#526f79]">Output<select className={fieldClass} disabled={busy || refreshing || !locked} value={portId} onChange={e => {setPortId(e.target.value); setConfirmed(false); setNote(""); setError(""); setMessage("");}}><option value="">Chọn output</option>{outputs.map(p => <option key={p.id} value={p.id}>{portLabel(p)} · {p.commissioningStatus}</option>)}</select></label>
+        <label className="text-xs text-[#526f79]">Kết quả<select className={fieldClass} disabled={busy || refreshing || !locked} value={status} onChange={e => {setStatus(e.target.value); setConfirmed(false);}}><option value="Verified">Verified – Đã kiểm tra đạt</option><option value="Pending">Pending – Cần kiểm tra lại</option><option value="Disabled">Disabled – Không cho phép sử dụng</option></select></label>
+      </div>
+      {port && !isRecentOff(port) && <p className="text-xs text-[#95600d]">Chưa có phản hồi GPIO OFF đủ mới. Cập nhật trạng thái từ controller rồi thử lại.</p>}
+      {port && status === "Verified" && !exact && <p className="text-xs text-[#95600d]">Output chưa có ánh xạ RAS chính xác.</p>}
+      <label className="block text-xs text-[#526f79]">Ghi chú kiểm tra<textarea className={fieldClass} rows={3} maxLength={500} required disabled={busy || refreshing || !locked} value={note} onChange={e => setNote(e.target.value)} placeholder="Kết quả kiểm tra đấu dây, tải, bảo vệ và điều kiện an toàn"/></label>
+      <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={confirmed} disabled={busy || refreshing || !locked} onChange={e => setConfirmed(e.target.checked)}/><span>Tôi đã kiểm tra thực tế và xác nhận trạng thái tải điện an toàn; không dựa riêng vào GPIO báo OFF.</span></label>
+      <button className="system-primary-button" type="submit" disabled={!eligible || busy}>{busy ? "Đang lưu…" : "Lưu kết quả nghiệm thu"}</button>
+    </form>}
+    {error && <p role="alert" className="mt-2 text-sm text-[#b93838]">{error}</p>}
+    {message && <p role="status" className="mt-2 text-sm text-[#13796e]">{message}</p>}
+  </Panel>;
+}
+Commissioning.propTypes = { row: PropTypes.object.isRequired, inventory: PropTypes.object.isRequired, refresh: PropTypes.func.isRequired, refreshing: PropTypes.bool };
+
+function RelayMapping({ row, inventory, refresh, refreshing, revision }) {
   const areaId = row.raw.farmingAreaId;
   const load = useCallback(signal => areaId ? api.getControllerRasDiagram(areaId, signal) : Promise.resolve(null), [areaId]);
-  const state = useResource(load);
+  const state = useResource(load, revision);
   const [nodeId, setNodeId] = useState("");
   const [channel, setChannel] = useState("");
   const [busy, setBusy] = useState(false);
@@ -176,7 +228,8 @@ function RelayMapping({ row, inventory, refresh }) {
   const nodes = (state.value?.nodes || []).filter(n => !n.relayDeviceId || n.relayDeviceId === row.id);
   const node = nodes.find(n => n.id === nodeId);
   const currentOutputs = inventory.ports.filter(p => p.isPresent && p.type === "DIGITAL_OUTPUT" && p.channel != null);
-  const available = currentOutputs.filter(p => !inventory.equipment.some(e => (e.controllerPortId === p.id || String(e.relayChannel) === String(p.channel)) && e.id !== nodeId));
+  const locked = inventory.hardwareControlDisabled === true;
+  const available = currentOutputs.filter(p => p.commissioningStatus !== "Disabled" && isRecentOff(p) && !inventory.equipment.some(e => (e.controllerPortId === p.id || String(e.relayChannel) === String(p.channel)) && e.id !== nodeId));
   const selectNode = e => {
     const id = e.target.value; setNodeId(id);
     const selected = nodes.find(n => n.id === id);
@@ -185,8 +238,8 @@ function RelayMapping({ row, inventory, refresh }) {
   };
   const save = async e => {
     e.preventDefault();
-    if (!node || busy || (channel && !available.some(p => String(p.channel) === channel)) || (!channel && node.relayDeviceId !== row.id)) return;
-    if (!window.confirm(channel ? "Xác nhận ánh xạ thiết bị RAS vào kênh " + channel + "? Cần kiểm tra đấu dây và commissioning trước khi vận hành." : "Gỡ liên kết relay này? Không dùng thao tác này để tắt tải điện.")) return;
+    if (!locked || refreshing || !node || busy || (channel && !available.some(p => String(p.channel) === channel)) || (!channel && node.relayDeviceId !== row.id)) return;
+    if (!window.confirm(channel ? "Xác nhận đã kiểm tra tải điện an toàn trước khi ánh xạ RAS vào kênh " + channel + "? Cần nghiệm thu lại trước khi vận hành." : "Xác nhận đã kiểm tra tải điện an toàn trước khi gỡ liên kết? Thao tác này không tắt tải điện.")) return;
     setBusy(true); setError(""); setNotice("");
     try {
       await api.updateControllerRelay(areaId, node.id, { relayDeviceId: channel ? row.id : null, relayChannel: channel || null });
@@ -198,22 +251,23 @@ function RelayMapping({ row, inventory, refresh }) {
   if (!areaId) return <Panel title="Ánh xạ thiết bị RAS"><p className="text-sm text-[#526f79]">Gán Controller vào khu nuôi trước khi liên kết thiết bị RAS.</p></Panel>;
   return <Panel title="Cấu hình ánh xạ thiết bị RAS">
     <SystemState loading={state.loading} error={state.error} onRetry={refresh}>
-      <p className="mb-3 text-xs text-[#54747e]">Chỉ chọn thiết bị RAS có sẵn trong khu của Controller và output hiện diện. Không thực hiện bật/tắt. Việc chuyển liên kết có thể yêu cầu xác minh lại phần cứng.</p>
+      <p className="mb-3 text-xs text-[#54747e]">Chỉ chọn thiết bị RAS có sẵn trong khu của Controller và output hiện diện báo OFF gần đây. Không thực hiện bật/tắt. Đổi ánh xạ sẽ yêu cầu nghiệm thu lại.</p>
+      {!locked && <p role="alert" className="mb-3 text-sm text-[#95600d]">Chưa xác nhận khóa điều khiển phần cứng đang bật. Tạm khóa thay đổi ánh xạ.</p>}
       {!nodes.length ? <p className="text-sm text-[#526f79]">Không có thiết bị RAS phù hợp trong khu này.</p> : <form className="space-y-3" onSubmit={save}>
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="text-xs text-[#526f79]">Thiết bị RAS<select disabled={busy} className={fieldClass} value={nodeId} onChange={selectNode}><option value="">Chọn thiết bị</option>{nodes.map(n => <option key={n.id} value={n.id}>{n.displayLabel || n.nodeCode}{n.relayDeviceId ? " · Đã liên kết kênh " + n.relayChannel : ""}</option>)}</select></label>
-          <label className="text-xs text-[#526f79]">Output<select disabled={!node || busy} className={fieldClass} value={channel} onChange={e => setChannel(e.target.value)}><option value="">Không liên kết</option>{available.map(p => <option key={p.id} value={String(p.channel)}>{portLabel(p)} · {p.commissioningStatus}</option>)}</select></label>
+          <label className="text-xs text-[#526f79]">Thiết bị RAS<select disabled={busy || refreshing || !locked} className={fieldClass} value={nodeId} onChange={selectNode}><option value="">Chọn thiết bị</option>{nodes.map(n => <option key={n.id} value={n.id}>{n.displayLabel || n.nodeCode}{n.relayDeviceId ? " · Đã liên kết kênh " + n.relayChannel : ""}</option>)}</select></label>
+          <label className="text-xs text-[#526f79]">Output<select disabled={!node || busy || refreshing || !locked} className={fieldClass} value={channel} onChange={e => setChannel(e.target.value)}><option value="">Không liên kết</option>{available.map(p => <option key={p.id} value={String(p.channel)}>{portLabel(p)} · {p.commissioningStatus}</option>)}</select></label>
         </div>
-        <button type="submit" className="system-primary-button" disabled={busy || !node || (!channel && node.relayDeviceId !== row.id) || (Boolean(channel) && !available.some(p => String(p.channel) === channel))}>{busy ? "Đang lưu…" : "Lưu ánh xạ"}</button>
+        <button type="submit" className="system-primary-button" disabled={busy || refreshing || !locked || !node || (!channel && node.relayDeviceId !== row.id) || (Boolean(channel) && !available.some(p => String(p.channel) === channel))}>{busy ? "Đang lưu…" : "Lưu ánh xạ"}</button>
       </form>}
       {error && <p role="alert" className="mt-2 text-sm text-[#b93838]">{error}</p>}
       {notice && <p role="status" className="mt-2 text-sm text-[#13796e]">{notice}</p>}
     </SystemState>
   </Panel>;
 }
-RelayMapping.propTypes = { row: PropTypes.object.isRequired, inventory: PropTypes.object.isRequired, refresh: PropTypes.func.isRequired };
+RelayMapping.propTypes = { row: PropTypes.object.isRequired, inventory: PropTypes.object.isRequired, refresh: PropTypes.func.isRequired, refreshing: PropTypes.bool, revision: PropTypes.number };
 
-function Bindings({ row, inventory, refresh }) {
+function Bindings({ row, inventory, refresh, refreshing, revision }) {
   const ports = new Map(inventory.ports.map(p => [p.id, p]));
   return <div className="space-y-4">
     <Panel title="Sensor liên kết">
@@ -234,16 +288,16 @@ function Bindings({ row, inventory, refresh }) {
         column("commissioning", "Commissioning", e => shown(ports.get(e.controllerPortId)?.commissioningStatus)),
       ]}/>
     </Panel>
-    <RelayMapping row={row} inventory={inventory} refresh={refresh}/>
+    <RelayMapping row={row} inventory={inventory} refresh={refresh} refreshing={refreshing} revision={revision}/>
   </div>;
 }
-Bindings.propTypes = { row: PropTypes.object.isRequired, inventory: PropTypes.object.isRequired, refresh: PropTypes.func.isRequired };
+Bindings.propTypes = { row: PropTypes.object.isRequired, inventory: PropTypes.object.isRequired, refresh: PropTypes.func.isRequired, refreshing: PropTypes.bool, revision: PropTypes.number };
 
 function InventoryView({ row, tab, revision, refresh }) {
   const load = useCallback(signal => api.getControllerPorts(row.id, signal), [row.id]);
-  const state = useResource(load, revision);
-  return <SystemState loading={state.loading} error={state.error} onRetry={refresh}>
-    {state.value && (tab === "ports" ? <Ports row={row} inventory={state.value}/> : <Bindings row={row} inventory={state.value} refresh={refresh}/>)}
+  const state = useResource(load, revision, true);
+  return <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
+    {state.value && (tab === "ports" ? <Ports row={row} inventory={state.value} refresh={refresh} refreshing={state.loading}/> : <Bindings row={row} inventory={state.value} refresh={refresh} refreshing={state.loading} revision={revision}/>)}
   </SystemState>;
 }
 InventoryView.propTypes = { row: PropTypes.object.isRequired, tab: PropTypes.string.isRequired, revision: PropTypes.number.isRequired, refresh: PropTypes.func.isRequired };
@@ -324,7 +378,7 @@ function TechnicalEvents({ row, revision, refresh }) {
 }
 TechnicalEvents.propTypes = { row: PropTypes.object.isRequired, revision: PropTypes.number.isRequired, refresh: PropTypes.func.isRequired };
 
-function ConfigForm({ detail, areas, refresh }) {
+function ConfigForm({ detail, areas, onSaved }) {
   const [draft, setDraft] = useState({
     name: detail.name || "", ipAddress: detail.ipAddress || "", macAddress: detail.macAddress || "",
     installationLocation: detail.installationLocation || "", note: detail.note || "",
@@ -343,7 +397,7 @@ function ConfigForm({ detail, areas, refresh }) {
       if (moved && (detail.sensorCount > 0 || detail.actuatorCount > 0)) throw new Error("Gỡ hoặc chuyển các liên kết Sensor/RAS trước khi chuyển Controller sang khu khác.");
       await api.updateDevice(detail.id, { ...draft, farmingAreaId: draft.farmingAreaId || EMPTY_ID, farmingRowId: draft.farmingRowId || EMPTY_ID });
       setNotice("Đã lưu cấu hình kỹ thuật.");
-      refresh();
+      onSaved();
     } catch (err) { setError(err?.message || "Không lưu được cấu hình."); }
     finally { setBusy(false); }
   };
@@ -363,14 +417,18 @@ function ConfigForm({ detail, areas, refresh }) {
     </form>
   </Panel>;
 }
-ConfigForm.propTypes = { detail: PropTypes.object.isRequired, areas: PropTypes.array.isRequired, refresh: PropTypes.func.isRequired };
+ConfigForm.propTypes = { detail: PropTypes.object.isRequired, areas: PropTypes.array.isRequired, onSaved: PropTypes.func.isRequired };
 
 function Configuration({ row, revision, refresh }) {
   const load = useCallback(() => Promise.all([api.getDevice(row.id), api.getDeviceLocations()]), [row.id]);
   const state = useResource(load, revision);
-  return <SystemState loading={state.loading} error={state.error} onRetry={refresh}>
-    {state.value && <ConfigForm detail={state.value[0]} areas={state.value[1]} refresh={refresh}/>}
-  </SystemState>;
+  const [saved, setSaved] = useState(false);
+  return <>
+    {saved && <p role="status" className="mb-3 text-sm text-[#13796e]">Đã lưu cấu hình kỹ thuật.</p>}
+    <SystemState loading={state.loading} error={state.error} onRetry={refresh}>
+      {state.value && <ConfigForm detail={state.value[0]} areas={state.value[1]} onSaved={() => { setSaved(true); refresh(); }}/>}
+    </SystemState>
+  </>;
 }
 Configuration.propTypes = { row: PropTypes.object.isRequired, revision: PropTypes.number.isRequired, refresh: PropTypes.func.isRequired };
 
@@ -378,12 +436,12 @@ function Workspace({ tab, controllerId, onChange }) {
   const [revision, setRevision] = useState(0);
   const refresh = useCallback(() => setRevision(v => v + 1), []);
   const load = useCallback(() => api.getDevices(), []);
-  const state = useResource(load, revision);
+  const state = useResource(load, revision, true);
   const rows = useMemo(() => mapDeviceRows(state.value || [], []).filter(r => r.type === "controller"), [state.value]);
   const row = controllerId ? rows.find(r => r.id === controllerId) : rows[0];
   return <SystemPage title="Quản lý Controller" description="Giám sát phần cứng, ánh xạ thiết bị, lịch sử lệnh và cấu hình kỹ thuật." actions={<button className="system-secondary-button" type="button" onClick={refresh}>Làm mới</button>}>
     <Tabs tab={tab} controllerId={row?.id || controllerId} onChange={onChange}/>
-    <SystemState loading={state.loading} error={state.error} onRetry={refresh}>
+    <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
       {!rows.length ? <Panel title="Chưa có Controller"><Link to={BASE} className="text-[#13796e] underline">Mở danh sách để đăng ký Controller</Link></Panel> : <>
         <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-[#dcebe8] bg-white p-4">
           <Cpu size={22} className="text-[#147e75]"/>
