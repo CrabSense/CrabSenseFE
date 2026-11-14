@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import PropTypes from "prop-types";
 
 import systemAdminService from "../../../services/systemAdminService";
@@ -10,6 +10,8 @@ const TYPES = [
 ];
 
 function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialKind }) {
+  const lock = useRef(false);
+  const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
@@ -35,6 +37,7 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   const submit = async () => {
+    if (lock.current) return;
     setError("");
     const code = (form.kind === "sensor" ? form.sensorCode : form.deviceCode).trim().toLowerCase();
     const ip = form.ipAddress.trim().toLowerCase();
@@ -47,6 +50,7 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
       setError(!code ? "Cần mã thiết bị." : "Mã, IP hoặc MAC đã có trong danh sách.");
       return;
     }
+    lock.current = true; setBusy(true);
     try {
       if (form.kind === "sensor") {
         await systemAdminService.createSensor({
@@ -68,7 +72,7 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
           macAddress: form.macAddress.trim() || null,
           firmwareVersion: form.firmwareVersion.trim() || null,
           farmingAreaId: form.farmingAreaId || null,
-          farmingRowId: form.kind === "camera" ? form.farmingRowId || null : null,
+          farmingRowId: form.farmingRowId || null,
           snapshotUrl: form.kind === "camera" ? form.snapshotUrl.trim() || null : null,
           resolution: form.kind === "camera" ? form.resolution.trim() || null : null,
           installationLocation: form.installationLocation.trim() || null,
@@ -79,7 +83,7 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
       onClose();
     } catch (saveError) {
       setError(saveError?.message || "Không tạo được thiết bị. Mã hoặc IP có thể đã tồn tại.");
-    }
+    } finally { lock.current = false; setBusy(false); }
   };
 
   return (
@@ -141,7 +145,7 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
                 {areas.filter(area => area.isActive).map((area) => <option key={area.id} value={area.id}>{area.name || area.code}</option>)}
               </select>
             </label>
-            {form.kind === "camera" && <label className="text-xs text-[#526f79]">Dãy nuôi
+            {form.kind !== "sensor" && <label className="text-xs text-[#526f79]">Dãy nuôi
               <select value={form.farmingRowId} onChange={event => set("farmingRowId", event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-[#dcebe8] bg-[#f7fbfa] px-3 text-sm">
                 <option value="">Không gán dãy</option>
                 {(areas.find(area => area.id === form.farmingAreaId)?.rows || []).filter(item => item.isActive).map(item => <option key={item.id} value={item.id}>{item.name || item.code}</option>)}
@@ -164,7 +168,7 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
           {step < 4 ? (
             <button type="button" onClick={() => setStep((value) => value + 1)} className="rounded-xl bg-[#147e75] px-3 py-2 text-sm font-bold text-white">Tiếp</button>
           ) : (
-            <button type="button" onClick={submit} className="rounded-xl bg-[#147e75] px-3 py-2 text-sm font-bold text-white">Lưu thiết bị</button>
+            <button type="button" disabled={busy} onClick={submit} className="rounded-xl bg-[#147e75] px-3 py-2 text-sm font-bold text-white">{busy ? "Đang lưu…" : "Lưu thiết bị"}</button>
           )}
         </div>
       </div>
