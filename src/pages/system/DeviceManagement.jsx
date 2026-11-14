@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { Cpu, Wifi, WifiOff, AlertTriangle, Wrench } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -32,6 +32,8 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
   const [tabRequest, setTabRequest] = useState(null);
   const [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState("");
+  const actionLock = useRef(false);
+  const [actionBusy, setActionBusy] = useState(false);
   const [pending, setPending] = useState(null);
   const navigate = useNavigate();
 
@@ -101,7 +103,8 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
   };
 
   const confirmPending = async () => {
-    if (!pending) return;
+    if (!pending || actionLock.current) return;
+    actionLock.current = true; setActionBusy(true);
     const { type, row } = pending;
     setError("");
     try {
@@ -157,7 +160,7 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
       load(true);
     } catch (actionError) {
       setNotice(actionError?.message || "Thao tác thất bại.");
-    }
+    } finally { actionLock.current = false; setActionBusy(false); }
   };
 
   const onAction = async (row, action) => {
@@ -328,12 +331,12 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
             {pending.type === "enable" ? <p className="mt-2 text-sm text-[#355b6a]">Kích hoạt lại {pending.row.code}.</p> : null}
             {pending.type === "remove" ? (
               <p className="mt-2 text-sm text-[#b93838]">
-                Gỡ {pending.row.code}? Sensor gắn: {pending.row.raw.sensorCount ?? 0}. Actuator gắn: {pending.row.raw.actuatorCount ?? 0}. Các liên kết được tách trước khi xóa.
+                Gỡ {pending.row.code}? Sensor gắn: {pending.row.raw.sensorCount ?? 0}. Actuator gắn: {pending.row.raw.actuatorCount ?? 0}. Controller có liên kết hoặc lịch sử phần cứng cần được gỡ liên kết an toàn hoặc ngừng sử dụng trước khi xóa.
               </p>
             ) : null}
             <div className="mt-4 flex justify-end gap-2">
               <button type="button" onClick={() => setPending(null)} className="rounded-xl border border-[#c9dfd9] px-3 py-2 text-sm">Hủy</button>
-              <button type="button" onClick={confirmPending} className={pending.type === "remove" || pending.type === "disable" ? "rounded-xl bg-[#b93838] px-3 py-2 text-sm font-bold text-white" : "rounded-xl bg-[#147e75] px-3 py-2 text-sm font-bold text-white"}>Xác nhận</button>
+              <button type="button" disabled={actionBusy} onClick={confirmPending} className={pending.type === "remove" || pending.type === "disable" ? "rounded-xl bg-[#b93838] px-3 py-2 text-sm font-bold text-white" : "rounded-xl bg-[#147e75] px-3 py-2 text-sm font-bold text-white"}>Xác nhận</button>
             </div>
           </div>
         </div>
