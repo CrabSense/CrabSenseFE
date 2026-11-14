@@ -12,7 +12,7 @@ import AddDeviceWizard from "./devices/AddDeviceWizard";
 import { duplicateSummary, mapDeviceRows } from "./devices/rows";
 import { deviceKind } from "./deviceModel";
 
-function DeviceManagement({ kind = "all" }) {
+function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
   const [devices, setDevices] = useState([]);
   const [sensors, setSensors] = useState([]);
   const [areas, setAreas] = useState([]);
@@ -164,6 +164,10 @@ function DeviceManagement({ kind = "all" }) {
       const tab=["logs"].includes(action)?"events":["config","assign","calibrate","sample"].includes(action)?"config":"list";
       navigate("/system/devices/sensors?sensorId="+encodeURIComponent(row.id)+"&tab="+tab+(action==="assign"?"&edit=1":""));return;
     }
+    if (kind === "controller" && onControllerTab) {
+      const pages = { io: "ports", relay: "ports", actuators: "bindings", mapping: "bindings", diagnostics: "monitor", heartbeat: "monitor", logs: "events", config: "config", assign: "config" };
+      if (pages[action]) { onControllerTab(pages[action], row.id); return; }
+    }
     const tabs = {
       view: "info",
       preview: "info",
@@ -223,6 +227,7 @@ function DeviceManagement({ kind = "all" }) {
           <button type="button" onClick={exportCsv} className="system-secondary-button">Xuất dữ liệu</button>
           <button type="button" disabled={Boolean(locationError)} onClick={() => setCreating(true)} className="system-primary-button">+ Thêm thiết bị</button>
         </>} />
+        {navigation}
         <SystemState loading={loading} error={error} onRetry={() => load()}>
           <div className="space-y-4">
             {locationError && <p role="alert" className="rounded-xl border border-[#edd29b] bg-[#fff7df] p-3 text-sm text-[#95600d]">Chưa tải được danh sách khu/dãy: {locationError}. Tạm khóa thêm thiết bị và thay đổi vị trí; các thiết bị hiện có vẫn xem được.</p>}
@@ -334,6 +339,6 @@ function DeviceManagement({ kind = "all" }) {
   );
 }
 
-DeviceManagement.propTypes = { kind: PropTypes.oneOf(["all", "camera", "sensor", "controller"]) };
+DeviceManagement.propTypes = { kind: PropTypes.oneOf(["all", "camera", "sensor", "controller"]), navigation: PropTypes.node, onControllerTab: PropTypes.func };
 
 export default DeviceManagement;
