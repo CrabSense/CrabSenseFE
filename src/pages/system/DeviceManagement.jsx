@@ -168,10 +168,10 @@ function DeviceManagement({ kind = "all" }) {
       view: "info",
       preview: "info",
       latest: "info",
-      io: "info",
-      relay: "info",
-      actuators: "info",
-      mapping: "info",
+      io: "ports",
+      relay: "ports",
+      actuators: "ports",
+      mapping: "ports",
       config: "config",
       assign: "config",
       stream: "config",
@@ -218,7 +218,7 @@ function DeviceManagement({ kind = "all" }) {
   return (
     <div className="system-workspace system-device-workspace mx-auto flex w-full min-w-0 max-w-[1800px] items-start gap-4 text-[#153b56]">
       <div className="min-w-0 w-full flex-1">
-        <SystemPageHeader title={({ camera: "Quản lý Camera", sensor: "Quản lý Sensor", controller: "Quản lý Controller" })[kind] || "Quản lý thiết bị"} description="Quản lý đăng ký, cấu hình và trạng thái thiết bị. Lịch ghi hình nằm ở tab riêng." actions={<>
+        <SystemPageHeader title={({ camera: "Quản lý Camera", sensor: "Quản lý Sensor", controller: "Quản lý Controller" })[kind] || "Quản lý thiết bị"} description={kind === "controller" ? "Quản lý controller, trạng thái kết nối, cấu hình và danh mục cổng phần cứng." : "Quản lý đăng ký, cấu hình và trạng thái thiết bị. Lịch ghi hình nằm ở tab riêng."} actions={<>
           <button type="button" onClick={() => load(true)} className="system-secondary-button">Làm mới</button>
           <button type="button" onClick={exportCsv} className="system-secondary-button">Xuất dữ liệu</button>
           <button type="button" disabled={Boolean(locationError)} onClick={() => setCreating(true)} className="system-primary-button">+ Thêm thiết bị</button>
