@@ -101,9 +101,9 @@ const systemAdminService = {
     }));
   },
 
-  async getControllerCommandHistory(id, { page = 1, pageSize = 25, status = "" } = {}, signal) {
+  async getControllerCommandHistory(id, { page = 1, pageSize = 25, status = "", from = "", to = "", channel = "" } = {}, signal) {
     const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-    if (status) query.set("status", status);
+    for (const [key,value] of Object.entries({status,from,to,channel})) if(value) query.set(key,value);
     const data = unwrapData(await fetchAPI(`/edge/commands/history/${encodeURIComponent(id)}?${query}`, { signal }));
     if (!data || !Array.isArray(data.items) || !Number.isFinite(data.totalCount))
       throw new Error("API lịch sử lệnh trả dữ liệu không đúng định dạng.");
