@@ -1,9 +1,10 @@
 import PropTypes from "prop-types";
+import { Cpu } from "lucide-react";
 import { connectionLabel, formatAgo, STATUS_LABEL } from "./rows";
 import { statusClass } from "../deviceModel";
 import DeviceActions from "./DeviceActions";
 
-function DeviceTable({ rows, page, pageSize, onPage, onPageSize, selectedId, onOpen, onAction }) {
+function DeviceTable({ rows, page, pageSize, onPage, onPageSize, selectedId, onOpen, onAction, controllerView = false }) {
   const pages = Math.max(1, Math.ceil(rows.length / pageSize));
   const safePage = Math.min(page, pages);
   const start = (safePage - 1) * pageSize;
@@ -15,7 +16,7 @@ function DeviceTable({ rows, page, pageSize, onPage, onPageSize, selectedId, onO
         <table className="system-table w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-[#dcebe8] text-[11px] tracking-[0.08em] text-[#54747e] uppercase">
-              {["Mã / tên", "Loại", "Khu vực", "Kết nối", "Trạng thái", "Last seen", "Thao tác"].map((label) => (
+              {(controllerView ? ["Controller", "Phần cứng", "Khu vực / vị trí", "IP / kết nối", "Trạng thái", "Heartbeat", "Firmware", "Sensor / RAS", "Thao tác"] : ["Mã / tên", "Loại", "Khu vực", "Kết nối", "Trạng thái", "Last seen", "Thao tác"]).map((label) => (
                 <th key={label} className="px-2 py-2 font-semibold">{label}</th>
               ))}
             </tr>
@@ -23,7 +24,7 @@ function DeviceTable({ rows, page, pageSize, onPage, onPageSize, selectedId, onO
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-2 py-6 text-[#526f79]">Không có thiết bị khớp bộ lọc.</td>
+                <td colSpan={controllerView ? 9 : 7} className="px-2 py-6 text-[#526f79]">Không có thiết bị khớp bộ lọc.</td>
               </tr>
             ) : visible.map((row) => (
               <tr
@@ -34,22 +35,23 @@ function DeviceTable({ rows, page, pageSize, onPage, onPageSize, selectedId, onO
                 ].join(" ")}
               >
                 <td className="px-2 py-3">
-                  <button type="button" onClick={() => onOpen(row)} className="font-semibold text-[#13796e]">{row.code}</button>
+                  <button type="button" onClick={() => onOpen(row)} className="font-semibold text-[#13796e] inline-flex items-center gap-2">{controllerView && <Cpu size={17}/>} {row.code}</button>
                   <div className="text-xs text-[#526f79]">{row.name}</div>
                 </td>
                 <td className="px-2 py-3">
                   <div>{row.typeLabel}</div>
                   {row.hardware ? <div className="text-xs text-[#54747e]">{row.hardware}</div> : null}
                 </td>
-                <td className="px-2 py-3">{row.area || "—"}</td>
+                <td className="px-2 py-3">{controllerView ? row.location : row.area || "—"}</td>
                 <td className="px-2 py-3">{connectionLabel(row)}</td>
                 <td className="px-2 py-3">
-                  <div className={statusClass(row.statusKey)}>{STATUS_LABEL[row.statusKey] || row.statusKey}</div>
+                  <div className={controllerView ? "ctrl-pill "+row.statusKey : statusClass(row.statusKey)}>{STATUS_LABEL[row.statusKey] || row.statusKey}</div>
                   {row.issues?.map((issue) => (
                     <div key={issue} className="text-xs text-[#95600d]">{issue}</div>
                   ))}
                 </td>
                 <td className="px-2 py-3">{formatAgo(row.lastSeen)}</td>
+                {controllerView && <><td className="px-2 py-3">{row.firmware || "—"}</td><td className="px-2 py-3">{row.raw.sensorCount ?? "—"} / {row.raw.actuatorCount ?? "—"}</td></>}
                 <td className="px-2 py-3">
                   <DeviceActions row={row} onAction={onAction || ((item, action) => onOpen(item, action))} />
                 </td>
@@ -85,6 +87,7 @@ function DeviceTable({ rows, page, pageSize, onPage, onPageSize, selectedId, onO
 
 DeviceTable.propTypes = {
   rows: PropTypes.array.isRequired,
+  controllerView: PropTypes.bool,
   page: PropTypes.number.isRequired,
   pageSize: PropTypes.number.isRequired,
   onPage: PropTypes.func.isRequired,
