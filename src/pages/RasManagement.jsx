@@ -659,6 +659,8 @@ export default function RasManagement() {
                           Assignment:{" "}
                           {node.hasRelay ? "Assigned" : "Not assigned"}
                         </p>
+                        <p>Port: {displayValue(node.portCode)} · {node.portPresent === true ? "Hiện diện" : node.portPresent === false ? "Không có port hiện hành" : "Chưa có dữ liệu"}</p>
+                        <p>Commissioning: {displayValue(node.commissioningStatus)}</p>
                         <p>
                           Mode:{" "}
                           {displayValue(node.controlMode)}
@@ -714,7 +716,7 @@ export default function RasManagement() {
                               key={command}
                               type="button"
                               className={button}
-                              disabled={busy}
+                              disabled={busy || diagram?.hardwareControlDisabled !== false || node.portPresent !== true || (command !== "off" && node.commissioningStatus !== "Verified")}
                               onClick={() =>
                                 sendCommand(node, command)
                               }
@@ -725,7 +727,7 @@ export default function RasManagement() {
                         </div>
 
                         <p className="mt-2 text-xs text-amber-300">
-                          Lệnh có thể tác động đến phần cứng thật.
+                          {diagram?.hardwareControlDisabled !== false ? "Điều khiển phần cứng đang khóa. Chỉ xem trạng thái." : "Lệnh có thể tác động đến phần cứng thật. ON/AUTO yêu cầu port hiện diện và đã nghiệm thu."}
                         </p>
                       </div>
                     )}
@@ -734,7 +736,8 @@ export default function RasManagement() {
                       <button
                         type="button"
                         className="inline-flex items-center gap-2 text-xs text-red-400 disabled:opacity-40"
-                        disabled={busy}
+                        disabled={busy || node.hasRelay}
+                        title={node.hasRelay ? "Yêu cầu System Admin gỡ liên kết relay an toàn trước khi xóa." : undefined}
                         onClick={() => deleteNode(node)}
                       >
                         <Trash2 size={14} />
