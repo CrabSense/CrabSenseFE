@@ -298,6 +298,18 @@ const systemAdminService = {
     return data;
   },
 
+  getCameraSchedules(params={},signal) { return sensorRequest("/camera-schedules",{params,signal}); },
+  getCameraScheduleSummary(signal) { return sensorRequest("/camera-schedules/summary",{signal}); },
+  getCameraSchedule(id,signal) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id),{signal}); },
+  validateCameraSchedule(body,id) { return sensorRequest("/camera-schedules/validate",{method:"POST",params:{scheduleId:id},body}); },
+  createCameraSchedule(body) { return sensorRequest("/camera-schedules",{method:"POST",body}); },
+  updateCameraSchedule(id,body) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id),{method:"PUT",body}); },
+  setCameraScheduleStatus(id,body) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id)+"/status",{method:"PATCH",body}); },
+  deleteCameraSchedule(id,expectedVersion) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id),{method:"DELETE",params:{expectedVersion}}); },
+  duplicateCameraSchedule(id,body) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id)+"/duplicate",{method:"POST",body}); },
+  getCameraScheduleExecutions(id,params={},signal) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id)+"/executions",{params,signal}); },
+  getCameraScheduleCalendar(params={},signal) { return sensorRequest("/camera-schedules/calendar",{params,signal}); },
+  getCameraRecordingStatus(id,signal) { return sensorRequest("/cameras/"+encodeURIComponent(id)+"/recording-status",{signal}); },
   async getRecordingSchedules() {
     return unwrapList(await fetchAPI("/cameras/recording-schedules"));
   },
