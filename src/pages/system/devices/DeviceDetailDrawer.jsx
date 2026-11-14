@@ -111,8 +111,8 @@ function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, t
       }
       if (action === "enable") {
         if (row.type === "camera") await systemAdminService.enableCamera(row.id);
-        else await systemAdminService.updateDevice(row.id, { status: "Online" });
-        setNotice(row.type === "camera" ? "Đã cho phép hoạt động; chờ heartbeat xác thực." : "Đã kích hoạt. Audit log đã ghi.");
+        else await systemAdminService.updateDevice(row.id, { status: "Offline" });
+        setNotice(row.type === "camera" ? "Đã cho phép hoạt động; chờ heartbeat xác thực." : "Đã cho phép hoạt động; chờ heartbeat xác thực.");
       }
       if (action === "firmware") {
         if (!firmwareDraft.trim()) {
