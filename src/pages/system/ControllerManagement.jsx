@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { Link, useSearchParams } from "react-router-dom";
 import { Activity, AlertTriangle, Cable, Clock, Cpu, List, Settings, Workflow } from "lucide-react";
@@ -66,6 +66,54 @@ function Info({ entries }) {
 }
 Info.propTypes = { entries: PropTypes.array.isRequired };
 
+function ControllerEventHistory({row,kind,revision,refresh}) {
+  const [page,setPage]=useState(1);
+  const load=useCallback(signal=>api.getControllerEventHistory(row.id,{kind,page,pageSize:25},signal),[row.id,kind,page]);
+  const state=useResource(load,revision);
+  const data=state.value;
+  return <Panel title={kind==="manifest"?"Lịch sử phiên bản phần cứng":"Lịch sử heartbeat Edge V2"}>
+    <p className="mb-3 text-xs text-[#54747e]">{kind==="manifest"?"Chỉ các phiên bản manifest thực sự được Backend xác thực và lưu.":"Mẫu heartbeat tối đa một lần mỗi 5 phút; không phải nhật ký của mọi gói tin. Khoảng trống không tự chứng minh mất kết nối."}</p>
+    <SystemState loading={state.loading} error={state.error} onRetry={refresh}>
+    {data&&<><DataTable rows={data.items} empty="Chưa có lịch sử được ghi nhận." columns={[
+      column("createdAt","Thời điểm",x=>formatWhen(x.createdAt)),
+      column("inventoryRevision","Revision"),column("summary","Sự kiện"),
+      ...(kind==="manifest"?[column("detailsJson","Cấu hình",x=><details><summary className="cursor-pointer text-[#13796e]">Xem manifest</summary><pre className="mt-2 max-h-64 max-w-[460px] overflow-auto whitespace-pre-wrap break-all rounded-lg bg-[#f7fbfa] p-2 text-xs">{x.detailsJson||"—"}</pre></details>)]:[])
+    ]}/>
+    <div className="mt-3 flex items-center justify-between gap-2 text-xs"><span>{data.totalCount} sự kiện · Trang {page}</span><div className="flex gap-2"><button type="button" className="system-secondary-button" disabled={page<=1} onClick={()=>setPage(p=>p-1)}>Trước</button><button type="button" className="system-secondary-button" disabled={page*25>=data.totalCount} onClick={()=>setPage(p=>p+1)}>Sau</button></div></div></>}
+    </SystemState>
+  </Panel>;
+}
+ControllerEventHistory.propTypes={row:PropTypes.object.isRequired,kind:PropTypes.string.isRequired,revision:PropTypes.number.isRequired,refresh:PropTypes.func.isRequired};
+
+function ControllerAlerts({row,revision,refresh}) {
+  const load=useCallback(signal=>api.getControllerAlerts(row.id,signal),[row.id]);
+  const state=useResource(load,revision);
+  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+  const lock=useRef(false);
+  const [filter,setFilter]=useState("");
+  const acknowledge=async alert=>{
+    if(lock.current||!window.confirm("Xác nhận đã tiếp nhận cảnh báo này? Thao tác không xác nhận thiết bị đã phục hồi."))return;
+    lock.current=true;setBusy(true);setError("");setNotice("");
+    try{await api.acknowledgeControllerAlert(row.id,alert.id);setNotice("Đã ghi nhận tiếp nhận cảnh báo.");refresh();}
+    catch(e){setError(e?.message||"Không cập nhật được cảnh báo.");}
+    finally{lock.current=false;setBusy(false);}
+  };
+  return <Panel title="Cảnh báo mất kết nối Controller">
+    <p className="mb-3 text-xs text-[#54747e]">Cảnh báo đã lưu từ Backend. Tiếp nhận không đồng nghĩa thiết bị đã được sửa; trạng thái phục hồi do Backend ghi nhận khi có bằng chứng kết nối.</p>
+    <label className="mb-3 block max-w-xs text-xs text-[#526f79]">Trạng thái<select className={fieldClass} value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Tất cả</option>{["Active","Acknowledged","InProgress","Recovered","Resolved"].map(s=><option key={s}>{s}</option>)}</select></label>
+    <SystemState loading={state.loading} error={state.error} onRetry={refresh}>
+      <DataTable rows={(state.value||[]).filter(a=>!filter||a.status===filter)} empty="Không có cảnh báo phù hợp." columns={[
+        column("createdAt","Bắt đầu",a=>formatWhen(a.createdAt)),column("severity","Mức độ"),column("message","Nội dung"),column("status","Trạng thái"),
+        column("lastOccurredAt","Lần cuối",a=>formatWhen(a.lastOccurredAt)),column("resolvedAt","Phục hồi / đóng",a=>formatWhen(a.resolvedAt)),
+        column("action","Thao tác",a=><button type="button" className="system-secondary-button" disabled={busy||a.status!=="Active"} onClick={()=>acknowledge(a)}>Tiếp nhận</button>),
+      ]}/>
+    </SystemState>
+    {notice&&<p role="status" className="mt-2 text-sm text-[#13796e]">{notice}</p>}
+    {error&&<p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
+  </Panel>;
+}
+ControllerAlerts.propTypes={row:PropTypes.object.isRequired,revision:PropTypes.number.isRequired,refresh:PropTypes.func.isRequired};
+
 function Monitor({ row, revision, refresh }) {
   const load = useCallback(signal => api.getDiagnostics(row.id, signal), [row.id]);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -107,6 +155,7 @@ function Monitor({ row, revision, refresh }) {
         {testError && <p role="alert" className="mt-2 text-sm text-[#b93838]">{testError}</p>}
         {test && <p role="status" className={"mt-2 text-sm " + (test.reachable ? "text-[#13796e]" : "text-[#95600d]")}>{test.message}</p>}
       </Panel>
+      <ControllerEventHistory row={row} kind="heartbeat" revision={revision} refresh={refresh}/>
       <Panel title="Lần đo gần nhất của Sensor">
         <p className="mb-3 text-xs text-[#54747e]">Không phải lịch sử heartbeat. Hệ thống hiện lưu mốc heartbeat gần nhất.</p>
         <DataTable columns={[column("at", "Thời điểm", x => formatWhen(x.at))]} rows={(data.recentMeasurements || []).map((at, i) => ({ id: i, at }))} empty="Chưa có lần đo."/>
@@ -308,7 +357,7 @@ function InventoryView({ row, tab, revision, refresh }) {
   const load = useCallback(signal => api.getControllerPorts(row.id, signal), [row.id]);
   const state = useResource(load, revision, true);
   return <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
-    {state.value && (tab === "ports" ? <Ports row={row} inventory={state.value} refresh={refresh} refreshing={state.loading}/> : <Bindings row={row} inventory={state.value} refresh={refresh} refreshing={state.loading} revision={revision}/>)}
+    {state.value && (tab === "ports" ? <div className="space-y-4"><Ports row={row} inventory={state.value} refresh={refresh} refreshing={state.loading}/><ControllerEventHistory row={row} kind="manifest" revision={revision} refresh={refresh}/></div> : <Bindings row={row} inventory={state.value} refresh={refresh} refreshing={state.loading} revision={revision}/>)}
   </SystemState>;
 }
 InventoryView.propTypes = { row: PropTypes.object.isRequired, tab: PropTypes.string.isRequired, revision: PropTypes.number.isRequired, refresh: PropTypes.func.isRequired };
@@ -395,6 +444,7 @@ function TechnicalEvents({ row, revision, refresh }) {
         <DataTable rows={warnings} columns={[column("type", "Nhóm"), column("message", "Nội dung")]} empty="Không phát hiện mục cần kiểm tra trong dữ liệu hiện tại."/>
       </SystemState>
     </Panel>
+    <ControllerAlerts row={row} revision={revision} refresh={refresh}/>
     <Panel title="Cảnh báo và nhật ký kỹ thuật đã ghi">
       <SystemState loading={logs.loading} error={logs.error} onRetry={refresh}>
         <DataTable rows={logs.value || []} columns={[
