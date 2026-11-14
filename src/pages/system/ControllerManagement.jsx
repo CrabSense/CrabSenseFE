@@ -307,7 +307,7 @@ Bindings.propTypes = { row: PropTypes.object.isRequired, inventory: PropTypes.ob
 function InventoryView({ row, tab, revision, refresh }) {
   const load = useCallback(signal => api.getControllerPorts(row.id, signal), [row.id]);
   const state = useResource(load, revision, true);
-  return {tab === "provisioning" ? <ControllerProvisioning/> : <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
+  return <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
     {state.value && (tab === "ports" ? <Ports row={row} inventory={state.value} refresh={refresh} refreshing={state.loading}/> : <Bindings row={row} inventory={state.value} refresh={refresh} refreshing={state.loading} revision={revision}/>)}
   </SystemState>;
 }
