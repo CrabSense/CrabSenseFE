@@ -308,6 +308,8 @@ const systemAdminService = {
   deleteCameraSchedule(id,expectedVersion) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id),{method:"DELETE",params:{expectedVersion}}); },
   duplicateCameraSchedule(id,body) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id)+"/duplicate",{method:"POST",body}); },
   getCameraScheduleExecutions(id,params={},signal) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id)+"/executions",{params,signal}); },
+  getCameraScheduleRetention(id,signal) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id)+"/retention",{signal}); },
+  cleanupCameraSchedule(id,expectedVersion) { return sensorRequest("/camera-schedules/"+encodeURIComponent(id)+"/retention/cleanup",{method:"POST",params:{expectedVersion,confirm:true}}); },
   getCameraScheduleCalendar(params={},signal) { return sensorRequest("/camera-schedules/calendar",{params,signal}); },
   getCameraRecordingStatus(id,signal) { return sensorRequest("/cameras/"+encodeURIComponent(id)+"/recording-status",{signal}); },
   async getRecordingSchedules() {
