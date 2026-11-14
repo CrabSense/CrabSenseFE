@@ -5,6 +5,7 @@ import { Activity, AlertTriangle, Cable, Clock, Cpu, List, Settings, Workflow } 
 import api from "../../services/systemAdminService";
 import { DataTable, KpiGrid, Panel, SystemPage, SystemState } from "../../components/system/SystemChrome";
 import DeviceManagement from "./DeviceManagement";
+import "./controller-management.css";
 import { formatWhen, statusClass } from "./deviceModel";
 import { mapDeviceRows, STATUS_LABEL } from "./devices/rows";
 
@@ -46,10 +47,10 @@ function useResource(load, revision = 0, keepValue = false) {
 }
 
 function Tabs({ tab, controllerId, onChange }) {
-  return <nav aria-label="Các chức năng quản lý Controller" className="mb-4 flex flex-wrap gap-2 rounded-xl border border-[#dcebe8] bg-white p-2">
+  return <nav aria-label="Các chức năng quản lý Controller" className="ctrl-tabs">
     {TABS.map(([id, label, Icon]) => <button key={id} type="button" aria-current={tab === id ? "page" : undefined}
       onClick={() => onChange(id, controllerId)}
-      className={"flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold " + (tab === id ? "bg-[#147e75] text-white" : "text-[#355b6a] hover:bg-[#edf6f3]")}>
+      className="ctrl-tab">
       <Icon size={16} aria-hidden="true" />{label}
     </button>)}
   </nav>;
@@ -143,6 +144,7 @@ function Ports({ row, inventory, refresh, refreshing }) {
         <label className="text-xs text-[#526f79]">Loại cổng<select className={fieldClass} value={type} onChange={e => setType(e.target.value)}><option value="">Tất cả</option>{[...new Set(ports.map(p => p.type))].sort().map(t => <option key={t}>{t}</option>)}</select></label>
         <label className="text-xs text-[#526f79]">Hiện diện<select className={fieldClass} value={presence} onChange={e => setPresence(e.target.value)}><option value="">Tất cả</option><option value="true">Hiện diện</option><option value="false">Đã rút khỏi manifest</option></select></label>
       </div>
+      <div className="ctrl-port-grid">{rows.filter(p => p.isPresent && p.type === "DIGITAL_OUTPUT").map(p => <article className="ctrl-port-card" key={p.id}><header><strong>{p.portCode}</strong><span className={"ctrl-pill "+(p.reportedOn == null ? "warning" : p.reportedOn ? "online" : "")}>{stateLabel(p.reportedOn)}</span></header><p>GPIO {p.gpio} · Kênh {shown(p.channel)}</p><p>{linkedEquipment(inventory,p).map(e=>e.name).join(", ") || "Chưa liên kết"}</p><p>{shown(p.commissioningStatus)} · {formatWhen(p.lastReportedAt)}</p></article>)}</div>
       <DataTable rows={rows} empty={ports.length ? "Không có cổng phù hợp." : "Controller chưa khai báo danh mục cổng."} columns={[
         column("portCode", "Port", p => <strong>{p.portCode}</strong>),
         column("type", "Loại"),
@@ -460,10 +462,10 @@ function Workspace({ tab, controllerId, onChange }) {
     <Tabs tab={tab} controllerId={row?.id || controllerId} onChange={onChange}/>
     <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
       {!rows.length ? <Panel title="Chưa có Controller"><Link to={BASE} className="text-[#13796e] underline">Mở danh sách để đăng ký Controller</Link></Panel> : <>
-        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-[#dcebe8] bg-white p-4">
-          <Cpu size={22} className="text-[#147e75]"/>
+        <div className="ctrl-context">
+          <span className="ctrl-context-icon"><Cpu size={24}/></span>
           <label className="min-w-[200px] flex-1 text-xs text-[#526f79]">Controller<select className={fieldClass} value={row?.id || ""} onChange={e => onChange(tab,e.target.value)}><option value="" disabled>Chọn Controller</option>{rows.map(r => <option key={r.id} value={r.id}>{r.code} · {r.name} · {STATUS_LABEL[r.statusKey] || r.statusKey}</option>)}</select></label>
-          {row && <span className="pb-2 text-sm text-[#526f79]">{row.location}</span>}
+          {row && <div className="ctrl-context-meta"><span className={"ctrl-pill "+row.statusKey}>{STATUS_LABEL[row.statusKey] || row.statusKey}</span><span>{row.location}</span><span>IP: {shown(row.ip)}</span><span>Firmware: {shown(row.firmware)}</span></div>}
         </div>
         {!row ? <p role="alert" className="text-sm text-[#b93838]">Controller trong đường dẫn không còn tồn tại. Chọn thiết bị khác.</p> : <div key={row.id + ":" + tab}>
           {tab === "monitor" && <Monitor row={row} revision={revision} refresh={refresh}/>}
@@ -489,6 +491,5 @@ export default function ControllerManagement() {
     if (id) next.set("controllerId", id);
     setParams(next);
   };
-  if (tab === "list") return <DeviceManagement kind="controller" navigation={<Tabs tab={tab} controllerId={controllerId} onChange={navigate}/>} onControllerTab={navigate}/>;
-  return <Workspace tab={tab} controllerId={controllerId} onChange={navigate}/>;
+  return <div className="controller-workspace">{tab === "list" ? <DeviceManagement kind="controller" navigation={<Tabs tab={tab} controllerId={controllerId} onChange={navigate}/>} onControllerTab={navigate}/> : <Workspace tab={tab} controllerId={controllerId} onChange={navigate}/>}</div>;
 }
