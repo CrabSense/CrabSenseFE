@@ -1,0 +1,18 @@
+.camera-schedule-workspace{--schedule-accent:#147e75;min-width:0}
+.camera-schedule-workspace .system-panel{padding:18px;border-radius:12px}
+.camera-schedule-workspace .system-panel-title{font-size:15px;margin-bottom:14px;color:#153b56}
+.camera-schedule-workspace label{font-size:12px;color:#54747e;font-weight:600}
+.camera-schedule-workspace fieldset{border:1px solid #dcebe8;border-radius:10px;padding:12px;min-width:0}
+.camera-schedule-workspace legend{font-size:12px;font-weight:650;color:#153b56;padding:0 6px}
+.camera-schedule-workspace .system-table th{background:#edf6f3;white-space:nowrap}
+.camera-schedule-workspace .system-table td{vertical-align:middle}
+.camera-schedule-workspace .system-table tr:hover{background:#f7fbfa}
+.schedule-actions{display:flex;flex-wrap:wrap;gap:5px;min-width:150px}
+.schedule-actions button{border:1px solid #dcebe8;border-radius:7px;padding:5px 8px;font-size:11px;color:#147e75;background:#fff;white-space:nowrap}
+.schedule-actions button:hover:not(:disabled){background:#edf6f3}
+.schedule-actions button:last-child{color:#b93838}
+.schedule-actions button:disabled{opacity:.45;cursor:not-allowed}
+.schedule-name{font-weight:700;text-align:left;color:#147e75;max-width:220px;overflow-wrap:anywhere}
+.camera-schedule-workspace .system-kpi-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1100px){.camera-schedule-workspace .system-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.camera-schedule-workspace .system-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

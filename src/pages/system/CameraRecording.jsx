@@ -16,7 +16,7 @@ export default function CameraRecording(){
         <button type="button" aria-pressed={tab==="schedule"} onClick={()=>changeTab("schedule")}><CalendarClock size={18}/> Lịch trình ghi hình</button>
         <button type="button" aria-pressed={tab==="history"} onClick={()=>changeTab("history")}><Film size={18}/> Lịch sử ghi hình</button>
       </div>
-      {tab==="history"?<RecordingHistory key={params.get("deviceId")||"all"} initialDeviceId={params.get("deviceId")||""}/>:<ScheduleWorkspace/>}
+      {tab==="history"?<RecordingHistory key={params.get("deviceId")||"all"} initialDeviceId={params.get("deviceId")||""}/>:<ScheduleWorkspace key={params.get("deviceId")||"all"}/>}
     </div>
   </SystemPage>;
 }
