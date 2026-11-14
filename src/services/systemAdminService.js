@@ -11,7 +11,45 @@ function unwrapData(response) {
   return response?.data ?? response ?? null;
 }
 
+function sensorPath(id, suffix = "") {
+  return `/sensors/${encodeURIComponent(id)}${suffix ? "/" + suffix : ""}`;
+}
+async function sensorRequest(path, {params = {}, method = "GET", body, signal} = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([k,v]) => {if(v !== "" && v != null) query.set(k, String(v));});
+  const response = await fetchAPI(path + (query.size ? "?" + query : ""), {method, signal, ...(body === undefined ? {} : {body:JSON.stringify(body)})});
+  return unwrapData(response);
+}
+async function sensorList(path, options) {
+  const data = await sensorRequest(path, options);
+  if(!Array.isArray(data)) throw new Error("API Sensor trả dữ liệu không đúng định dạng.");
+  return data;
+}
+
 const systemAdminService = {
+  getSensorInventory(params,signal) { return sensorList("/sensors/inventory",{params,signal}); },
+  getSensorInventoryDetail(id,signal) { return sensorRequest(sensorPath(id,"inventory"),{signal}); },
+  getSensorSummary(signal) { return sensorRequest("/sensors/summary",{signal}); },
+  getSensorTypes(signal) { return sensorList("/sensors/types",{signal}); },
+  getDiscoveredSensors(deviceId,signal) { return sensorList("/sensors/discovered",{params:{deviceId},signal}); },
+  getSensor(id,signal) { return sensorRequest(sensorPath(id),{signal}); },
+  registerSensorFromPort(body) { return sensorRequest("/sensors/register-from-port",{method:"POST",body}); },
+  bindSensor(id,body) { return sensorRequest(sensorPath(id,"binding"),{method:"PUT",body}); },
+  enableSensor(id) { return sensorRequest(sensorPath(id,"enable"),{method:"POST"}); },
+  disableSensor(id) { return sensorRequest(sensorPath(id,"disable"),{method:"POST"}); },
+  getSensorHealth(id,signal) { return sensorRequest(sensorPath(id,"health"),{signal}); },
+  getSensorMeasurements(id,params,signal) { return sensorRequest(sensorPath(id,"measurements"),{params,signal}); },
+  getSensorStatistics(id,params,signal) { return sensorRequest(sensorPath(id,"statistics"),{params,signal}); },
+  getSensorChart(id,params,signal) { return sensorRequest(sensorPath(id,"chart"),{params,signal}); },
+  getSensorEvents(id,signal) { return sensorRequest(sensorPath(id,"events"),{signal}); },
+  getSensorConfiguration(id,signal) { return sensorRequest(sensorPath(id,"configuration"),{signal}); },
+  saveSensorConfiguration(id,body) { return sensorRequest(sensorPath(id,"configuration"),{method:"PUT",body}); },
+  getSensorCalibrations(id,signal) { return sensorList(sensorPath(id,"calibrations"),{signal}); },
+  recordSensorCalibration(id,body) { return sensorRequest(sensorPath(id,"calibrations"),{method:"POST",body}); },
+  requestSensorTest(id) { return sensorRequest(sensorPath(id,"test"),{method:"POST"}); },
+  getSensorTests(id,signal) { return sensorList(sensorPath(id,"tests"),{signal}); },
+  getSensorTest(id,testId,signal) { return sensorRequest(sensorPath(id,"tests/"+encodeURIComponent(testId)),{signal}); },
+
   async getCameras() { return unwrapList(await fetchAPI("/cameras")); },
   async getCamera(id) { return unwrapData(await fetchAPI(`/cameras/${id}`)); },
   async createCamera(body) { return unwrapData(await fetchAPI("/cameras", { method: "POST", body: JSON.stringify(body) })); },
