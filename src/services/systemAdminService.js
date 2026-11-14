@@ -77,8 +77,32 @@ const systemAdminService = {
     return unwrapList(await fetchAPI("/devices"));
   },
 
-  async getControllerPorts(id) {
-    return unwrapData(await fetchAPI(`/iot/controllers/${id}/ports`));
+  async getControllerPorts(id, signal) {
+    const data = unwrapData(await fetchAPI(`/iot/controllers/${encodeURIComponent(id)}/ports`, { signal }));
+    if (!data || !Array.isArray(data.ports) || !Array.isArray(data.equipment) || !Array.isArray(data.sensors))
+      throw new Error("API danh mục Controller trả dữ liệu không đúng định dạng.");
+    return data;
+  },
+
+  async getControllerCommandHistory(id, { page = 1, pageSize = 25, status = "" } = {}, signal) {
+    const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (status) query.set("status", status);
+    const data = unwrapData(await fetchAPI(`/edge/commands/history/${encodeURIComponent(id)}?${query}`, { signal }));
+    if (!data || !Array.isArray(data.items) || !Number.isFinite(data.totalCount))
+      throw new Error("API lịch sử lệnh trả dữ liệu không đúng định dạng.");
+    return data;
+  },
+
+  async getControllerRasDiagram(areaId, signal) {
+    const data = unwrapData(await fetchAPI(`/areas/${encodeURIComponent(areaId)}/ras-flow`, { signal }));
+    if (!data || !Array.isArray(data.nodes)) throw new Error("Không tải được danh mục RAS.");
+    return data;
+  },
+
+  async updateControllerRelay(areaId, nodeId, body) {
+    return unwrapData(await fetchAPI(`/areas/${encodeURIComponent(areaId)}/ras-flow/nodes/${encodeURIComponent(nodeId)}/relay`, {
+      method: "PUT", body: JSON.stringify(body),
+    }));
   },
 
   async getDevice(id) {
