@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
+import { Cpu, Wifi, WifiOff, AlertTriangle, Wrench } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import systemAdminService from "../../services/systemAdminService";
@@ -242,6 +243,7 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
                 ))}
               </div>
             ) : null}
+            {kind === "controller" && <div className="ctrl-summary">{[["all","Tổng Controller",Cpu],["online","Online",Wifi],["offline","Offline",WifiOff],["warning","Cảnh báo",AlertTriangle],["maintenance","Bảo trì",Wrench]].map(([id,label,Icon])=><button key={id} type="button" className={"ctrl-stat "+id} aria-pressed={statusFilter===id} onClick={()=>{setStatusFilter(id);setPage(1);}}><Icon/><span><small>{label}</small><strong>{id==="all"?rows.length:rows.filter(r=>r.statusKey===id).length}</strong></span></button>)}</div>}
             {kind === "all" ? <DeviceStats
               rows={rows}
               activeType={typeFilter}
@@ -268,6 +270,7 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
             <section className="system-panel rounded-xl border border-[#dcebe8] bg-white p-4">
               <DeviceTable
                 rows={filtered}
+                controllerView={kind === "controller"}
                 page={page}
                 pageSize={pageSize}
                 onPage={setPage}
