@@ -56,7 +56,7 @@ function RecordingDetails({item,onClose,onDeleted,onNotice}){
       {loading&&<p role="status" className="rec-muted">Đang tải thông tin…</p>}
       <div className="rec-player">{url?<video controls playsInline preload="metadata" src={url} onError={()=>setError("Không phát được định dạng/codec video. Bạn có thể tải xuống để xem bằng trình phát phù hợp.")}/>:<div><Film size={36}/><strong>{data.fileName}</strong><span>Video đã lưu · không phải live</span><button type="button" disabled={Boolean(busy)||loading||!detail||data.sizeBytes>PREVIEW_LIMIT} onClick={()=>act("play")}><PlayCircle size={18}/>{busy==="play"?"Đang tải video…":"Phát lại video"}</button>{data.sizeBytes>PREVIEW_LIMIT&&<small>Video lớn hơn 128 MiB, hãy tải xuống để xem.</small>}</div>}</div>
       <h3>Thông tin bản ghi</h3>
-      <dl className="rec-facts"><dt>Tên file</dt><dd>{data.fileName}</dd><dt>Camera</dt><dd>{[data.deviceCode,data.cameraName].filter(Boolean).join(" · ")||"—"}</dd><dt>Vị trí hiện tại</dt><dd>{[data.areaName,data.rowName].filter(Boolean).join(" / ")||"Chưa gán"}</dd><dt>Thời điểm lưu</dt><dd>{recordingTime(data.createdAt)}</dd><dt>Bắt đầu quay</dt><dd>{recordingTime(data.startedAt)}</dd><dt>Kết thúc quay</dt><dd>{recordingTime(data.endedAt)}</dd><dt>Thời lượng</dt><dd>{durationLabel(data.durationSeconds)}</dd><dt>Dung lượng</dt><dd>{formatBytes(data.sizeBytes)}</dd><dt>Chế độ ghi</dt><dd>{modeLabel(data.recordingMode)}</dd><dt>Kho lưu trữ</dt><dd>{data.provider||"—"}</dd><dt>Nguồn bản ghi</dt><dd>{data.source==="LegacyMedia"?"Media đã lưu":data.source||"Chưa xác định"}</dd></dl>
+      <dl className="rec-facts"><dt>Tên file</dt><dd>{data.fileName}</dd><dt>Camera</dt><dd>{[data.deviceCode,data.cameraName].filter(Boolean).join(" · ")||"—"}</dd><dt>Vị trí hiện tại</dt><dd>{[data.areaName,data.rowName].filter(Boolean).join(" / ")||"Chưa gán"}</dd><dt>Thời điểm lưu</dt><dd>{recordingTime(data.createdAt)}</dd><dt>Bắt đầu quay</dt><dd>{recordingTime(data.startedAt)}</dd><dt>Kết thúc quay</dt><dd>{recordingTime(data.endedAt)}</dd><dt>Thời lượng</dt><dd>{durationLabel(data.durationSeconds)}</dd><dt>Dung lượng</dt><dd>{formatBytes(data.sizeBytes)}</dd><dt>Chế độ ghi</dt><dd>{modeLabel(data.recordingMode)}</dd><dt>Kho lưu trữ</dt><dd>{data.provider||"—"}</dd><dt>Lịch trình nguồn</dt><dd>{data.scheduleName||"—"}{data.scheduleVersion? " · Revision "+data.scheduleVersion:""}</dd><dt>Phiên thực thi</dt><dd>{data.executionId||"—"}</dd><dt>Nguồn bản ghi</dt><dd>{data.source==="LegacyMedia"?"Media đã lưu":data.source||"Chưa xác định"}</dd></dl>
       <p className="rec-muted">Thời điểm lưu không phải thời điểm quay. Metadata chưa có từ Camera Agent được để chưa xác định.</p>
       {busy&&busy!=="delete"&&<button className="system-secondary-button" type="button" onClick={()=>request.current?.abort()}>Hủy tải</button>}
       {data.sizeBytes>DOWNLOAD_LIMIT&&<p className="rec-muted">File lớn hơn 500 MiB, trang này chưa hỗ trợ tải xuống.</p>}
@@ -66,7 +66,7 @@ function RecordingDetails({item,onClose,onDeleted,onNotice}){
 }
 RecordingDetails.propTypes={item:PropTypes.object.isRequired,onClose:PropTypes.func.isRequired,onDeleted:PropTypes.func.isRequired,onNotice:PropTypes.func.isRequired};
 
-export default function RecordingHistory({initialDeviceId=""}){
+export default function RecordingHistory({initialDeviceId="",initialRecordingId=""}){
   const [draft,setDraft]=useState(()=>({...EMPTY_FILTERS,deviceId:initialDeviceId}));
   const [filters,setFilters]=useState(()=>({...EMPTY_FILTERS,deviceId:initialDeviceId}));
   const [page,setPage]=useState(1),[pageSize,setPageSize]=useState(25);
@@ -93,6 +93,7 @@ export default function RecordingHistory({initialDeviceId=""}){
     return()=>controller.abort();
   },[filters,page,pageSize,revision]);
   useEffect(()=>()=>exportAbort.current?.abort(),[]);
+  useEffect(()=>{if(!initialRecordingId)return;const ctrl=new AbortController();systemAdminService.getRecordingDetail(initialRecordingId,ctrl.signal).then(v=>{if(!ctrl.signal.aborted)setSelected(v);}).catch(e=>{if(!ctrl.signal.aborted)setNotice(e.message||"Không tìm thấy video.");});return()=>ctrl.abort();},[initialRecordingId]);
   const refresh=()=>{setSelected(null);setRevision(n=>n+1);};
   const change=(key,value)=>setDraft(old=>({...old,[key]:value,...(key==="farmingAreaId"?{farmingRowId:""}:{})}));
   const apply=event=>{event.preventDefault();try{recordingQuery(draft,1,pageSize);setFilterError("");setFilters({...draft});setPage(1);setSelected(null);}catch(err){setFilterError(err.message);}};
@@ -142,4 +143,4 @@ export default function RecordingHistory({initialDeviceId=""}){
     <p className="rec-footnote"><Clock size={14}/> Ngày lọc là ngày lưu file; khu/dãy là vị trí hiện tại của Camera. Không suy đoán thời lượng hoặc chế độ ghi.</p>
   </div>;
 }
-RecordingHistory.propTypes={initialDeviceId:PropTypes.string};
+RecordingHistory.propTypes={initialDeviceId:PropTypes.string,initialRecordingId:PropTypes.string};
