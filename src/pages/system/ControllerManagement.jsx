@@ -6,6 +6,7 @@ import api from "../../services/systemAdminService";
 import { DataTable, KpiGrid, Panel, SystemPage, SystemState } from "../../components/system/SystemChrome";
 import DeviceManagement from "./DeviceManagement";
 import "./controller-management.css";
+import ControllerProvisioning from "./ControllerProvisioning";
 import { formatWhen, statusClass } from "./deviceModel";
 import { mapDeviceRows, STATUS_LABEL } from "./devices/rows";
 
@@ -19,6 +20,7 @@ const TABS = [
   ["history", "Lịch sử điều khiển", Clock],
   ["events", "Cảnh báo kỹ thuật", AlertTriangle],
   ["config", "Cấu hình kỹ thuật", Settings],
+  ["provisioning", "Kiosk / Đăng ký", Cpu],
 ];
 const COMMAND_STATES = {
   pending: "Chờ gửi", delivered: "Đã giao", acknowledged: "Đã phản hồi",
@@ -298,7 +300,7 @@ Bindings.propTypes = { row: PropTypes.object.isRequired, inventory: PropTypes.ob
 function InventoryView({ row, tab, revision, refresh }) {
   const load = useCallback(signal => api.getControllerPorts(row.id, signal), [row.id]);
   const state = useResource(load, revision, true);
-  return <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
+  return {tab === "provisioning" ? <ControllerProvisioning/> : <SystemState loading={state.loading && !state.value} error={state.error} onRetry={refresh}>
     {state.value && (tab === "ports" ? <Ports row={row} inventory={state.value} refresh={refresh} refreshing={state.loading}/> : <Bindings row={row} inventory={state.value} refresh={refresh} refreshing={state.loading} revision={revision}/>)}
   </SystemState>;
 }
@@ -475,7 +477,7 @@ function Workspace({ tab, controllerId, onChange }) {
           {tab === "config" && <Configuration row={row} revision={revision} refresh={refresh}/>}
         </div>}
       </>}
-    </SystemState>
+    </SystemState>}
   </SystemPage>;
 }
 Workspace.propTypes = { tab: PropTypes.string.isRequired, controllerId: PropTypes.string, onChange: PropTypes.func.isRequired };
