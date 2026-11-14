@@ -177,7 +177,7 @@ function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, t
         <button type="button" onClick={onClose} className="text-sm text-[#526f79]">Đóng</button>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs">
-        {TABS.map(([id, label]) => (
+        {(row.type === "controller" ? [...TABS, ["ports", "Cổng / I/O"]] : TABS).map(([id, label]) => (
           <button
             key={id}
             type="button"
@@ -193,6 +193,7 @@ function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, t
         {notice ? <p className="mb-3 text-[#95600d]">{notice}</p> : null}
         {row.issues?.length ? <p className="mb-3 text-xs text-[#95600d]">{row.issues.join(" · ")}. Kiểm tra trước khi giữ cả hai bản ghi.</p> : null}
         {tab === "info" ? <InfoTab row={row} detail={detail} schedule={schedule} /> : null}
+        {tab === "ports" && row.type === "controller" ? <ControllerInventory key={row.id} deviceId={row.id} /> : null}
         {tab === "config" ? (
           row.source === "sensor" ? (
             <div className="space-y-3 rounded-xl border border-[#dcebe8] bg-[#f7fbfa] p-3">
@@ -306,7 +307,6 @@ function InfoTab({ row, detail, schedule }) {
         {row.type === "controller" ? <Item label="RSSI" value={detail?.rssiDbm ?? row.raw.rssiDbm ?? "—"} /> : null}
         {row.type === "controller" ? <Item label="Pin" value={detail?.batteryLevel ?? row.raw.batteryLevel ?? "—"} /> : null}
       </dl>
-      {row.type === "controller" ? <ControllerInventory key={row.id} deviceId={row.id} /> : null}
       {row.type === "controller" ? <ChildLists detail={detail} sensorCount={row.raw.sensorCount} actuatorCount={row.raw.actuatorCount} /> : null}
       {row.type === "controller" ? <p className="text-xs text-[#54747e]">Bật/tắt bơm hoặc van không nằm ở trang này.</p> : null}
     </div>
@@ -336,20 +336,21 @@ function ControllerInventory({ deviceId }) {
         <h3 className="font-semibold text-sm">Cổng controller</h3>
         <button type="button" disabled={loading} onClick={() => setRevision((v) => v + 1)} className="system-secondary-button">Làm mới</button>
       </div>
-      <p className="mt-1 text-xs text-[#526f79]">Danh mục phần cứng do controller báo. Chỉ xem, không gửi lệnh điều khiển.</p>
+      <p className="mt-1 text-xs text-[#526f79]">Danh mục phần cứng do controller báo. Trạng thái GPIO không xác nhận tải điện đang chạy. Chỉ xem, không gửi lệnh điều khiển.</p>
       {loading ? <p role="status" className="mt-3 text-xs text-[#526f79]">Đang tải cổng...</p> : error ? <p role="alert" className="mt-3 text-xs text-[#b93838]">{error}</p> : (
         <>
-          <p className="my-2 text-xs text-[#526f79]">Model: {inventory?.hardwareModel || "—"} · Manifest: {inventory?.capabilityVersion ?? "—"} · {ports.length} cổng</p>
+          <p className="my-2 text-xs text-[#526f79]">Model: {inventory?.hardwareModel || "—"} · Manifest: {inventory?.capabilityVersion ?? "—"} · {ports.filter(p => p.isPresent).length}/{ports.length} cổng hiện diện</p>
           {!ports.length ? <p className="text-xs text-[#526f79]">Controller chưa báo danh mục cổng.</p> : (
             <ul className="space-y-2 text-xs">
               {ports.map((port) => {
                 const equipment = (inventory?.equipment || []).filter((item) => item.controllerPortId === port.id || item.busPortId === port.id);
-                const sensors = (inventory?.sensors || []).filter((item) => item.controllerPortId === port.id);
+                const sensors = (inventory?.sensors || []).filter((item) => item.controllerPortId === port.id || item.busPortId === port.id);
                 return <li key={port.id} className="rounded-lg border border-[#dcebe8] bg-white p-2">
                   <div className="flex flex-wrap justify-between gap-1"><strong>{port.portCode}</strong><span className={port.isPresent ? "text-[#13796e]" : "text-[#95600d]"}>{port.isPresent ? "Hiện diện" : "Không hiện diện"}</span></div>
                   <p className="mt-1 text-[#355b6a]">{port.type} · GPIO {port.gpio}{port.secondaryGpio != null ? " / " + port.secondaryGpio : ""} · Kênh {port.channel ?? "—"}</p>
-                  <p className="mt-1 text-[#526f79]">Commissioning: {port.commissioningStatus || "—"} · Báo trạng thái: {port.reportedOn == null ? "—" : port.reportedOn ? "ON" : "OFF"}</p>
-                  <p className="mt-1 text-[#526f79]">Thiết bị: {[...equipment.map((item) => item.name), ...sensors.map((item) => item.sensorCode+(item.busAddress?" ("+item.busAddress+"/"+item.busRegister+")":""))].filter(Boolean).join(", ") || "Chưa liên kết"}</p>
+                  <p className="mt-1 text-[#526f79]">Commissioning: {port.commissioningStatus || "—"} · GPIO báo: {!port.isPresent || port.reportedOn == null ? "—" : port.reportedOn ? "ON" : "OFF"}</p>
+                  <p className="mt-1 text-[#526f79]">Báo lúc: {formatWhen(port.lastReportedAt)} · Active: {port.activeLevel || "—"}</p>
+                  <p className="mt-1 text-[#526f79]">Thiết bị: {[...equipment.map((item) => item.name), ...sensors.map((item) => item.sensorCode+(item.busAddress != null?" ("+item.busAddress+"/"+(item.busRegister ?? "—")+")":""))].filter(Boolean).join(", ") || "Chưa liên kết"}</p>
                   {sensors.map(s=><Link key={s.id} className="mr-2 text-xs text-[#13796e] underline" to={"/system/devices/sensors?sensorId="+encodeURIComponent(s.id)}>Xem {s.sensorCode}</Link>)}
                   {port.isPresent&&["DIGITAL_INPUT","ANALOG_INPUT","RS485","I2C","UART"].includes(port.type)&&(!sensors.length||["RS485","I2C","UART"].includes(port.type))&&<Link className="text-xs text-[#13796e] underline" to={"/system/devices/sensors?deviceId="+encodeURIComponent(deviceId)+"&portId="+encodeURIComponent(port.id)}>Đăng ký Sensor</Link>}
                 </li>;
