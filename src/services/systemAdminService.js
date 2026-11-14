@@ -27,6 +27,14 @@ async function sensorList(path, options) {
 }
 
 const systemAdminService = {
+  getKiosks(areaId, signal) { return sensorList("/kiosks", {params:{farmingAreaId:areaId},signal}); },
+  getEdgeControllers(areaId, signal) { return sensorList("/kiosks/controllers", {params:{farmingAreaId:areaId},signal}); },
+  createKiosk(body) { return sensorRequest("/kiosks",{method:"POST",body}); },
+  issueKioskCode(id) { return sensorRequest("/kiosks/"+encodeURIComponent(id)+"/provisioning-codes",{method:"POST"}); },
+  revokeKiosk(id) { return sensorRequest("/kiosks/"+encodeURIComponent(id)+"/revoke",{method:"POST"}); },
+  deleteKiosk(id) { return sensorRequest("/kiosks/"+encodeURIComponent(id),{method:"DELETE"}); },
+  approveEdgeController(id) { return sensorRequest("/controllers/"+encodeURIComponent(id)+"/approve",{method:"POST"}); },
+  rejectEdgeController(id) { return sensorRequest("/controllers/"+encodeURIComponent(id)+"/reject",{method:"POST"}); },
   getSensorRasLocations(signal) { return sensorList("/sensors/ras-locations",{signal}); },
   cancelSensorTest(id,testId) { return sensorRequest(sensorPath(id,"tests/"+encodeURIComponent(testId)+"/cancel"),{method:"POST"}); },
   resetSensorConfiguration(id,expectedVersion) { return sensorRequest(sensorPath(id,"configuration/reset"),{method:"POST",params:{expectedVersion}}); },
