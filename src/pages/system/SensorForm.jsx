@@ -38,7 +38,11 @@ export default function SensorForm({sensor,areas,devices,types,initialArea="",in
     api.getDiscoveredSensors(f.deviceId,ctl.signal).then(rows=>{if(!ctl.signal.aborted)setPorts(rows);}).catch(e=>{if(!ctl.signal.aborted)setPortError(e.message);}).finally(()=>{if(!ctl.signal.aborted)setPortLoading(false);});
     return()=>ctl.abort();
   },[editing,method,f.deviceId]);
-  const port=ports.find(p=>p.id===f.portId),area=areas.find(a=>a.id===f.farmingAreaId);
+  const port=ports.find(p=>p.id===f.portId);
+  // A sensor may have a direct row without an explicit area. Preserve that relationship
+  // unless the user actually changes location.
+  const derivedArea=areas.find(a=>a.rows?.some(r=>r.id===f.farmingRowId));
+  const area=areas.find(a=>a.id===f.farmingAreaId)||(!f.farmingAreaId?derivedArea:null);
   const areaRows=area?.rows||[];
   const deviceOptions=devices.filter(d=>f.sourceType==="CameraAnalysis"&&method==="manual"?deviceKind(d)==="camera":deviceKind(d)==="controller");
   const chooseDevice=value=>setF(old=>({...old,deviceId:value,portId:"",busAddress:"",busRegister:""}));
@@ -48,7 +52,9 @@ export default function SensorForm({sensor,areas,devices,types,initialArea="",in
     try{
       if(!f.sensorCode.trim()||!f.sensorType.trim())throw new Error("Nhập mã và loại Sensor.");
       if(editing){
-        const body={name:f.name.trim(),installationLocation:f.installationLocation.trim(),farmingAreaId:f.farmingAreaId||EMPTY_ID,farmingRowId:f.farmingRowId||EMPTY_ID};
+        const body={name:f.name.trim(),installationLocation:f.installationLocation.trim()};
+        if(f.farmingAreaId!==(raw.farmingAreaId||""))body.farmingAreaId=f.farmingAreaId||EMPTY_ID;
+        if(f.farmingRowId!==(raw.farmingRowId||""))body.farmingRowId=f.farmingRowId||EMPTY_ID;
         // Omit unchanged fields: legacy types/units and inherited location remain intact.
         if(f.sensorType.trim()!==raw.sensorType)body.sensorType=f.sensorType.trim();
         if(f.unit.trim()!==(raw.unit||""))body.unit=f.unit.trim();
@@ -82,14 +88,14 @@ export default function SensorForm({sensor,areas,devices,types,initialArea="",in
         {editing&&<div className="sen-note">Controller/port được chỉnh tại mục Liên kết phần cứng. Loại và đơn vị đã có dữ liệu đo không thể đổi ý nghĩa lịch sử.</div>}
       </div>
       {!editing&&<><h3>02 · Liên kết phần cứng</h3><div className="sen-form-grid">
-        <Field label={method==="port"?"Controller *":"Thiết bị nguồn (tùy chọn)"}><select required={method==="port"} value={f.deviceId} onChange={e=>chooseDevice(e.target.value)}><option value="">Chọn thiết bị</option>{deviceOptions.map(d=><option key={d.id} value={d.id}>{d.deviceCode} · {d.name||d.deviceType}</option>)}</select></Field>
+        <Field label={method==="port"?"Controller *":"Thiết bị nguồn (tùy chọn)"}><select required={method==="port"} value={f.deviceId} onChange={e=>chooseDevice(e.target.value)}><option value="">Chọn thiết bị</option>{f.deviceId&&!deviceOptions.some(d=>d.id===f.deviceId)&&<option value={f.deviceId}>{initialPort?.deviceCode||"Thiết bị đã chọn"}</option>}{deviceOptions.map(d=><option key={d.id} value={d.id}>{d.deviceCode} · {d.name||d.deviceType}</option>)}</select></Field>
         {method==="port"&&<Field label="Port đã phát hiện *"><select required disabled={!f.deviceId||portLoading} value={f.portId} onChange={e=>{const p=ports.find(x=>x.id===e.target.value);setF(old=>({...old,portId:e.target.value,busAddress:"",busRegister:"",...(p?.sensorCode&&!isBus(p)?{sensorCode:p.sensorCode}:{})}));}}><option value="">{portLoading?"Đang tải port…":"Chọn port"}</option>{ports.map(p=><option key={p.id} value={p.id}>{p.portCode} · {p.portType}{p.gpio!=null?" / GPIO "+p.gpio:""}{p.registered?" (bus dùng chung)":""}</option>)}</select></Field>}
         {method==="port"&&isBus(port)&&<><Field label="Địa chỉ bus *"><input required maxLength={64} value={f.busAddress} onChange={e=>set("busAddress",e.target.value)}/></Field><Field label="Register / thông số *"><input required maxLength={64} value={f.busRegister} onChange={e=>set("busRegister",e.target.value)}/></Field></>}
       </div>{method==="port"&&portError&&<p role="alert" className="sen-error">{portError}</p>}{method==="port"&&f.deviceId&&!portLoading&&!portError&&!ports.length&&<p className="sen-note">Không có port input/bus khả dụng. Kiểm tra manifest hoặc chọn đăng ký thủ công nếu thiết bị cũ.</p>}</>}
       <h3>{editing?"02":"03"} · Vị trí lắp đặt</h3>
       <div className="sen-form-grid">
-        <Field label="Khu nuôi"><select value={f.farmingAreaId} onChange={e=>setF(old=>({...old,farmingAreaId:e.target.value,farmingRowId:""}))}><option value="">Không gán trực tiếp / kế thừa thiết bị</option>{areas.filter(a=>a.isActive!==false||a.id===f.farmingAreaId).map(a=><option key={a.id} value={a.id}>{a.name||a.code}{a.isActive===false?" (ngừng hoạt động)":""}</option>)}</select></Field>
-        <Field label="Dãy nuôi"><select value={f.farmingRowId} disabled={!area} onChange={e=>set("farmingRowId",e.target.value)}><option value="">Không gán trực tiếp</option>{areaRows.filter(r=>r.isActive!==false||r.id===f.farmingRowId).map(r=><option key={r.id} value={r.id}>{r.name||r.code}</option>)}</select></Field>
+        <Field label="Khu nuôi"><select value={f.farmingAreaId||area?.id||""} disabled={!areas.length} onChange={e=>setF(old=>({...old,farmingAreaId:e.target.value,farmingRowId:""}))}><option value="">Không gán trực tiếp / kế thừa thiết bị</option>{f.farmingAreaId&&!areas.some(a=>a.id===f.farmingAreaId)&&<option value={f.farmingAreaId}>Khu đã gán (chưa tải danh mục)</option>}{areas.filter(a=>a.isActive!==false||a.id===f.farmingAreaId).map(a=><option key={a.id} value={a.id}>{a.name||a.code}{a.isActive===false?" (ngừng hoạt động)":""}</option>)}</select></Field>
+        <Field label="Dãy nuôi"><select value={f.farmingRowId} disabled={!area} onChange={e=>set("farmingRowId",e.target.value)}><option value="">Không gán trực tiếp</option>{f.farmingRowId&&!areaRows.some(r=>r.id===f.farmingRowId)&&<option value={f.farmingRowId}>Dãy đã gán (chưa tải danh mục)</option>}{areaRows.filter(r=>r.isActive!==false||r.id===f.farmingRowId).map(r=><option key={r.id} value={r.id}>{r.name||r.code}</option>)}</select></Field>
         {(editing||method==="manual")&&<Field label="Vị trí cụ thể"><input maxLength={200} value={f.installationLocation} onChange={e=>set("installationLocation",e.target.value)} placeholder="VD: Bể lọc số 1"/></Field>}
       </div>
       <p className="sen-note">Ngưỡng chất lượng nước thuộc quản lý trại, không chỉnh tại đây. {method==="port"&&!editing?"Vị trí lắp chi tiết có thể cập nhật sau khi đăng ký.":""}</p>
@@ -118,7 +124,7 @@ export function BindingForm({sensor,devices,onClose,onSaved}){
   return <SensorDialog title={"Liên kết phần cứng · "+sensor.sensorCode} onClose={onClose} busy={busy}><form className="sen-form" onSubmit={submit}>
     <p className="sen-note">Thay đổi liên kết sẽ đặt lại trạng thái kết nối và xác nhận cấu hình. Chỉ chọn port input đang hiện diện.</p>
     {error&&<p role="alert" className="sen-error">{error}</p>}
-    <Field label="Thiết bị nguồn"><select value={device} onChange={e=>{setDevice(e.target.value);setPortId("");setAddress("");setRegister("");}}><option value="">Gỡ liên kết thiết bị</option>{devices.filter(d=>d.id===sensor.deviceId||deviceKind(d)==="controller"||sensor.sourceType==="CameraAnalysis").map(d=><option key={d.id} value={d.id}>{d.deviceCode} · {shown(d.name)}</option>)}</select></Field>
+    <Field label="Thiết bị nguồn"><select value={device} onChange={e=>{setDevice(e.target.value);setPortId("");setAddress("");setRegister("");}}><option value="">Gỡ liên kết thiết bị</option>{device&&!devices.some(d=>d.id===device)&&<option value={device}>{sensor.controllerCode||"Thiết bị đã gán"}</option>}{devices.filter(d=>d.id===sensor.deviceId||deviceKind(d)==="controller"||sensor.sourceType==="CameraAnalysis").map(d=><option key={d.id} value={d.id}>{d.deviceCode} · {shown(d.name)}</option>)}</select></Field>
     <Field label="Port"><select value={portId} disabled={!device||loading} onChange={e=>{setPortId(e.target.value);setAddress("");setRegister("");}}><option value="">{loading?"Đang tải…":"Không gán port"}</option>{portId&&!port&&<option value={portId}>Port cũ (chưa xác minh)</option>}{ports.map(p=><option key={p.id} value={p.id}>{p.portCode} · {p.portType}</option>)}</select></Field>
     {isBus(port)&&<div className="sen-form-grid"><Field label="Địa chỉ bus *"><input required maxLength={64} value={address} onChange={e=>setAddress(e.target.value)}/></Field><Field label="Register *"><input required maxLength={64} value={register} onChange={e=>setRegister(e.target.value)}/></Field></div>}
     {portId&&!port&&!loading&&<p className="sen-note">Port cũ không còn hiện diện hoặc đã được gán. Chọn lại port hợp lệ.</p>}

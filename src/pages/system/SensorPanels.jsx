@@ -70,6 +70,17 @@ export function SensorHistory({sensor}){
 }
 SensorHistory.propTypes={sensor:PropTypes.object.isRequired};
 
+export function SensorAllEvents(){
+  const [revision,refresh]=useState(0),[kind,setKind]=useState(""),[status,setStatus]=useState("");
+  const data=useSensorData(()=>api.getAlerts(false),[revision]);
+  const alerts=(data.data||[]).filter(a=>["sensor_disconnect","sensor_read_error"].includes(a.incidentType));
+  const rows=alerts.filter(a=>(!kind||a.incidentType===kind)&&(!status||a.status===status));
+  return <section className="sen-panel"><div className="sen-section-head"><div><h2><AlertTriangle size={18}/> Cảnh báo kỹ thuật toàn hệ thống</h2><p>Chỉ lỗi kỹ thuật Sensor do BE ghi nhận. Chọn Sensor để xem nhật ký riêng.</p></div><button type="button" className="system-secondary-button sen-btn" onClick={()=>refresh(n=>n+1)}><RefreshCw size={16}/> Làm mới</button></div>
+    <div className="sen-inline-form"><Field label="Loại cảnh báo"><select value={kind} onChange={e=>setKind(e.target.value)}><option value="">Tất cả loại</option><option value="sensor_disconnect">Mất kết nối</option><option value="sensor_read_error">Lỗi đọc</option></select></Field><Field label="Trạng thái"><select value={status} onChange={e=>setStatus(e.target.value)}><option value="">Tất cả trạng thái</option>{[...new Set(alerts.map(a=>a.status))].filter(Boolean).map(s=><option key={s}>{s}</option>)}</select></Field></div>
+    <SensorState state={data} onRetry={()=>refresh(n=>n+1)}><SensorTable rows={rows} columns={[{key:"incidentType",label:"Loại lỗi",render:a=>a.incidentType==="sensor_disconnect"?"Mất kết nối":"Lỗi đọc Sensor"},{key:"message",label:"Thông báo"},{key:"severity",label:"Mức độ"},{key:"status",label:"Trạng thái"},{key:"lastOccurredAt",label:"Lần cuối",render:a=>dateLabel(a.lastOccurredAt||a.createdAt)}]} empty="Không có cảnh báo Sensor phù hợp."/></SensorState>
+  </section>;
+}
+
 export function SensorEvents({sensor}){
   const [revision,refresh]=useState(0);
   const events=useSensorData(signal=>api.getSensorEvents(sensor.id,signal),[sensor.id,revision]);
