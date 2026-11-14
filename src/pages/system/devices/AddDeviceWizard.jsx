@@ -51,6 +51,9 @@ function AddDeviceWizard({ areas, devices, sensors, onClose, onCreated, initialK
       if (form.kind === "sensor") {
         await systemAdminService.createSensor({
           sensorCode: form.sensorCode.trim(),
+          name: form.name.trim() || null,
+          farmingAreaId: form.farmingAreaId || null,
+          farmingRowId: form.farmingRowId || null,
           sensorType: form.sensorType.trim() || "sensor",
           unit: form.unit.trim() || null,
           deviceId: form.deviceId || null,

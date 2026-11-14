@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from "react";
 import PropTypes from "prop-types";
+import {useSearchParams} from "react-router-dom";
 import {Activity,Wifi,WifiOff,AlertTriangle,Power,HelpCircle,Plus,RefreshCw,Download,Search,MapPin,List,ChartNoAxesCombined,Settings,Eye,Pencil,X,Link2,Trash2,Cpu,ChevronLeft,ChevronRight,FlaskConical,Clock} from "lucide-react";
 import api from "../../services/systemAdminService";
 import {SystemPage,SystemState} from "../../components/system/SystemChrome";
@@ -92,9 +93,11 @@ function Detail({sensor,onClose,onEdit,onBinding,onNavigate,onChanged}){
 Detail.propTypes={sensor:PropTypes.object.isRequired,onClose:PropTypes.func.isRequired,onEdit:PropTypes.func.isRequired,onBinding:PropTypes.func.isRequired,onNavigate:PropTypes.func.isRequired,onChanged:PropTypes.func.isRequired};
 
 export default function SensorManagement(){
+  const [params]=useSearchParams();
+  const initialTab=TABS.some(([id])=>id===params.get("tab"))?params.get("tab"):"list";
   const [sensors,setSensors]=useState([]),[summary,setSummary]=useState(null),[areas,setAreas]=useState([]),[devices,setDevices]=useState([]),[types,setTypes]=useState([]);
   const [catalogAvailable,setCatalogAvailable]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(""),[auxError,setAuxError]=useState(""),[notice,setNotice]=useState(""),[revision,refresh]=useState(0);
-  const [tab,setTab]=useState("list"),[filters,setFilters]=useState(EMPTY_FILTER),[page,setPage]=useState(1),[pageSize,setPageSize]=useState(10),[selected,setSelected]=useState(""),[modal,setModal]=useState(null);
+  const [tab,setTab]=useState(initialTab),[filters,setFilters]=useState(EMPTY_FILTER),[page,setPage]=useState(1),[pageSize,setPageSize]=useState(10),[selected,setSelected]=useState(params.get("sensorId")||""),[modal,setModal]=useState(null);
   useEffect(()=>{
     const ctl=new AbortController();setLoading(true);setError("");setAuxError("");
     Promise.allSettled([api.getSensorInventory({},ctl.signal),api.getSensorSummary(ctl.signal),api.getDeviceLocations(),api.getDevices(),api.getSensorTypes(ctl.signal)]).then(([inventory,sum,loc,dev,typ])=>{

@@ -27,7 +27,6 @@ function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, t
   const [pendingDanger, setPendingDanger] = useState(null);
   const [firmwareDraft, setFirmwareDraft] = useState("");
   const [connection, setConnection] = useState(null);
-  const [sensorConfig, setSensorConfig] = useState(null);
 
   useEffect(() => {
     if (tabRequest?.tab) setTab(tabRequest.tab);
@@ -45,14 +44,8 @@ function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, t
     setFirmwareDraft(row.firmware || "");
     if (row.source !== "device") {
       setConfig(null);
-      setSensorConfig({
-        unit: row.raw.unit || "",
-        minThreshold: row.raw.minThreshold ?? "",
-        maxThreshold: row.raw.maxThreshold ?? "",
-      });
       return undefined;
     }
-    setSensorConfig(null);
     setConfig({
       name: row.raw.name || "",
       ipAddress: row.raw.ipAddress || "",
@@ -201,31 +194,11 @@ function DeviceDetailDrawer({ row, areas, locationsAvailable = true, schedule, t
         {row.issues?.length ? <p className="mb-3 text-xs text-[#95600d]">{row.issues.join(" · ")}. Kiểm tra trước khi giữ cả hai bản ghi.</p> : null}
         {tab === "info" ? <InfoTab row={row} detail={detail} schedule={schedule} /> : null}
         {tab === "config" ? (
-          row.source === "sensor" && sensorConfig ? (
-            <form
-              onSubmit={async (event) => {
-                event.preventDefault();
-                setError("");
-                try {
-                  await systemAdminService.updateSensor(row.id, {
-                    unit: sensorConfig.unit || null,
-                    minThreshold: sensorConfig.minThreshold === "" ? null : Number(sensorConfig.minThreshold),
-                    maxThreshold: sensorConfig.maxThreshold === "" ? null : Number(sensorConfig.maxThreshold),
-                  });
-                  setNotice("Đã lưu ngưỡng cảm biến.");
-                  onChanged();
-                } catch (saveError) {
-                  setError(saveError?.message || "Không lưu được cảm biến.");
-                }
-              }}
-              className="space-y-2"
-            >
-              <Field label="Đơn vị" value={sensorConfig.unit} onChange={(value) => setSensorConfig({ ...sensorConfig, unit: value })} />
-              <Field label="Ngưỡng min" value={String(sensorConfig.minThreshold)} onChange={(value) => setSensorConfig({ ...sensorConfig, minThreshold: value })} />
-              <Field label="Ngưỡng max" value={String(sensorConfig.maxThreshold)} onChange={(value) => setSensorConfig({ ...sensorConfig, maxThreshold: value })} />
-              <p className="text-xs text-[#54747e]">Đây là ngưỡng đang lưu. API chưa có chu kỳ lấy mẫu hay hiệu chuẩn riêng.</p>
-              <button type="submit" className="h-10 rounded-xl bg-[#147e75] px-3 text-sm font-bold text-white">Lưu hiệu chuẩn</button>
-            </form>
+          row.source === "sensor" ? (
+            <div className="space-y-3 rounded-xl border border-[#dcebe8] bg-[#f7fbfa] p-3">
+              <p className="text-sm text-[#355b6a]">Cấu hình kỹ thuật, liên kết port và hiệu chuẩn được quản lý tại trang Sensor. Ngưỡng chất lượng nước thuộc quản lý trại.</p>
+              <Link to={`/system/devices/sensors?sensorId=${encodeURIComponent(row.id)}&tab=config`} className="inline-flex rounded-lg bg-[#147e75] px-3 py-2 text-sm font-semibold text-white">Mở cấu hình Sensor</Link>
+            </div>
           ) : row.source === "device" && config ? (
             <form onSubmit={saveConfig} className="space-y-2">
               <Field label="Tên" value={config.name} onChange={(value) => setConfig({ ...config, name: value })} />
