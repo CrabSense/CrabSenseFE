@@ -203,7 +203,9 @@ const fetchAPI = async (endpoint, options = {}, configOptions = {}) => {
         redirectToLogin();
       }
 
-      throw new Error(message);
+      const error = new Error(message);
+      error.status = response.status;
+      throw error;
     }
 
     return result;
