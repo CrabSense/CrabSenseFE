@@ -35,6 +35,7 @@ const systemAdminService = {
   getMonitoringHistory(type,id,params,signal){return sensorRequest(monitoringPath+"/"+encodeURIComponent(type)+"/"+encodeURIComponent(id)+"/history",{params,signal});},
   getMonitoringTrends(params,signal){return sensorRequest(monitoringPath+"/trends",{params,signal});},
   getMonitoringPolicies(signal){return sensorRequest(monitoringPath+"/policies",{signal});},
+  saveMonitoringPolicy(type,id,body){return sensorRequest(monitoringPath+"/policies/"+encodeURIComponent(type)+"/"+encodeURIComponent(id),{method:"PUT",body});},
   getMonitoringAlerts(params,signal){return sensorRequest(monitoringPath+"/alerts",{params,signal});},
   acknowledgeMonitoringAlert(id){return sensorRequest(monitoringPath+"/alerts/"+encodeURIComponent(id)+"/acknowledge",{method:"POST"});},
   getKiosks(areaId, signal) { return sensorList("/kiosks", {params:{farmingAreaId:areaId},signal}); },
