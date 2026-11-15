@@ -17,11 +17,11 @@ function useLoad(load,revision,interval=0){
 }
 function State({state,children}){return <><SystemState loading={state.loading&&!state.data} error={!state.data?state.error:""} onRetry={state.retry}>{state.data&&children(state.data)}</SystemState>{state.data&&state.error&&<p role="alert" className="text-red-700 text-xs">{state.error} · Dữ liệu cũ</p>}</>;}
 State.propTypes={state:PropTypes.object.isRequired,children:PropTypes.func.isRequired};
-export function MonitoringTopology({area,revision,onSelect}){
+export function MonitoringTopology({area,revision,onSelect,expanded=false}){
  const [open,setOpen]=useState(false);
- return <Panel title="Sơ đồ phụ thuộc thiết bị"><button className="system-secondary-button" onClick={()=>setOpen(x=>!x)}>{open?"Thu gọn":"Xem sơ đồ"}</button>{open&&<TopologyBody area={area} revision={revision} onSelect={onSelect}/>}</Panel>;
+ return <Panel title="Sơ đồ phụ thuộc thiết bị">{!expanded&&<button className="system-secondary-button" onClick={()=>setOpen(x=>!x)}>{open?"Thu gọn":"Xem sơ đồ"}</button>}{(expanded||open)&&<TopologyBody area={area} revision={revision} onSelect={onSelect}/>}</Panel>;
 }
-MonitoringTopology.propTypes={area:PropTypes.string.isRequired,revision:PropTypes.number.isRequired,onSelect:PropTypes.func.isRequired};
+MonitoringTopology.propTypes={area:PropTypes.string.isRequired,revision:PropTypes.number.isRequired,onSelect:PropTypes.func.isRequired,expanded:PropTypes.bool};
 function TopologyBody({area,revision,onSelect}){
  const load=useCallback(signal=>api.getMonitoringTopology({farmingAreaId:area},signal),[area]);
  const state=useLoad(load,revision,30000);
@@ -39,11 +39,11 @@ function TopologyBody({area,revision,onSelect}){
  </div>;}}</State>;
 }
 TopologyBody.propTypes=MonitoringTopology.propTypes;
-export function MonitoringDiagnostics({row,revision}){
+export function MonitoringDiagnostics({row,revision,expanded=false}){
  const [open,setOpen]=useState(false);
- return <Panel title="Chẩn đoán thiết bị"><button className="system-secondary-button" onClick={()=>setOpen(x=>!x)}>{open?"Thu gọn":"Xem chi tiết"}</button>{open&&<DiagnosticsBody row={row} revision={revision}/>}</Panel>;
+ return <Panel title="Chẩn đoán thiết bị">{!expanded&&<button className="system-secondary-button" onClick={()=>setOpen(x=>!x)}>{open?"Thu gọn":"Xem chi tiết"}</button>}{(expanded||open)&&<DiagnosticsBody row={row} revision={revision}/>}</Panel>;
 }
-MonitoringDiagnostics.propTypes=rowProps;
+MonitoringDiagnostics.propTypes={...rowProps,expanded:PropTypes.bool};
 function DiagnosticsBody({row,revision}){
  const load=useCallback(signal=>api.getMonitoringDiagnostics(row.type,row.id,signal),[row.type,row.id]);
  const state=useLoad(load,revision,30000);
