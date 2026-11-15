@@ -28,6 +28,12 @@ async function sensorList(path, options) {
 
 const monitoringPath="/system/device-monitoring";
 const systemAdminService = {
+  getMonitoringHealth(signal){return sensorRequest(monitoringPath+"/health",{signal});},
+  getMonitoringTopology(params,signal){return sensorRequest(monitoringPath+"/topology",{params,signal});},
+  getMonitoringDiagnostics(type,id,signal){return sensorRequest(monitoringPath+"/"+encodeURIComponent(type)+"/"+encodeURIComponent(id)+"/diagnostics",{signal});},
+  getMonitoringHealthHistory(type,id,params,signal){return sensorRequest(monitoringPath+"/"+encodeURIComponent(type)+"/"+encodeURIComponent(id)+"/health-history",{params,signal});},
+  resetMonitoringPolicy(type,id,expectedVersion){return sensorRequest(monitoringPath+"/policies/"+encodeURIComponent(type)+"/"+encodeURIComponent(id),{method:"DELETE",params:{expectedVersion}});},
+  exportMonitoringHistory(params){const query=new URLSearchParams();Object.entries(params).forEach(([k,v])=>{if(v!==""&&v!=null)query.set(k,String(v));});return fetchAPI(monitoringPath+"/export?"+query,{}, {responseType:"csv",maxBytes:20*1024*1024});},
   getMonitoringSummary(params,signal){return sensorRequest(monitoringPath+"/summary",{params,signal});},
   getMonitoringDevices(params,signal){return sensorRequest(monitoringPath+"/devices",{params,signal});},
   getMonitoringAreas(signal){return sensorRequest(monitoringPath+"/areas",{signal});},
