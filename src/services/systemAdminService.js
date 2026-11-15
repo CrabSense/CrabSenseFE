@@ -377,9 +377,21 @@ const systemAdminService = {
     return unwrapList(await fetchAPI(`/cameras/recordings${suffix}`));
   },
 
-  async getAiServices() {
-    return unwrapList(await fetchAPI("/ai/services"));
+  async getAiServices(signal) {
+    const data = await sensorRequest("/ai/services", { signal });
+    if (!Array.isArray(data)) throw new Error("API AI trả dữ liệu không đúng định dạng.");
+    return data;
   },
+  updateAiConfiguration(id, body) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/configuration", {method:"PUT", body}); },
+  getAiModels(id, signal) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/models", {signal}); },
+  registerAiModel(id, body) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/models", {method:"POST",body}); },
+  getAiCameras(id, signal) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/cameras", {signal}); },
+  assignAiCamera(id, deviceId) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/cameras/" + encodeURIComponent(deviceId), {method:"PUT"}); },
+  unassignAiCamera(id, deviceId) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/cameras/" + encodeURIComponent(deviceId), {method:"DELETE"}); },
+  getAiJobs(id, params, signal) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/jobs", {params,signal}); },
+  retryAiJob(id, jobId) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/jobs/" + encodeURIComponent(jobId) + "/retry", {method:"POST"}); },
+  getAiMetrics(id, signal) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/metrics", {signal}); },
+  getAiAudit(id, signal) { return sensorRequest("/ai/services/" + encodeURIComponent(id) + "/audit", {signal}); },
 
   async createAiService(body) {
     return unwrapData(
