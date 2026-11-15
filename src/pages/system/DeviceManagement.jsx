@@ -298,7 +298,7 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
           onChanged={() => load(true)}
         />
       ) : null}
-      {creating && kind==="controller" ? <AddControllerDialog areas={areas} devices={devices} onClose={()=>setCreating(false)} onCreated={()=>{setCreating(false);setNotice("Đã tạo hồ sơ Controller. Chờ thiết bị đăng ký qua Kiosk.");load(true);}} onProvision={(areaId)=>{setCreating(false);navigate("/system/devices/controllers?tab=provisioning&areaId="+encodeURIComponent(areaId));}}/> : creating ? (
+      {creating && kind==="controller" ? <AddControllerDialog areas={areas} devices={devices} onClose={()=>setCreating(false)} onCreated={()=>{setCreating(false);setNotice("Đã tạo hồ sơ Controller. Chờ thiết bị đăng ký qua Kiosk.");load(true);}} onProvision={(areaId,kioskId)=>{setCreating(false);navigate("/system/devices/controllers?tab=provisioning&areaId="+encodeURIComponent(areaId)+(kioskId?"&kioskId="+encodeURIComponent(kioskId):""));}}/> : creating ? (
         <AddDeviceWizard
           initialKind={kind === "all" ? undefined : kind}
           areas={areas}
