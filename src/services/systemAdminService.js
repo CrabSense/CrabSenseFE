@@ -34,6 +34,8 @@ const systemAdminService = {
   getMonitoringDetail(type,id,signal){return sensorRequest(monitoringPath+"/"+encodeURIComponent(type)+"/"+encodeURIComponent(id),{signal});},
   getMonitoringHistory(type,id,params,signal){return sensorRequest(monitoringPath+"/"+encodeURIComponent(type)+"/"+encodeURIComponent(id)+"/history",{params,signal});},
   getMonitoringTrends(params,signal){return sensorRequest(monitoringPath+"/trends",{params,signal});},
+  getMonitoringAvailability(type,id,params,signal){return sensorRequest(monitoringPath+"/"+encodeURIComponent(type)+"/"+encodeURIComponent(id)+"/availability",{params,signal});},
+  saveMonitoringPolicy(type,body){return sensorRequest(monitoringPath+"/policies/"+encodeURIComponent(type),{method:"PUT",body});},
   getMonitoringPolicies(signal){return sensorRequest(monitoringPath+"/policies",{signal});},
   getMonitoringAlerts(params,signal){return sensorRequest(monitoringPath+"/alerts",{params,signal});},
   acknowledgeMonitoringAlert(id){return sensorRequest(monitoringPath+"/alerts/"+encodeURIComponent(id)+"/acknowledge",{method:"POST"});},

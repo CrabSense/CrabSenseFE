@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Video, Camera, CircleCheck, CircleAlert, Wrench, RefreshCw, Plus, Search, Eye, Pencil, MoreHorizontal, MapPin, Clock, List, LayoutGrid, ChevronLeft, ChevronRight, X, Download, CalendarClock, Wifi, ImageOff } from "lucide-react";
 import systemAdminService from "../../services/systemAdminService";
 import { SystemPage, SystemState } from "../../components/system/SystemChrome";
@@ -298,7 +298,10 @@ export default function CameraManagement(){
   const [view,setView]=useState("list");
   const [page,setPage]=useState(1);
   const [size,setSize]=useState(10);
-  const [selectedId,setSelectedId]=useState(null);
+  const [params]=useSearchParams();
+  const cameraId=params.get("cameraId");
+  const [selectedId,setSelectedId]=useState(cameraId);
+  useEffect(()=>{setSelectedId(cameraId);},[cameraId]);
   const [tab,setTab]=useState("info");
   const [edit,setEdit]=useState(null);
   const [notice,setNotice]=useState("");
