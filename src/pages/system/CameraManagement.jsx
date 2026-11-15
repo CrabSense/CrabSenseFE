@@ -298,10 +298,10 @@ export default function CameraManagement(){
   const [view,setView]=useState("list");
   const [page,setPage]=useState(1);
   const [size,setSize]=useState(10);
-  const [params]=useSearchParams();
-  const cameraId=params.get("cameraId");
+  const [routeParams]=useSearchParams();
+  const cameraId=routeParams.get("cameraId");
   const [selectedId,setSelectedId]=useState(cameraId);
-  useEffect(()=>{setSelectedId(cameraId);},[cameraId]);
+  useEffect(()=>setSelectedId(cameraId),[cameraId]);
   const [tab,setTab]=useState("info");
   const [edit,setEdit]=useState(null);
   const [notice,setNotice]=useState("");
