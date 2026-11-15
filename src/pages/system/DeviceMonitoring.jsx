@@ -1,8 +1,9 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import PropTypes from "prop-types";
 import {Link} from "react-router-dom";
-import {Activity,Cpu,Cctv,Monitor,RefreshCw,AlertTriangle,Wifi,WifiOff} from "lucide-react";
+import {Activity,Cpu,Cctv,Monitor,RefreshCw,AlertTriangle} from "lucide-react";
 import api from "../../services/systemAdminService";
+import LegacyDeviceMonitoring from "./LegacyDeviceMonitoring";
 import {DataTable,KpiGrid,Panel,SystemPage,SystemState} from "../../components/system/SystemChrome";
 import {formatWhen,statusClass} from "./deviceModel";
 const kinds=[["camera","Camera",Cctv],["sensor","Sensor",Activity],["controller","Controller",Cpu],["kiosk","Kiosk",Monitor]];
@@ -14,7 +15,8 @@ const linkFor=r=>r.type==="sensor"?"/system/devices/sensors?sensorId="+encodeURI
 const reasonText={heartbeat_timeout:"Quá hạn heartbeat",telemetry_timeout:"Quá hạn dữ liệu",upstream_kiosk_offline:"Kiosk mất kết nối",upstream_controller_offline:"Controller mất kết nối",no_verified_heartbeat:"Chưa có heartbeat xác thực",initial_observation:"Quan sát đầu tiên",observation_gap:"Gián đoạn giám sát",status_changed:"Đổi trạng thái",source_removed:"Đã gỡ nguồn"};
 function useResource(load,revision,interval=0){
  const [state,setState]=useState({value:null,error:"",loading:true,updated:null});
- useEffect(()=>{let active=true,controller=null,busy=false;const run=async()=>{if(busy)return;busy=true;controller=new AbortController();setState(s=>({...s,loading:true,error:""}));try{const value=await load(controller.signal);if(active)setState({value,error:"",loading:false,updated:new Date()});}catch(e){if(active&&!controller.signal.aborted)setState(s=>({...s,loading:false,error:e.message||"Không tải được dữ liệu."}));}finally{busy=false;}};
+ const lastLoad=useRef(null);
+ useEffect(()=>{let active=true,controller=null,busy=false;if(lastLoad.current!==load){lastLoad.current=load;setState({value:null,error:"",loading:true,updated:null});}const run=async()=>{if(busy)return;busy=true;controller=new AbortController();setState(s=>({...s,loading:true,error:""}));try{const value=await load(controller.signal);if(active)setState({value,error:"",loading:false,updated:new Date()});}catch(e){if(active&&!controller.signal.aborted)setState(s=>({...s,loading:false,error:e.message||"Không tải được dữ liệu."}));}finally{busy=false;}};
  run();const timer=interval?setInterval(run,interval):null;return()=>{active=false;controller?.abort();if(timer)clearInterval(timer);};},[load,revision,interval]);
  return state;
 }
@@ -38,7 +40,7 @@ function Trends({area,revision,refresh}){
  return <Panel title="Xu hướng kết nối"><div className="mb-3 flex justify-between gap-2"><p className="text-xs text-[#54747e]">Số lần chuyển Offline / phục hồi theo ngày UTC. Không phải tỷ lệ uptime.</p><select aria-label="Khoảng thời gian" className={field} value={days} onChange={e=>setDays(Number(e.target.value))}>{[7,30,90].map(d=><option key={d} value={d}>{d} ngày</option>)}</select></div><Resource state={state} retry={refresh}>{v=>{const points=v.points||[],max=Math.max(1,...points.map(x=>Math.max(x.offline,x.recovered)));return points.length?<div className="space-y-2">{points.map(p=><div key={p.day} className="grid grid-cols-[90px_1fr_60px] items-center gap-2 text-xs"><span>{p.day.slice(0,10)}</span><div className="space-y-1"><div className="h-2 rounded bg-[#e9efed]"><div className="h-2 rounded bg-[#b93838]" style={{width:p.offline/max*100+"%"}}/></div><div className="h-2 rounded bg-[#e9efed]"><div className="h-2 rounded bg-[#147e75]" style={{width:p.recovered/max*100+"%"}}/></div></div><span>{p.offline} / {p.recovered}</span></div>)}<p className="text-xs text-[#54747e]">Đỏ: Offline · Xanh: phục hồi. Khoảng không được quan sát không tính là kết nối tốt.</p></div>:<p className="text-sm text-[#54747e]">Chưa có dữ liệu lịch sử.</p>;}}</Resource></Panel>;
 }
 Trends.propTypes={area:PropTypes.string.isRequired,revision:PropTypes.number.isRequired,refresh:PropTypes.func.isRequired};
-export default function DeviceMonitoring(){
+function MonitoringWorkspace(){
  const [revision,setRevision]=useState(0),[kind,setKind]=useState(""),[status,setStatus]=useState(""),[area,setArea]=useState(""),[row,setRow]=useState(""),[query,setQuery]=useState(""),[search,setSearch]=useState(""),[onlyAlert,setOnlyAlert]=useState(false),[page,setPage]=useState(1),[alertPage,setAlertPage]=useState(1),[severity,setSeverity]=useState(""),[selected,setSelected]=useState(null),[ackError,setAckError]=useState(""),[ackBusy,setAckBusy]=useState(false);
  const lock=useRef(false);const refresh=useCallback(()=>setRevision(x=>x+1),[]);
  useEffect(()=>{const t=setTimeout(()=>{setSearch(query);setPage(1);},250);return()=>clearTimeout(t);},[query]);
@@ -59,4 +61,13 @@ export default function DeviceMonitoring(){
  <Trends area={area} revision={revision} refresh={refresh}/>
  <Panel title="Chính sách giám sát"><Resource state={policies} retry={refresh}>{v=><><p className="text-sm">Camera / Controller: {v.cameraTimeoutSeconds}/{v.controllerTimeoutSeconds} giây · Kiosk: {v.kioskTimeoutSeconds} giây · Recording Agent: {v.agentTimeoutSeconds} giây.</p><p className="mt-2 text-xs text-[#54747e]">Sensor có timeout riêng trong cấu hình Sensor. Lịch sử lấy mẫu mỗi {v.historySampleSeconds} giây, không phải giám sát liên tục.</p><Link className="mt-2 inline-block text-sm text-[#13796e]" to="/system/devices/sensors">Cấu hình Sensor</Link></>}</Resource></Panel>
  </div>{selected&&<Detail key={selected.type+selected.id} row={selected} close={()=>setSelected(null)} revision={revision} refresh={refresh}/>}</div></div></SystemPage>;
+}
+
+export default function DeviceMonitoring(){
+ const [mode,setMode]=useState("checking"),[error,setError]=useState(""),[attempt,setAttempt]=useState(0);
+ useEffect(()=>{let active=true,busy=false,ctrl=null;const probe=async()=>{if(busy)return;busy=true;ctrl=new AbortController();try{await api.getMonitoringSummary({},ctrl.signal);if(active){setMode("new");setError("");}}catch(e){if(active&&!ctrl.signal.aborted){if(e.status===404){setMode("legacy");setError("");}else{setMode("error");setError(e.message||"Không kiểm tra được phiên bản Backend.");}}}finally{busy=false;}};
+ probe();const timer=setInterval(probe,30000);return()=>{active=false;ctrl?.abort();clearInterval(timer);};},[attempt]);
+ if(mode==="legacy")return <LegacyDeviceMonitoring/>;
+ if(mode==="new")return <MonitoringWorkspace/>;
+ return <SystemPage title="Giám sát thiết bị" description="Kiểm tra API giám sát khả dụng."><SystemState loading={mode==="checking"} error={error} onRetry={()=>{setMode("checking");setAttempt(x=>x+1);}}/></SystemPage>;
 }
