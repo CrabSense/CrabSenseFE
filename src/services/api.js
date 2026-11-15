@@ -153,18 +153,18 @@ const fetchAPI = async (endpoint, options = {}, configOptions = {}) => {
       }
     }
 
-    if (response.ok && responseType === "blob") {
+    if (response.ok && (responseType === "blob" || responseType === "csv")) {
       const type = (response.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
-      if (!type.startsWith("video/") && type !== "application/octet-stream") {
+      if (responseType === "csv" ? type !== "text/csv" : (!type.startsWith("video/") && type !== "application/octet-stream")) {
         await response.body?.cancel();
-        throw new Error("API không trả nội dung video hợp lệ.");
+        throw new Error("API không trả nội dung tải xuống hợp lệ.");
       }
       const length = Number(response.headers.get("content-length") || 0);
       if (maxBytes && length > maxBytes) {
         await response.body?.cancel();
-        throw new Error("Video vượt giới hạn tải trên trình duyệt.");
+        throw new Error("Tệp vượt giới hạn tải trên trình duyệt.");
       }
-      if (!response.body) throw new Error("Trình duyệt không hỗ trợ đọc video.");
+      if (!response.body) throw new Error("Trình duyệt không hỗ trợ đọc tệp.");
       const reader = response.body.getReader();
       const chunks = [];
       let received = 0;
@@ -175,12 +175,12 @@ const fetchAPI = async (endpoint, options = {}, configOptions = {}) => {
           received += value.byteLength;
           if (maxBytes && received > maxBytes) {
             await reader.cancel();
-            throw new Error("Video vượt giới hạn tải trên trình duyệt.");
+            throw new Error("Tệp vượt giới hạn tải trên trình duyệt.");
           }
           chunks.push(value);
         }
       } finally { reader.releaseLock(); }
-      if (!received || (length > 0 && received !== length)) throw new Error("Nội dung video chưa đầy đủ.");
+      if (!received || (length > 0 && received !== length)) throw new Error("Nội dung tệp chưa đầy đủ.");
       return new Blob(chunks, { type });
     }
 
