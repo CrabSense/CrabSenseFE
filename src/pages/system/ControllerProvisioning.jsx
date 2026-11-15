@@ -1,14 +1,15 @@
 import {useEffect,useState,useRef} from "react";
-import {Link} from "react-router-dom";
+import {Link,useSearchParams} from "react-router-dom";
 import api from "../../services/systemAdminService";
 import {Panel,DataTable,SystemState} from "../../components/system/SystemChrome";
 import {formatWhen} from "./deviceModel";
 const field="mt-1 w-full rounded-lg border border-[#c9dfd9] bg-[#f7fbfa] px-3 py-2 text-sm";
 const col=(key,label,render)=>({key,label,render});
 export default function ControllerProvisioning(){
+ const [params]=useSearchParams();const initialArea=params.get("areaId")||"";
  const [areas,setAreas]=useState([]),[area,setArea]=useState(""),[name,setName]=useState(""),[rows,setRows]=useState(null),[error,setError]=useState(""),[notice,setNotice]=useState(""),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[loading,setLoading]=useState(true);
  const lock=useRef(false);
- useEffect(()=>{let active=true;api.getDeviceLocations().then(v=>{if(active){setAreas(v);setArea(a=>a||v.find(x=>x.isActive)?.id||"");}}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[]);
+ useEffect(()=>{let active=true;api.getDeviceLocations().then(v=>{if(active){setAreas(v);setArea(a=>a||v.find(x=>x.id===initialArea&&x.isActive)?.id||v.find(x=>x.isActive)?.id||"");}}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[initialArea]);
  useEffect(()=>{if(!area)return;let active=true;const ctrl=new AbortController();setRows(null);setError("");setLoading(true);Promise.all([api.getKiosks(area,ctrl.signal),api.getEdgeControllers(area,ctrl.signal)]).then(v=>{if(active)setRows(v);}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;ctrl.abort();};},[area,revision]);
  async function act(label,fn){if(lock.current||!window.confirm(label))return;lock.current=true;setBusy(true);setError("");setNotice("");try{await fn();setNotice("Đã lưu thao tác. Danh sách được tải lại.");setRevision(v=>v+1);}catch(e){setError(e.message||"Thao tác thất bại.");}finally{lock.current=false;setBusy(false);}}
  const action=(label,fn,disabled=false)=><button type="button" className="system-secondary-button" disabled={busy||loading||disabled} onClick={()=>act(label,fn)}>{label}</button>;

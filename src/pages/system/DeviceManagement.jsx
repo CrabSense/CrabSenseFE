@@ -10,6 +10,7 @@ import DeviceFilters from "./devices/DeviceFilters";
 import DeviceTable from "./devices/DeviceTable";
 import DeviceDetailDrawer from "./devices/DeviceDetailDrawer";
 import AddDeviceWizard from "./devices/AddDeviceWizard";
+import AddControllerDialog from "./devices/AddControllerDialog";
 import { duplicateSummary, mapDeviceRows } from "./devices/rows";
 import { deviceKind } from "./deviceModel";
 
@@ -229,7 +230,7 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
         <SystemPageHeader title={({ camera: "Quản lý Camera", sensor: "Quản lý Sensor", controller: "Quản lý Controller" })[kind] || "Quản lý thiết bị"} description={kind === "controller" ? "Quản lý controller, trạng thái kết nối, cấu hình và danh mục cổng phần cứng." : "Quản lý đăng ký, cấu hình và trạng thái thiết bị. Lịch ghi hình nằm ở tab riêng."} actions={<>
           <button type="button" onClick={() => load(true)} className="system-secondary-button">Làm mới</button>
           <button type="button" onClick={exportCsv} className="system-secondary-button">Xuất dữ liệu</button>
-          <button type="button" disabled={Boolean(locationError)} onClick={() => setCreating(true)} className="system-primary-button">+ Thêm thiết bị</button>
+          <button type="button" disabled={Boolean(locationError)} onClick={() => setCreating(true)} className="system-primary-button">{kind==="controller"?"+ Thêm Controller":"+ Thêm thiết bị"}</button>
         </>} />
         {navigation}
         <SystemState loading={loading} error={error} onRetry={() => load()}>
@@ -297,7 +298,7 @@ function DeviceManagement({ kind = "all", navigation, onControllerTab }) {
           onChanged={() => load(true)}
         />
       ) : null}
-      {creating ? (
+      {creating && kind==="controller" ? <AddControllerDialog areas={areas} devices={devices} onClose={()=>setCreating(false)} onCreated={()=>{setCreating(false);setNotice("Đã tạo hồ sơ Controller. Chờ thiết bị đăng ký qua Kiosk.");load(true);}} onProvision={(areaId)=>{setCreating(false);navigate("/system/devices/controllers?tab=provisioning&areaId="+encodeURIComponent(areaId));}}/> : creating ? (
         <AddDeviceWizard
           initialKind={kind === "all" ? undefined : kind}
           areas={areas}
