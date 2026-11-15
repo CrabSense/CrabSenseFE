@@ -26,7 +26,17 @@ async function sensorList(path, options) {
   return data;
 }
 
+const monitoringPath="/system/device-monitoring";
 const systemAdminService = {
+  getMonitoringSummary(params,signal){return sensorRequest(monitoringPath+"/summary",{params,signal});},
+  getMonitoringDevices(params,signal){return sensorRequest(monitoringPath+"/devices",{params,signal});},
+  getMonitoringAreas(signal){return sensorRequest(monitoringPath+"/areas",{signal});},
+  getMonitoringDetail(type,id,signal){return sensorRequest(monitoringPath+"/"+encodeURIComponent(type)+"/"+encodeURIComponent(id),{signal});},
+  getMonitoringHistory(type,id,params,signal){return sensorRequest(monitoringPath+"/"+encodeURIComponent(type)+"/"+encodeURIComponent(id)+"/history",{params,signal});},
+  getMonitoringTrends(params,signal){return sensorRequest(monitoringPath+"/trends",{params,signal});},
+  getMonitoringPolicies(signal){return sensorRequest(monitoringPath+"/policies",{signal});},
+  getMonitoringAlerts(params,signal){return sensorRequest(monitoringPath+"/alerts",{params,signal});},
+  acknowledgeMonitoringAlert(id){return sensorRequest(monitoringPath+"/alerts/"+encodeURIComponent(id)+"/acknowledge",{method:"POST"});},
   getKiosks(areaId, signal) { return sensorList("/kiosks", {params:{farmingAreaId:areaId},signal}); },
   getEdgeControllers(areaId, signal) { return sensorList("/kiosks/controllers", {params:{farmingAreaId:areaId},signal}); },
   createKiosk(body) { return sensorRequest("/kiosks",{method:"POST",body}); },
