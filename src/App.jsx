@@ -104,7 +104,7 @@ function App() {
 
         <Route
           element={
-            <ProtectedRoute allowedRoles={[SYSTEM_ADMINISTRATOR_ROLE, "SystemAdmin"]}>
+            <ProtectedRoute allowedRoles={[SYSTEM_ADMINISTRATOR_ROLE]}>
               <AdminLayout />
             </ProtectedRoute>
           }

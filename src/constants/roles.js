@@ -7,27 +7,19 @@ export const FARM_STAFF_ROLE = "FarmStaff";
 /** @deprecated dùng FARM_ADMINISTRATOR_ROLE */
 export const FARM_ADMIN_ROLE = FARM_ADMINISTRATOR_ROLE;
 
-export const FARM_PORTAL_ROLES = [
-  FARM_ADMINISTRATOR_ROLE,
-  FARM_MANAGER_ROLE,
-  FARM_STAFF_ROLE,
-];
-
-/** JWT/DB cũ — chỉ dùng khi migrate. */
-const LEGACY_FARM_OWNER = "FarmOwner";
-const LEGACY_STAFF = "Staff";
-const LEGACY_SYSTEM_ADMIN = "SystemAdmin";
+// Web is exclusively for administrators. Manager uses Desktop; Staff uses Mobile.
+export const FARM_PORTAL_ROLES = [FARM_ADMINISTRATOR_ROLE];
 
 export function isSystemAdministratorRole(role) {
-  return role === SYSTEM_ADMINISTRATOR_ROLE || role === LEGACY_SYSTEM_ADMIN;
+  return role === SYSTEM_ADMINISTRATOR_ROLE;
 }
 
 export function isFarmPortalRole(role) {
-  return (
-    FARM_PORTAL_ROLES.includes(role) ||
-    role === LEGACY_FARM_OWNER ||
-    role === LEGACY_STAFF
-  );
+  return FARM_PORTAL_ROLES.includes(role);
+}
+
+export function canUseWeb(role) {
+  return isSystemAdministratorRole(role) || isFarmPortalRole(role);
 }
 
 export function homePathForRole(role) {
