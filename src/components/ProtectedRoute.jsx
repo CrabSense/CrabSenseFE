@@ -2,13 +2,14 @@ import PropTypes from "prop-types";
 import { Navigate } from "react-router-dom";
 
 import authService from "../services/authService";
-import { homePathForRole } from "../constants/roles";
+import { homePathForRole, canUseWeb } from "../constants/roles";
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const token = authService.getAccessToken();
   const user = authService.getStoredUser();
 
-  if (!token) {
+  if (!token || !canUseWeb(user?.role)) {
+    authService.clearAuth();
     return <Navigate to="/login" replace />;
   }
 

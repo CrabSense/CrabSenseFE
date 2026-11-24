@@ -1,3 +1,5 @@
+import { canUseWeb } from "../constants/roles";
+
 const IS_PAGES = import.meta.env.VITE_GITHUB_PAGES === "true";
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || (IS_PAGES ? "" : "http://localhost:5080/api")).replace(/\/+$/, "");
 
@@ -90,6 +92,10 @@ export const refreshAccessToken = async () => {
         );
       }
 
+      if (!canUseWeb(result.data.user?.role)) {
+        redirectToLogin();
+        throw new Error("This role cannot use the Web application.");
+      }
       saveAuthData(result.data);
 
       return result.data.accessToken;

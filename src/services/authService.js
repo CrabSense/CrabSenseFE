@@ -1,3 +1,4 @@
+import { canUseWeb } from "../constants/roles";
 import fetchAPI, { refreshAccessToken } from "./api";
 
 const authService = {
@@ -23,6 +24,11 @@ const authService = {
 
     const { accessToken, refreshToken, expiresAt, user } = response.data;
 
+    if (!canUseWeb(user?.role)) {
+      authService.clearAuth();
+      throw new Error("Web is only available to System Admin and Farm Admin.");
+    }
+
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
     localStorage.setItem("expiresAt", expiresAt);
@@ -38,6 +44,10 @@ const authService = {
       throw new Error(response?.message || "Unable to get current user.");
     }
 
+    if (!canUseWeb(response.data?.role)) {
+      authService.clearAuth();
+      throw new Error("This role cannot use the Web application.");
+    }
     if (response.data) {
       localStorage.setItem("user", JSON.stringify(response.data));
     }
@@ -74,7 +84,12 @@ const authService = {
     }
 
     try {
-      return JSON.parse(user);
+      const parsed = JSON.parse(user);
+      if (!canUseWeb(parsed?.role)) {
+        authService.clearAuth();
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }
