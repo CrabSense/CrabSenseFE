@@ -28,6 +28,13 @@ async function sensorList(path, options) {
 
 const monitoringPath="/system/device-monitoring";
 const systemAdminService = {
+  async getMediaStorageSummary(signal) {
+    const data = await sensorRequest("/system/media-storage/summary", {signal});
+    if (!data || !Array.isArray(data.groups) || !Number.isFinite(data.totalBytes) ||
+        !Number.isFinite(data.totalFiles) || data.source !== "database_metadata")
+      throw new Error("API thống kê media trả dữ liệu không đúng định dạng.");
+    return data;
+  },
   getMonitoringHealth(signal){return sensorRequest(monitoringPath+"/health",{signal});},
   getMonitoringTopology(params,signal){return sensorRequest(monitoringPath+"/topology",{params,signal});},
   getMonitoringDiagnostics(type,id,signal){return sensorRequest(monitoringPath+"/"+encodeURIComponent(type)+"/"+encodeURIComponent(id)+"/diagnostics",{signal});},

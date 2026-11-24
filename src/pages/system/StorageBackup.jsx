@@ -18,14 +18,24 @@ function StorageBackup() {
   const [busy, setBusy] = useState(false);
   const [restoreName, setRestoreName] = useState("");
   const [schedule, setSchedule] = useState(null);
+  const [mediaSummary, setMediaSummary] = useState(null);
+  const [mediaError, setMediaError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
+    setMediaError("");
     const results = await Promise.allSettled([
       systemAdminService.getBackups(),
       systemAdminService.getBackupSchedule(),
+      systemAdminService.getMediaStorageSummary(),
     ]);
+    const mediaResult = results.pop();
+    if (mediaResult.status === "fulfilled") setMediaSummary(mediaResult.value);
+    else {
+      setMediaSummary(null);
+      setMediaError(mediaResult.reason?.message || "Không tải được thống kê media.");
+    }
     const messages = [];
     const assign = [
       setBackups,
@@ -79,7 +89,7 @@ function StorageBackup() {
   return (
     <SystemPage
       title="Sao lưu và khôi phục"
-      description="Quản lý bản sao lưu Database, lịch tự động và khôi phục dữ liệu."
+      description="Theo dõi dung lượng media đã đăng ký, quản lý bản sao lưu Database và lịch tự động."
       actions={
         <button
           type="button"
@@ -91,7 +101,7 @@ function StorageBackup() {
         </button>
       }
     >
-      <SystemState loading={loading} error={error && !schedule && !backups.length ? error : ""} onRetry={load}>
+      <SystemState loading={loading} error={error && !schedule && !backups.length && !mediaSummary ? error : ""} onRetry={load}>
         <div className="space-y-4">
           {error ? <p className="text-sm text-[#b93838]">{error}</p> : null}
           {actionError ? <p className="text-sm text-[#b93838]">{actionError}</p> : null}
@@ -99,6 +109,29 @@ function StorageBackup() {
             { label: "Bản sao lưu Database", value: backups.length },
             { label: "Kết quả sao lưu tự động", value: schedule?.lastResult || "—" },
           ]} />
+          <Panel title="Dung lượng lưu trữ media">
+            <p className="mb-3 text-xs text-[#526f79]">
+              Thống kê từ metadata Database, không phải quota Google Drive thực tế.
+              Không bao gồm file chưa đăng ký hoặc file mồ côi.
+            </p>
+            {mediaError ? <div className="text-sm text-[#b93838]">{mediaError} <button type="button" onClick={load} className="underline">Thử lại</button></div> : null}
+            {mediaSummary ? <>
+              <KpiGrid items={[
+                {label:"Số file đã đăng ký",value:mediaSummary.totalFiles},
+                {label:"Dung lượng đã đăng ký",value:formatBytes(mediaSummary.totalBytes)},
+              ]}/>
+              <p className="my-2 text-xs text-[#526f79]">Cập nhật: {formatWhen(mediaSummary.measuredAtUtc)}</p>
+              <DataTable empty="Chưa có media." rows={mediaSummary.groups.map(row=>({
+                ...row,id:JSON.stringify([row.provider,row.category,row.isShared]),
+              }))} columns={[
+                {key:"provider",label:"Kho lưu trữ"},
+                {key:"category",label:"Loại file"},
+                {key:"isShared",label:"Chia sẻ",render:row=>row.isShared?"Đã chia sẻ":"Riêng tư"},
+                {key:"fileCount",label:"Số file"},
+                {key:"bytes",label:"Dung lượng",render:row=>formatBytes(row.bytes)},
+              ]}/>
+            </> : null}
+          </Panel>
           {schedule ? (
             <Panel title="Backup schedule">
               <form
