@@ -264,9 +264,10 @@ function BoxTable({
 
       // Reset box status to Empty.
       // Keep Backend status values unchanged.
-      const savedBox = await farmManagementService.updateBoxStatus(
+      const savedBox = await farmManagementService.updateBox(
         clearingBox.id,
         {
+          code: clearingBox.code,
           status: BOX_STATUS.EMPTY,
           isOccupied: false,
         },
