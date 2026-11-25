@@ -167,22 +167,13 @@ function BoxFormModal({
 
         savedBox = box;
 
-        // Update the code only when changed.
-        // PUT /boxes/{id}
-        if (codeChanged) {
+        // Administrator configuration uses one PUT, never the Staff-only
+        // operational PATCH. BE independently validates actual occupancy.
+        if (codeChanged || (!isOccupied && statusChanged)) {
           savedBox = await farmManagementService.updateBox(box.id, {
             code: nextCode,
-            status: box.status,
+            status: isOccupied ? box.status : form.status,
             isOccupied,
-          });
-        }
-
-        // Only unoccupied boxes may have
-        // their status changed manually.
-        if (!isOccupied && statusChanged) {
-          savedBox = await farmManagementService.updateBoxStatus(box.id, {
-            status: form.status,
-            isOccupied: false,
           });
         }
       } else {
