@@ -8,11 +8,21 @@ const resultPath=(area,batch,analyte)=>{
   return batchPath(area,batch)+"/results/"+analyte;
 };
 const waterBenchService={
+  adminMedia:(area,camera,skip=0,signal)=>read(areaPath(area)+"/admin-media?"+new URLSearchParams({skip:String(skip),take:"50",...(camera?{cameraId:camera}:{})}),signal),
+  image:(id,signal)=>fetchAPI("/media/"+encodeURIComponent(id)+"/content",{signal,cache:"no-store"},{responseType:"image",maxBytes:5*1024*1024}),
+  salinity:(area,batch,signal)=>read(resultPath(area,batch,"NH3")+"/salinity-candidates",signal),
+  retryRequest:(area,batch,a)=>read(resultPath(area,batch,a)+"/retry-request"),
+  review:(area,batch,a,signal)=>read(resultPath(area,batch,a)+"/review",signal),
+  submitReview:(area,batch,a,p)=>write(resultPath(area,batch,a)+"/review","POST",p),
+  publish:(area,batch,a,p)=>write(resultPath(area,batch,a)+"/publish","POST",p),
   kiosks:(area,signal)=>{areaPath(area);return read("/kiosks?farmingAreaId="+area,signal);},
   calibrations:(area,signal)=>read(colorPath(area),signal),
   register:(area,payload)=>write(areaPath(area)+"/station","POST",payload),
   configure:(area,payload)=>write(areaPath(area)+"/configuration","PUT",payload),
-  revokeStation:(area,station)=>write(areaPath(area)+"/station/"+encodeURIComponent(station)+"/revoke","POST"),
+  revokeStation:async(area,station)=>{
+    const r=await fetchAPI(areaPath(area)+"/station/"+encodeURIComponent(station)+"/revoke",{method:"POST"});
+    if(r?.success!==true)throw new Error(r?.message||"Revoke failed");return r;
+  },
   createCalibration:(area,payload)=>write(colorPath(area),"POST",payload),
   revokeCalibration:async(area,id)=>{
     const response=await fetchAPI(colorPath(area)+"/"+encodeURIComponent(id)+"/revoke",{method:"POST"});

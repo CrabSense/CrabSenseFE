@@ -159,9 +159,9 @@ const fetchAPI = async (endpoint, options = {}, configOptions = {}) => {
       }
     }
 
-    if (response.ok && (responseType === "blob" || responseType === "csv")) {
+    if (response.ok && (responseType === "blob" || responseType === "csv" || responseType === "image")) {
       const type = (response.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
-      if (responseType === "csv" ? type !== "text/csv" : (!type.startsWith("video/") && type !== "application/octet-stream")) {
+      if (responseType === "csv" ? type !== "text/csv" : responseType === "image" ? !["image/jpeg","image/png"].includes(type) : (!type.startsWith("video/") && type !== "application/octet-stream")) {
         await response.body?.cancel();
         throw new Error("API không trả nội dung tải xuống hợp lệ.");
       }

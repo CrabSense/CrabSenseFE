@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from "react";
+import { CalibrationWizard, ControlCheck, SalinityPicker, ReviewPanel } from "./GuidedOperations";
 import waterBench from "../../services/waterBenchService";
 import authService from "../../services/authService";
 import {batchKey} from "../../services/waterBenchModel";
@@ -29,7 +30,6 @@ function Feedback({action}){return <>{action.error&&<p role="alert" className="t
 function Field({label,value,onChange,type="text",...props}){return <label className="block text-sm space-y-1"><span>{label}</span><input className={field} type={type} value={value} onChange={e=>onChange(e.target.value)} {...props}/></label>;}
 function Source({value,onChange}){return <select aria-label="Sample source" className={field} value={value} onChange={e=>onChange(e.target.value)}><option value="">—</option>{sources.map(s=><option key={s}>{s}</option>)}</select>;}
 function JsonView({value}){return value==null?null:<pre className="max-h-72 overflow-auto whitespace-pre-wrap break-all rounded bg-black/30 p-3 text-xs">{JSON.stringify(value,null,2)}</pre>;}
-function parseObject(raw){const v=JSON.parse(raw);if(!v||typeof v!=="object"||Array.isArray(v))throw new Error("JSON object required");return v;}
 export function StationOperations({areaId,station,language,onChanged}){
  const en=language==="en",t=(vi,eng)=>en?eng:vi;
  const action=useAction(onChanged);
@@ -38,7 +38,7 @@ export function StationOperations({areaId,station,language,onChanged}){
  const [reg,setReg]=useState({kioskId:"",masterHardwareId:"",slaveHardwareId:""});
  const [form,setForm]=useState(()=>({enabled:station?.configuredEnabled===true,times:row(station?.times).join(", "),grace:station?.graceMinutes??5,
  source:station?.sampleSource??"",targets:Object.fromEntries(row(station?.targets).map(x=>[x.analyte,x.calibrationId]))}));
- const [calId,setCalId]=useState(""),[checks,setChecks]=useState(null),[calJson,setCalJson]=useState(""),[qcJson,setQcJson]=useState("");
+ const [calId,setCalId]=useState(""),[checks,setChecks]=useState(null);
  useEffect(()=>{
   const c=new AbortController();let active=true;
   Promise.all([waterBench.calibrations(areaId,c.signal),waterBench.kiosks(areaId,c.signal)]).then(([p,k])=>{
@@ -85,17 +85,9 @@ export function StationOperations({areaId,station,language,onChanged}){
     <p>{activeProfile.revokedAt?t("Đã thu hồi","Revoked"):t("Chưa thu hồi; kiểm tra hạn và QC","Not revoked; check expiry and QC")}</p>
     <JsonView value={checks}/>
     <button type="button" className={btn} disabled={!!activeProfile.revokedAt} onClick={()=>{if(window.confirm(t("Thu hồi hiệu chuẩn?","Revoke calibration?")))action.run(()=>waterBench.revokeCalibration(areaId,calId));}}>{t("Thu hồi hiệu chuẩn","Revoke calibration")}</button>
-    <details><summary className="cursor-pointer">{t("Kiểm tra đối chứng — dữ liệu kỹ thuật JSON","Control check — technical JSON")}</summary>
-     <p className="text-xs">mediaId, expected, maxError, reagentLot, reactionSeconds, salinityPpt</p>
-     <textarea className={field} rows={5} value={qcJson} onChange={e=>setQcJson(e.target.value)} aria-label="Control check JSON"/>
-     <button className={btn} type="button" disabled={!!activeProfile.revokedAt} onClick={()=>action.run(()=>waterBench.check(areaId,calId,parseObject(qcJson)))}>{t("Gửi kiểm tra QC","Submit QC check")}</button>
-    </details></>}
-   <details><summary className="cursor-pointer">{t("Tạo hiệu chuẩn — dữ liệu kỹ thuật JSON","Create calibration — technical JSON")}</summary>
-    <p className="text-xs">{t("Chỉ dùng ảnh chuẩn có nguồn gốc và mẫu đối chứng độc lập. BE kiểm tra hình học, đơn vị và dải đo.","Use traceable standards and independent holdout image. BE validates geometry, units and range.")}</p>
-    <p className="text-xs break-all">cameraDeviceId, analyte, kitName, reagentLot, protocol, standards[], validation, maxValidationError, validUntil, measuredUnit, kitRevision</p>
-    <textarea className={field} rows={8} value={calJson} onChange={e=>setCalJson(e.target.value)} aria-label="Calibration JSON"/>
-    <button type="button" className={btn} onClick={()=>action.run(()=>waterBench.createCalibration(areaId,parseObject(calJson)))}>{t("Tạo hiệu chuẩn","Create calibration")}</button>
-   </details>
+    <ControlCheck key={calId} areaId={areaId} profile={activeProfile} language={language} submit={p=>action.run(()=>waterBench.check(areaId,calId,p))}/>
+   </>}
+   <CalibrationWizard areaId={areaId} language={language} submit={p=>action.run(()=>waterBench.createCalibration(areaId,p))}/>
   </fieldset><Feedback action={action}/>
  </section>;
 }
@@ -132,9 +124,12 @@ export function BatchOperations({areaId,batch,data,language,onChanged}){
   const result=await waterBench.assessBatch(areaId,batch,samples);
   return result;
  });
- const retry=(a)=>action.run(()=>{
-  const p=readSaved(areaId,batch,a);
-  if(!savedRequestMatches(p,get(data.retry,a)))throw new Error("Original request unavailable in this tab");
+ const retry=(a)=>action.run(async()=>{
+  const attempt=get(data.retry,a);
+  let p=readSaved(areaId,batch,a);
+  if(!savedRequestMatches(p,attempt))p=await waterBench.retryRequest(areaId,batch,a);
+  if(!savedRequestMatches(p,attempt))throw new Error("Original request identity mismatch");
+  save(areaId,batch,a,p);
   return waterBench.assess(areaId,batch,a,p);
  });
  const retest=(a)=>action.run(()=>{
@@ -154,7 +149,7 @@ export function BatchOperations({areaId,batch,data,language,onChanged}){
  });
  return <section className={box}>
   <h3 className="font-semibold">{t("Đánh giá mẫu và bằng chứng","Sample assessments and evidence")}</h3>
-  <p className="text-sm text-amber-300">{t("Chỉ phân tích ảnh đã lưu. Không tự bơm hóa chất hoặc công bố kết quả. Retry giữ nguyên dữ liệu yêu cầu trong tab hiện tại.","Stored images only; no dosing or publication. Retry preserves the original request in this tab.")}</p>
+  <p className="text-sm text-amber-300">{t("Chỉ phân tích ảnh đã lưu. Không tự bơm hóa chất hoặc công bố kết quả. Retry phục hồi đúng yêu cầu gốc từ BE.","Stored images only; no dosing. Retry recovers the original request from BE.")}</p>
   <fieldset disabled={action.busy} className="space-y-4 disabled:opacity-60">
    <div className="grid gap-3 lg:grid-cols-3">{actual.map(a=>{
     const ready=get(data.readiness,a),attempt=get(data.retry,a),result=get(data.results,a),f=forms[a],saved=readSaved(areaId,batch,a),canStart=initial(a);
@@ -166,8 +161,8 @@ export function BatchOperations({areaId,batch,data,language,onChanged}){
      {saved&&<p className="text-xs break-all">{t("Yêu cầu đã lưu","Saved request")}: {saved.requestId}</p>}
      <div className="flex flex-wrap gap-2">
      {canStart&&mode!=="scheduled"&&<button type="button" className={primary} onClick={()=>runSingle(a)}>{t("Phân tích AI","Analyze AI")}</button>}
-     {attempt?.status==="retry_available"&&<button type="button" className={btn} disabled={!savedRequestMatches(saved,attempt)} onClick={()=>retry(a)}>{t("Retry yêu cầu cũ","Retry original request")}</button>}
-     {attempt?.status==="retry_available"&&!savedRequestMatches(saved,attempt)&&<p className="text-xs text-amber-300">{t("Không còn yêu cầu gốc trong tab; không tạo ID mới.","Original request absent in this tab; do not mint a new ID.")}</p>}
+     {attempt?.status==="retry_available"&&<button type="button" className={btn} onClick={()=>retry(a)}>{t("Retry yêu cầu cũ","Retry original request")}</button>}
+     {attempt?.status==="retry_available"&&!savedRequestMatches(saved,attempt)&&<p className="text-xs text-amber-300">{t("Sẽ lấy yêu cầu gốc từ BE; không tạo ID mới.","Recover original request from BE; no new ID.")}</p>}
      {!result?.assessment&&attempt?.status!=="inference_running"&&result?.sessionId&&data.timeline?.timeline?.status!=="running_observed"&&<button type="button" className={btn} onClick={()=>{if(window.confirm(t("Xác nhận yêu cầu đo lại, không chạy phần cứng?","Record retest requirement without hardware dispatch?")))retest(a);}}>{t("Yêu cầu đo lại","Require retest")}</button>}
      {result?.assessment&&<button type="button" className={btn} onClick={()=>action.run(async()=>setProof(await waterBench.evidence(areaId,batch,a)),false)}>{t("Bằng chứng","Evidence")}</button>}
      </div>
@@ -178,12 +173,13 @@ export function BatchOperations({areaId,batch,data,language,onChanged}){
     <h4 className="font-semibold">{t("Tham chiếu NH3","NH3 reference")}</h4>
     <button className={btn} type="button" onClick={()=>action.run(async()=>setProof(await waterBench.ammonia(areaId,batch)),false)}>{t("Xem tham chiếu đã lưu","Read stored reference")}</button>
     {!ammoniaSaved&&<><select className={field} aria-label="Ammonia method" value={ammonia.method} onChange={e=>setAmmonia(x=>({...x,method:e.target.value}))}><option value="">—</option><option value="printed_table">Thủy Phước — NH4</option><option value="equilibrium">Equilibrium — NH4 / TAN-N</option></select>
-    <Field label={t("ID bản đo độ mặn đã lưu","Stored salinity measurement ID")} value={ammonia.salinityMeasurementId} onChange={v=>setAmmonia(x=>({...x,salinityMeasurementId:v}))}/>
+    <SalinityPicker areaId={areaId} batch={batch} language={language} value={ammonia.salinityMeasurementId} onChange={v=>setAmmonia(x=>({...x,salinityMeasurementId:v}))}/>
     <Field label={t("Lý do","Reason")} value={ammonia.reason} maxLength={500} onChange={v=>setAmmonia(x=>({...x,reason:v}))}/>
     <label className="flex gap-2 text-sm"><input type="checkbox" checked={ammonia.same} onChange={e=>setAmmonia(x=>({...x,same:e.target.checked}))}/>{t("Xác nhận cùng nguồn mẫu","Confirm same sample source")}</label>
     <label className="flex gap-2 text-sm"><input type="checkbox" checked={ammonia.basis} onChange={e=>setAmmonia(x=>({...x,basis:e.target.checked}))}/>{t("Xác nhận đại lượng và đơn vị thực tế","Confirm actual measurand and unit")}</label></>}
     <button className={btn} type="button" onClick={submitAmmonia}>{ammoniaSaved?t("Gửi lại yêu cầu gốc","Resend original request"):t("Tạo tham chiếu NH3","Create NH3 reference")}</button>
    </div>}
+   {actual.filter(a=>get(data.results,a)?.assessment?.status==="estimate_review_required").map(a=><ReviewPanel key={a} areaId={areaId} batch={batch} analyte={a} unit={get(data.results,a).assessment.unit} language={language}/>)}
    <JsonView value={proof}/>
   </fieldset><Feedback action={action}/>
  </section>;
