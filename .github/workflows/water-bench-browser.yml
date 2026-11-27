@@ -1,0 +1,41 @@
+name: Water Bench Browser Tests
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Install isolated browser test dependencies
+        run: npm install --prefix tests/browser --ignore-scripts --no-package-lock
+      - run: node tests/browser/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Chromium browser contract tests
+        env:
+          VITE_API_BASE_URL: http://127.0.0.1:5173/api
+          VITE_GITHUB_PAGES: 'false'
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 5173 > "$RUNNER_TEMP/water-bench-vite.log" 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5173/ >/dev/null
+          node tests/browser/waterBench.mjs
+      - name: Upload browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: water-bench-browser-diagnostics
+          path: |
+            tests/browser/artifacts/
+            ${{ runner.temp }}/water-bench-vite.log
+          if-no-files-found: warn
+          retention-days: 7
