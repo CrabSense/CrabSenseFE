@@ -26,3 +26,14 @@ export function savedRequestMatches(saved,attempt){
  return saved?.action==="estimate"&&attempt?.status==="retry_available"&&saved.requestId===attempt.requestId;
 }
 export function reasonPayload(reason,id){if(!reason.trim()||reason.length>500)throw new Error("Reason required");return {requestId:requireId(id),action:"needs_retest",reason:reason.trim()};}
+
+export function ammoniaPayload(form,unit,requestId){
+ const reason=String(form?.reason??"").trim();
+ if(!["printed_table","equilibrium"].includes(form?.method))throw new Error("Select ammonia method");
+ if(!form.salinityMeasurementId)throw new Error("Select a qualified salinity measurement");
+ if(!reason||reason.length>500)throw new Error("Enter a reason (1–500 characters)");
+ if(form.same!==true)throw new Error("Confirm same sample source");
+ if(form.basis!==true)throw new Error("Confirm actual measurand and unit");
+ if(form.method==="printed_table"?unit!=="mg/L NH4":!["mg/L NH4","mg/L TAN-N"].includes(unit))throw new Error("Incompatible ammonia measurand");
+ return {requestId:requireId(requestId),method:form.method,salinityMeasurementId:requireId(form.salinityMeasurementId),sameSampleSourceConfirmed:true,measurandConfirmed:true,reason};
+}

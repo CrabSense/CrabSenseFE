@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react";
+import { useEffect,useMemo,useState } from "react";
 import { FlaskConical,RefreshCw } from "lucide-react";
 import useSelectedArea from "../hooks/useSelectedArea";
 import useTranslation from "../hooks/useTranslation";
@@ -25,24 +25,28 @@ const states={
 function ScopeWorkspace({areaId,language}) {
   const en=language==="en", tr=(vi,eng)=>en?eng:vi;
   const label=(status)=>states[status]?.[en?1:0]??display(status);
-  const [revision,setRevision]=useState(0);
+  const [stationRevision,setStationRevision]=useState(0);
+  const [batchRevision,setBatchRevision]=useState(0);
   const [overview,setOverview]=useState({loading:true,batches:[],station:null,error:null});
   const [selected,setSelected]=useState("");
   const [detail,setDetail]=useState({loading:false,error:null,data:null});
-  const batch=overview.batches.find(b=>batchKey(b)===selected);
+  const batch=useMemo(()=>{
+    if(!selected)return null;
+    const [stationId,bootId,firmwareBatchId]=selected.split(":");
+    return {stationId,bootId,firmwareBatchId};
+  },[selected]);
   useEffect(()=>{
     const controller=new AbortController();
     let active=true;
-    setOverview({loading:true,batches:[],station:null,error:null});
-    setSelected("");
+    setOverview(previous=>({...previous,refreshing:true,error:null}));
     Promise.all([waterBench.station(areaId,controller.signal),waterBench.batches(areaId,controller.signal)]).then(([station,batches])=>{
       if(!active)return;
       if(!Array.isArray(batches))throw new Error("Invalid batch list");
-      setOverview({loading:false,station,batches,error:null});
-      setSelected(batches.length?batchKey(batches[0]):"");
-    }).catch(error=>{if(active)setOverview({loading:false,station:null,batches:[],error:error.message});});
+      setOverview({loading:false,refreshing:false,station,batches,error:null,loadedRevision:stationRevision});
+      setSelected(previous=>batches.some(b=>batchKey(b)===previous)?previous:(batches.length?batchKey(batches[0]):""));
+    }).catch(error=>{if(active)setOverview(previous=>({...previous,loading:false,refreshing:false,error:error.message}));});
     return ()=>{active=false;controller.abort();};
-  },[areaId,revision]);
+  },[areaId,stationRevision]);
   useEffect(()=>{
     const controller=new AbortController();
     let active=true;
@@ -54,13 +58,13 @@ function ScopeWorkspace({areaId,language}) {
         if(active)setDetail({loading:false,error:null,data:{timeline,results,readiness,retry,receipts,key:batchKey(batch)}});
       }).catch(error=>{if(active)setDetail({loading:false,error:error.message,data:null});});
     return ()=>{active=false;controller.abort();};
-  },[areaId,batch]);
+  },[areaId,batch,batchRevision]);
   const data=detail.data?.key===selected?detail.data:null;
   return <div className="space-y-5">
     <div className="flex flex-wrap justify-between gap-3">
       <div><h2 className="text-lg font-semibold">{tr("Trạm và phiên phân tích","Station and batches")}</h2>
         <p className="text-sm text-[#98AA9A]">{tr("Tra cứu 50 phiên gần nhất trong khu đã chọn.","Latest 50 batches in the selected area.")}</p></div>
-      <button className={field+" flex items-center gap-2"} onClick={()=>setRevision(n=>n+1)}><RefreshCw size={16}/>{tr("Tải lại","Refresh")}</button>
+      <button className={field+" flex items-center gap-2"} onClick={()=>{setStationRevision(n=>n+1);setBatchRevision(n=>n+1);}} disabled={overview.refreshing||detail.loading}><RefreshCw size={16}/>{tr("Tải lại","Refresh")}</button>
     </div>
     {overview.loading&&<p role="status">{tr("Đang tải…","Loading…")}</p>}
     {overview.error&&<p role="alert" className="text-red-300">{overview.error}</p>}
@@ -74,7 +78,7 @@ function ScopeWorkspace({areaId,language}) {
           <div>{tr("Giờ chạy","Schedule times")}: {overview.station.times?.join(", ")||"—"} ({display(overview.station.timezone)})</div>
         </dl>:<p className="mt-2 text-sm">{tr("Chưa đăng ký trạm.","No station registered.")}</p>}
       </section>
-      <StationOperations key={overview.station?.stationId??"unregistered"} areaId={areaId} station={overview.station} language={language} onChanged={()=>setRevision(n=>n+1)}/>
+      <fieldset disabled={overview.refreshing} className="min-w-0 disabled:opacity-60"><StationOperations key={(overview.station?.stationId??"unregistered")+":"+overview.loadedRevision} areaId={areaId} station={overview.station} language={language} onChanged={()=>setStationRevision(n=>n+1)}/></fieldset>
       <section className={panel}>
         <label className="block font-semibold" htmlFor="bench-batch">{tr("Phiên phân tích","Analysis batch")}</label>
         {overview.batches.length===0?<p className="mt-2">{tr("Chưa có phiên.","No batches.")}</p>:
@@ -105,7 +109,7 @@ function ScopeWorkspace({areaId,language}) {
             </dl>
           </section>)}
         </div>
-        <BatchOperations key={selected} areaId={areaId} batch={batch} data={data} language={language} onChanged={()=>setRevision(n=>n+1)}/>
+        <BatchOperations key={selected} areaId={areaId} batch={batch} data={data} language={language} onChanged={()=>setBatchRevision(n=>n+1)}/>
       </>}
     </>}
   </div>;

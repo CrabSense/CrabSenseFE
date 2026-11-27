@@ -1,6 +1,6 @@
 import {chromium} from "playwright";
 import assert from "node:assert/strict";
-import {mkdir} from "node:fs/promises";
+import {mkdir,writeFile} from "node:fs/promises";
 const browser=await chromium.launch({headless:true});
 const guid=n=>"00000000-0000-0000-0000-"+String(n).padStart(12,"0");
 const area=guid(1),station=guid(2),req=guid(3),camera=guid(4),salinity=guid(5);
@@ -11,6 +11,9 @@ const assessment=(a,unit)=>({id:guid(a==="NO2"?20:21),status:"estimate_review_re
 const base="http://127.0.0.1:5173";
 let sent=null,calibration=null,ammonia=null,review=null,publication=null,recoveryReads=0;
 let page;
+let releaseCalibration;
+const calibrationResponseGate=new Promise(resolve=>{releaseCalibration=resolve;});
+const pageErrors=[],requestFailures=[];
 try{
  // Generate a deterministic test image in a real browser; never fetch a production asset.
  const fixture=await browser.newPage();
@@ -21,8 +24,8 @@ try{
  }),"base64");
  await fixture.close();
  page=await browser.newPage({viewport:{width:1440,height:1000}});
- const pageErrors=[];
  page.on("pageerror",e=>pageErrors.push(e.message));
+ page.on("requestfailed",r=>{if(r.failure()?.errorText!=="net::ERR_ABORTED")requestFailures.push({url:r.url(),error:r.failure()?.errorText});});
  await page.addInitScript(({area})=>{
    localStorage.setItem("accessToken","synthetic");localStorage.setItem("refreshToken","synthetic");
    localStorage.setItem("user",JSON.stringify({id:area,role:"FarmAdministrator",fullName:"CI"}));
@@ -53,7 +56,7 @@ try{
      if(url.searchParams.has("cameraId"))assert.equal(url.searchParams.get("cameraId"),camera);
      data={cameras:[{id:camera,deviceCode:"CI camera"}],items:media,total:media.length};
    }
-   else if(path.endsWith("/calibrations")&&method==="POST"){calibration=request.postDataJSON();data={id:guid(30)};}
+   else if(path.endsWith("/calibrations")&&method==="POST"){calibration=request.postDataJSON();await calibrationResponseGate;data={id:guid(30)};}
    else if(path.endsWith("/salinity-candidates"))data={sampleAt:"2026-01-01T00:00:00Z",items:[{measurementId:salinity,value:15,sensorCode:"SAL-CI",installationLocation:"RAS",differenceSeconds:1}]};
    else if(path.endsWith("/ammonia-reference")&&method==="POST"){ammonia=request.postDataJSON();data={status:"estimated"};}
    else if(path.endsWith("/NO2/review")&&method==="POST"){review=request.postDataJSON();data=review;}
@@ -73,10 +76,19 @@ try{
  await page.getByLabel("NO2 review decision").waitFor();
  console.log("PASS original retry recovery");
  // Select a stored image and draw all three ROIs in image coordinates.
- await page.getByText("Guided calibration",{exact:true}).click();
- await page.getByLabel("Calibration camera").selectOption(camera);
- await page.getByLabel("ROI image",{exact:true}).selectOption(media[0].id);
- const canvas=page.locator('svg[aria-label="ROI canvas"]');
+ const wizard=page.getByTestId("calibration-wizard");
+ await wizard.locator("summary").click();
+ const cameraPicker=wizard.getByTestId("calibration-camera");
+ await cameraPicker.locator('option[value="'+camera+'"]').waitFor({state:"attached"});
+ await cameraPicker.selectOption(camera);
+ assert.equal(await cameraPicker.inputValue(),camera);
+ const roiPicker=wizard.getByTestId("roi-image-picker");
+ await roiPicker.waitFor({state:"visible"});
+ assert.equal(await roiPicker.getAttribute("aria-label"),"ROI image");
+ await roiPicker.locator('option[value="'+media[0].id+'"]').waitFor({state:"attached"});
+ await roiPicker.selectOption(media[0].id);
+ assert.equal(await roiPicker.inputValue(),media[0].id);
+ const canvas=wizard.getByTestId("roi-canvas");
  await canvas.waitFor();await canvas.scrollIntoViewIfNeeded();
  const regions=[["sample",.10,.10,.35,.40],["reference",.55,.10,.85,.40],["anchor",.55,.55,.85,.90]];
  for(const [kind,x1,y1,x2,y2] of regions){
@@ -94,7 +106,7 @@ try{
  const labels=["Standard 1","Standard 2","Standard 3","Independent holdout"];
  for(let i=0;i<labels.length;i++){
    const label=labels[i];
-   await page.getByLabel(label,{exact:true}).selectOption(media[i].id);
+   await wizard.getByTestId("media-"+label.toLowerCase().replaceAll(" ","-")).selectOption(media[i].id);
    await page.getByLabel(label+" concentration",{exact:true}).fill(String([0,1,2,.5][i]));
    await page.getByLabel(label+" reactionSeconds",{exact:true}).fill("300");
    await page.getByLabel(label+" salinityPpt",{exact:true}).fill("15");
@@ -109,20 +121,39 @@ try{
  assert.ok(calibration.protocol.geometryPolicy.anchor.width>=16);
  console.log("PASS private image picker, ROI drag, independent standards payload");
  // Only qualified readings are offered; submit selected measurement with attestations.
- await page.getByLabel("Ammonia method").selectOption("equilibrium");
- await page.getByLabel("Salinity measurement").selectOption(salinity);
- await page.getByLabel("Reason",{exact:true}).fill("same sample fixture");
- await page.getByLabel("Confirm same sample source",{exact:true}).check();
- await page.getByLabel("Confirm actual measurand and unit",{exact:true}).check();
- await page.getByRole("button",{name:"Create NH3 reference",exact:true}).click();
+ const ammoniaPanel=page.getByTestId("ammonia-panel");
+ const method=ammoniaPanel.getByLabel("Ammonia method");
+ const reading=ammoniaPanel.getByTestId("salinity-measurement");
+ const reason=ammoniaPanel.getByTestId("ammonia-reason");
+ const same=ammoniaPanel.getByTestId("ammonia-same-source");
+ const basis=ammoniaPanel.getByTestId("ammonia-confirm-basis");
+ await method.selectOption("equilibrium");
+ await reading.selectOption(salinity);
+ await reason.fill("same sample fixture");
+ await same.check();await basis.check();
+ // Calibration success used to unmount the batch form and lose these inputs.
+ releaseCalibration();
+ const resetWizard=page.getByTestId("calibration-wizard");
+ await resetWizard.locator("summary").waitFor({state:"visible"});
+ await page.waitForFunction(()=>{const x=document.querySelector('[data-testid="calibration-wizard"]');return x&&!x.open;});
+ assert.equal(await method.inputValue(),"equilibrium");
+ assert.equal(await reading.inputValue(),salinity);
+ assert.equal(await reason.inputValue(),"same sample fixture");
+ assert.equal(await same.isChecked(),true);assert.equal(await basis.isChecked(),true);
+ await basis.uncheck();
+ await ammoniaPanel.getByTestId("ammonia-submit").click();
+ await page.getByRole("alert").filter({hasText:"Confirm actual measurand and unit"}).waitFor();
+ assert.equal(ammonia,null,"missing attestation must prevent submission");
+ await basis.check();
+ await ammoniaPanel.getByTestId("ammonia-submit").click();
  await wait(()=>ammonia,"ammonia payload not submitted");
  assert.equal(ammonia.salinityMeasurementId,salinity);assert.equal(ammonia.method,"equilibrium");
  assert.equal(ammonia.sameSampleSourceConfirmed,true);assert.equal(ammonia.measurandConfirmed,true);
  console.log("PASS qualified salinity selection and ammonia request");
- const panel=page.locator("section").filter({has:page.getByRole("heading",{name:"NO2 · Review and publish record",exact:true})}).filter({has:page.getByLabel("NO2 review decision")}).last();
+ const panel=page.getByTestId("review-panel-NO2");
  await panel.getByLabel("NO2 review decision").selectOption("approved");
  await panel.getByLabel("Review reason",{exact:true}).fill("independent fixture");
- await panel.getByLabel("Independent reference image",{exact:true}).selectOption(media[5].id);
+ await panel.getByTestId("review-image-NO2").selectOption(media[5].id);
  await panel.getByLabel("Reference value (mg/L NO2)",{exact:true}).fill("1.1");
  await panel.getByLabel("Reference method",{exact:true}).fill("lab fixture");
  await panel.getByLabel("Confirm independent reference, same sample and unit",{exact:true}).check();
@@ -130,7 +161,7 @@ try{
  await panel.getByRole("button",{name:"Record review",exact:true}).click();
  await wait(()=>review,"review not submitted");
  assert.equal(review.referenceMediaId,media[5].id);assert.equal(review.referenceValue,1.1);assert.equal(review.referenceUnit,"mg/L NO2");
- const publishPanel=page.getByRole("heading",{name:"NO2 · Review and publish record",exact:true}).locator("..");
+ const publishPanel=page.getByTestId("review-panel-NO2");
  await publishPanel.getByLabel("Publication reason",{exact:true}).fill("approved fixture");
  page.once("dialog",d=>d.accept());
  await publishPanel.getByRole("button",{name:"Publish record",exact:true}).click();
@@ -146,6 +177,9 @@ try{
  console.log("PASS Staff and Manager web denial");
 }catch(error){
  await mkdir("tests/browser/artifacts",{recursive:true});
- if(page){await page.screenshot({path:"tests/browser/artifacts/failure.png",fullPage:true}).catch(()=>{});}
+ if(page){
+   await page.screenshot({path:"tests/browser/artifacts/failure.png",fullPage:true}).catch(()=>{});
+   await writeFile("tests/browser/artifacts/diagnostics.json",JSON.stringify({pageErrors,requestFailures,url:page.url(),body:await page.locator("body").innerText().catch(()=>"")},null,2));
+ }
  throw error;
-}finally{await browser.close();}
+}finally{releaseCalibration?.();await browser.close();}
