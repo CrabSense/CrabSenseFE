@@ -27,6 +27,7 @@ jobs:
       - name: Install & build
         run: |
           npm ci
+          node --test tests/*.test.js
           npm run build --if-present
 
       - name: SonarCloud Scan

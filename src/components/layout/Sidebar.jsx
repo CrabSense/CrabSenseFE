@@ -16,6 +16,7 @@ import {
   BellRing,
   SlidersHorizontal,
   ClipboardList,
+  FlaskConical,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,12 @@ const MAIN_NAV_ITEMS = [
     to: "/ras-management",
     labelKey: "nav.rasManagement",
     icon: Waves,
+    adminOnly: true,
+  },
+  {
+    to: "/water-bench",
+    labelKey: "nav.waterBench",
+    icon: FlaskConical,
     adminOnly: true,
   },
   {
