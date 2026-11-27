@@ -10,6 +10,7 @@ export const SYSTEM_ADMIN_GROUPS = [
     { to: "/system/devices/sensors", labelKey: "nav.manageSensors", icon: Radio, child: true },
     { to: "/system/devices/cameras", labelKey: "nav.manageCameras", icon: Cctv, child: true },
     { to: "/system/device-monitoring", labelKey: "nav.deviceMonitoring", icon: Activity },
+    { to: "/system/water-bench", labelKey: "nav.waterBenchTechnical", icon: Activity, child: true },
   ] },
   { labelKey: "nav.systemAiGroup", items: [
     { to: "/system/cameras", labelKey: "nav.recordingSchedule", icon: CalendarClock },

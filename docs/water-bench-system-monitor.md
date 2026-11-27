@@ -1,0 +1,4 @@
+## P2.4.5 — System Admin WaterBench
+New /system/water-bench route under System Admin device monitoring. Uses BE #109 platform-only GET with exact technical allowlist. Paged 25 stations, page-local counters plus system total, 30s refresh, unknown/stale labels, no hardware commands or chemical data. Synthetic unit and browser tests cover response flags, redaction and role gates. Draft PR deliberately holds FE until BE CI/deployment verified. Production authorization and PostgreSQL performance verification pending.
+
+Chromium #6 repair: route guard intentionally redirects authenticated wrong-role administrators to their own home (/system or /dashboard), not /login. Verify exact destinations, preserve session, observe forbidden WaterBench API requests (must be zero), and mock dashboard reads. Capture diagnostics from the actual failing page. Production guards unchanged.
