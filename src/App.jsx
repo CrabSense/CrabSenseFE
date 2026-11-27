@@ -27,6 +27,7 @@ import FarmUsersPage from "./pages/FarmUsersPage";
 import EnvironmentalThresholds from "./pages/EnvironmentalThresholds";
 import AlertManagement from "./pages/AlertManagement";
 import RasManagement from "./pages/RasManagement";
+import WaterBenchWorkspace from "./pages/WaterBenchWorkspace";
 import OperationalReports from "./pages/OperationalReports";
 import {
   FARM_ADMINISTRATOR_ROLE,
@@ -74,6 +75,7 @@ function App() {
             />
 
           <Route path="/monitoring" element={<Monitoring />} />
+          <Route path="/water-bench" element={<ProtectedRoute allowedRoles={[FARM_ADMINISTRATOR_ROLE]}><WaterBenchWorkspace /></ProtectedRoute>} />
 
           <Route path="/analytics" element={<Analytics />} />
 
