@@ -7,6 +7,7 @@ import Analytics from "./pages/Analytics.jsx";
 import Settings from "./pages/Settings.jsx";
 import FarmManagement from "./pages/FarmManagement.jsx";
 import DeviceMonitoring from "./pages/system/DeviceMonitoring.jsx";
+import WaterBenchTechnical from "./pages/system/WaterBenchTechnical.jsx";
 import StorageManagement from "./pages/system/StorageManagement.jsx";
 import SystemOverview from "./pages/system/SystemOverview.jsx";
 import DeviceManagement from "./pages/system/DeviceManagement.jsx";
@@ -117,6 +118,7 @@ function App() {
           <Route path="/system/devices/sensors" element={<SensorManagement />} />
           <Route path="/system/devices/controllers" element={<ControllerManagement />} />
           <Route path="/system/device-monitoring" element={<DeviceMonitoring />} />
+          <Route path="/system/water-bench" element={<WaterBenchTechnical />} />
           <Route path="/system/cameras" element={<CameraRecording />} />
           <Route path="/system/ai" element={<AiServices />} />
           <Route path="/system/storage" element={<StorageManagement />} />
