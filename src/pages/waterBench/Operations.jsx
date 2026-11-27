@@ -3,7 +3,7 @@ import { CalibrationWizard, ControlCheck, SalinityPicker, ReviewPanel } from "./
 import waterBench from "../../services/waterBenchService";
 import authService from "../../services/authService";
 import {batchKey} from "../../services/waterBenchModel";
-import {analytes,sources,requireId,schedulePayload,estimatePayload,savedRequestMatches,reasonPayload} from "./operationModel";
+import {analytes,sources,requireId,schedulePayload,estimatePayload,savedRequestMatches,reasonPayload,ammoniaPayload} from "./operationModel";
 
 const box="rounded-xl border border-[#24382A] bg-[#0D1510] p-5 space-y-3";
 const field="w-full rounded-lg border border-[#38513B] bg-[#050806] px-3 py-2 text-sm";
@@ -140,10 +140,7 @@ export function BatchOperations({areaId,batch,data,language,onChanged}){
  });
  const submitAmmonia=()=>action.run(()=>{
   if(ammoniaSaved)return waterBench.assessAmmonia(areaId,batch,ammoniaSaved);
-  if(!ammonia.same||!ammonia.basis||!ammonia.reason.trim()||ammonia.reason.length>500||!["printed_table","equilibrium"].includes(ammonia.method))throw new Error("Confirm sample and measurand");
-  const unit=get(data.results,"NH3")?.assessment?.unit;
-  if(ammonia.method==="printed_table"?unit!=="mg/L NH4":!["mg/L NH4","mg/L TAN-N"].includes(unit))throw new Error("Incompatible ammonia measurand");
-  const p={requestId:id(),method:ammonia.method,salinityMeasurementId:requireId(ammonia.salinityMeasurementId),sameSampleSourceConfirmed:true,measurandConfirmed:true,reason:ammonia.reason.trim()};
+  const p=ammoniaPayload(ammonia,get(data.results,"NH3")?.assessment?.unit,id());
   save(areaId,batch,"NH3-reference",p);setAmmoniaSaved(p);
   return waterBench.assessAmmonia(areaId,batch,p);
  });
@@ -169,15 +166,15 @@ export function BatchOperations({areaId,batch,data,language,onChanged}){
     </div>;
    })}</div>
    {mode==="scheduled"&&actual.length===3&&analytes.every(initial)&&<button className={primary} type="button" onClick={runBatch}>{t("Phân tích đồng thời 3 chất","Analyze all 3 in parallel")}</button>}
-   {get(data.results,"NH3")?.assessment?.status==="estimate_review_required"&&<div className="space-y-2 border-t border-[#24382A] pt-3">
+   {get(data.results,"NH3")?.assessment?.status==="estimate_review_required"&&<div data-testid="ammonia-panel" className="space-y-2 border-t border-[#24382A] pt-3">
     <h4 className="font-semibold">{t("Tham chiếu NH3","NH3 reference")}</h4>
     <button className={btn} type="button" onClick={()=>action.run(async()=>setProof(await waterBench.ammonia(areaId,batch)),false)}>{t("Xem tham chiếu đã lưu","Read stored reference")}</button>
     {!ammoniaSaved&&<><select className={field} aria-label="Ammonia method" value={ammonia.method} onChange={e=>setAmmonia(x=>({...x,method:e.target.value}))}><option value="">—</option><option value="printed_table">Thủy Phước — NH4</option><option value="equilibrium">Equilibrium — NH4 / TAN-N</option></select>
     <SalinityPicker areaId={areaId} batch={batch} language={language} value={ammonia.salinityMeasurementId} onChange={v=>setAmmonia(x=>({...x,salinityMeasurementId:v}))}/>
-    <Field label={t("Lý do","Reason")} value={ammonia.reason} maxLength={500} onChange={v=>setAmmonia(x=>({...x,reason:v}))}/>
-    <label className="flex gap-2 text-sm"><input type="checkbox" checked={ammonia.same} onChange={e=>setAmmonia(x=>({...x,same:e.target.checked}))}/>{t("Xác nhận cùng nguồn mẫu","Confirm same sample source")}</label>
-    <label className="flex gap-2 text-sm"><input type="checkbox" checked={ammonia.basis} onChange={e=>setAmmonia(x=>({...x,basis:e.target.checked}))}/>{t("Xác nhận đại lượng và đơn vị thực tế","Confirm actual measurand and unit")}</label></>}
-    <button className={btn} type="button" onClick={submitAmmonia}>{ammoniaSaved?t("Gửi lại yêu cầu gốc","Resend original request"):t("Tạo tham chiếu NH3","Create NH3 reference")}</button>
+    <Field data-testid="ammonia-reason" label={t("Lý do","Reason")} value={ammonia.reason} maxLength={500} onChange={v=>setAmmonia(x=>({...x,reason:v}))}/>
+    <label className="flex gap-2 text-sm"><input data-testid="ammonia-same-source" type="checkbox" checked={ammonia.same} onChange={e=>setAmmonia(x=>({...x,same:e.target.checked}))}/>{t("Xác nhận cùng nguồn mẫu","Confirm same sample source")}</label>
+    <label className="flex gap-2 text-sm"><input data-testid="ammonia-confirm-basis" type="checkbox" checked={ammonia.basis} onChange={e=>setAmmonia(x=>({...x,basis:e.target.checked}))}/>{t("Xác nhận đại lượng và đơn vị thực tế","Confirm actual measurand and unit")}</label></>}
+    <button data-testid="ammonia-submit" className={btn} type="button" onClick={submitAmmonia}>{ammoniaSaved?t("Gửi lại yêu cầu gốc","Resend original request"):t("Tạo tham chiếu NH3","Create NH3 reference")}</button>
    </div>}
    {actual.filter(a=>get(data.results,a)?.assessment?.status==="estimate_review_required").map(a=><ReviewPanel key={a} areaId={areaId} batch={batch} analyte={a} unit={get(data.results,a).assessment.unit} language={language}/>)}
    <JsonView value={proof}/>

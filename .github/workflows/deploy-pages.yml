@@ -70,9 +70,14 @@ jobs:
         with:
           path: dist
 
+  # Main deployments must pass the same real browser contract used on pull requests.
+  browser:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    uses: ./.github/workflows/water-bench-browser.yml
+
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: build
+    needs: [build, browser]
     runs-on: ubuntu-latest
     permissions:
       contents: read

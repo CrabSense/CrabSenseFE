@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {schedulePayload,estimatePayload,savedRequestMatches,reasonPayload} from "../src/pages/waterBench/operationModel.js";
+import {schedulePayload,estimatePayload,savedRequestMatches,reasonPayload,ammoniaPayload} from "../src/pages/waterBench/operationModel.js";
 const g=n=>"00000000-0000-0000-0000-"+String(n).padStart(12,"0");
 test("schedule retains version and rejects overlap across midnight",()=>{
  const station={configurationVersion:7},form={enabled:true,times:"08:00, 19:00",grace:5,source:"RAS_RETURN",targets:{NO2:g(1),NO3:g(2),NH3:g(3)}};
@@ -18,4 +18,14 @@ test("estimate attestation and exact retry identity",()=>{
  assert.equal(savedRequestMatches(p,{status:"retry_available",requestId:g(2)}),true);
  assert.equal(savedRequestMatches(p,{status:"retry_available",requestId:g(3)}),false);
  assert.deepEqual(Object.keys(reasonPayload("bad photo",g(3))).sort(),["action","reason","requestId"]);
+});
+
+test("NH3 requires exact source, measurand, reason and eligible selection",()=>{
+ const form={method:"equilibrium",salinityMeasurementId:g(1),same:true,basis:true,reason:" fixture "};
+ assert.deepEqual(ammoniaPayload(form,"mg/L TAN-N",g(2)),{requestId:g(2),method:"equilibrium",salinityMeasurementId:g(1),sameSampleSourceConfirmed:true,measurandConfirmed:true,reason:"fixture"});
+ for(const patch of [{same:false},{basis:false},{reason:" "},{salinityMeasurementId:""},{method:""}])
+   assert.throws(()=>ammoniaPayload({...form,...patch},"mg/L TAN-N",g(2)));
+ assert.throws(()=>ammoniaPayload({...form,method:"printed_table"},"mg/L TAN-N",g(2)));
+ assert.throws(()=>ammoniaPayload(form,"mg/L NH3",g(2)));
+ assert.equal(ammoniaPayload({...form,method:"printed_table"},"mg/L NH4",g(2)).method,"printed_table");
 });
