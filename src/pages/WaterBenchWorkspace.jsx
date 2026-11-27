@@ -4,6 +4,7 @@ import useSelectedArea from "../hooks/useSelectedArea";
 import useTranslation from "../hooks/useTranslation";
 import waterBench from "../services/waterBenchService";
 import { batchKey,channels } from "../services/waterBenchModel";
+import { StationOperations, BatchOperations } from "./waterBench/Operations";
 
 const panel="rounded-xl border border-[#24382A] bg-[#0D1510] p-5";
 const field="rounded-lg border border-[#38513B] bg-[#050806] px-3 py-2 text-sm text-[#F4F7F4]";
@@ -73,6 +74,7 @@ function ScopeWorkspace({areaId,language}) {
           <div>{tr("Giờ chạy","Schedule times")}: {overview.station.times?.join(", ")||"—"} ({display(overview.station.timezone)})</div>
         </dl>:<p className="mt-2 text-sm">{tr("Chưa đăng ký trạm.","No station registered.")}</p>}
       </section>
+      <StationOperations key={overview.station?.stationId??"unregistered"} areaId={areaId} station={overview.station} language={language} onChanged={()=>setRevision(n=>n+1)}/>
       <section className={panel}>
         <label className="block font-semibold" htmlFor="bench-batch">{tr("Phiên phân tích","Analysis batch")}</label>
         {overview.batches.length===0?<p className="mt-2">{tr("Chưa có phiên.","No batches.")}</p>:
@@ -103,6 +105,7 @@ function ScopeWorkspace({areaId,language}) {
             </dl>
           </section>)}
         </div>
+        <BatchOperations key={selected} areaId={areaId} batch={batch} data={data} language={language} onChanged={()=>setRevision(n=>n+1)}/>
       </>}
     </>}
   </div>;
@@ -114,7 +117,7 @@ export default function WaterBenchWorkspace() {
   const area=areas.find(x=>x.id===selectedAreaId);
   return <div className="space-y-5 text-[#E3ECE4]">
     <header className="flex items-center gap-3"><FlaskConical className="text-[#77FF00]"/><h1 className="text-2xl font-semibold">{en?"Water analysis":"Phân tích nước"}</h1></header>
-    <p className="text-sm text-[#98AA9A]">{en?"Read-only evidence workspace. No dosing or publication commands.":"Tra cứu bằng chứng, chưa phát lệnh hóa chất hoặc công bố kết quả."}</p>
+    <p className="text-sm text-[#98AA9A]">{en?"Manage station, schedule and AI assessments. No dosing or publication commands.":"Quản lý trạm, lịch và đánh giá AI; không phát lệnh hóa chất hoặc công bố kết quả."}</p>
     <label className="block" htmlFor="bench-area">{en?"Farm area":"Khu nuôi"}</label>
     <select id="bench-area" className={field+" w-full max-w-md"} value={area?.id??""} onChange={e=>setSelectedAreaId(e.target.value||null)} disabled={areasLoading}>
       <option value="">{en?"Select area":"Chọn khu nuôi"}</option>
