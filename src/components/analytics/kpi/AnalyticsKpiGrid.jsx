@@ -3,6 +3,7 @@ import { Activity, PackageCheck, Shell, TrendingUp } from "lucide-react";
 import AnalyticsKpiCard from "./AnalyticsKpiCard";
 
 import useTranslation from "../../../hooks/useTranslation";
+import { efficiencyRate } from "../../../services/efficiencyContract.js";
 
 // ============================================
 // FORMAT DECIMAL METRICS
@@ -115,8 +116,8 @@ function AnalyticsKpiGrid({ survival, harvest, molting, efficiency }) {
         index={3}
         icon={TrendingUp}
         label={t("analytics.harvestRate")}
-        value={formatMetric(efficiency?.harvestRate)}
-        numericValue={efficiency?.harvestRate}
+        value={formatMetric(efficiencyRate(efficiency?.harvestRate))}
+        numericValue={efficiencyRate(efficiency?.harvestRate)}
         formatValue={formatMetric}
         suffix="%"
         description={t("analytics.operationalEfficiencyDescription")}

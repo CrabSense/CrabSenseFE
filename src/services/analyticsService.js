@@ -1,4 +1,5 @@
 import fetchAPI from "./api";
+import { verifyEfficiency } from "./efficiencyContract.js";
 
 const unwrapWrappedReport = (response, fallbackMessage) => {
   if (!response?.success) {
@@ -93,20 +94,20 @@ const analyticsService = {
     return unwrapWrappedReport(response, "Unable to load molting report.");
   },
 
-  getOperationalEfficiency: async ({ fromDate = null, toDate = null } = {}) => {
+  getOperationalEfficiency: async ({ fromDate = null, toDate = null, farmingAreaId = null } = {}) => {
     const params = buildDateParams({
       fromDate,
       toDate,
     });
 
+    if (farmingAreaId) params.set("farmingAreaId", farmingAreaId);
     const response = await fetchAPI(
       `/reports/operational-efficiency?${params.toString()}`,
     );
-
-    return unwrapWrappedReport(
+    return verifyEfficiency(unwrapWrappedReport(
       response,
       "Unable to load operational efficiency.",
-    );
+    ), farmingAreaId);
   },
 };
 

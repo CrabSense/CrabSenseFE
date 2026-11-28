@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import useTranslation from "../../../hooks/useTranslation";
 
 import useAnimatedHealthValue from "@/hooks/useAnimatedHealthValue";
+import { efficiencyRate } from "../../../services/efficiencyContract.js";
 
 // ============================================
 // TONE STYLES
@@ -33,16 +34,6 @@ const toneStyles = {
 // RATE HELPERS
 // ============================================
 
-function getRate(value) {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
-  const number = Number(value);
-
-  return Number.isFinite(number) ? number : null;
-}
-
 function clampProgress(value) {
   return Math.min(Math.max(value, 0), 100);
 }
@@ -58,7 +49,7 @@ function EfficiencyRateRow({
   index = 0,
   noDataText,
 }) {
-  const rate = getRate(value);
+  const rate = efficiencyRate(value);
 
   const styles = toneStyles[tone] ?? toneStyles.good;
 
@@ -93,8 +84,8 @@ function EfficiencyRateRow({
       </div>
 
       {/* ANIMATED PROGRESS BAR */}
-      <Progress
-        value={rate === null ? 0 : animatedProgress}
+      {rate !== null && <Progress
+        value={animatedProgress}
         max={100}
         aria-label={`${label}: ${finalRate}`}
         className={[
@@ -102,7 +93,7 @@ function EfficiencyRateRow({
           "[&_[data-slot=progress-indicator]]:transition-none",
           styles.progress,
         ].join(" ")}
-      />
+      />}
     </div>
   );
 }

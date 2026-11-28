@@ -150,7 +150,7 @@ function AnalyticsKpiCard({
             </strong>
 
             {/* UNIT */}
-            {suffix && (
+            {suffix && displayValue !== "—" && (
               <span className="text-xs font-medium text-[#8C9A90]">
                 {suffix}
               </span>
