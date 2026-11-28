@@ -7,7 +7,25 @@ const area=guid(1),station=guid(2),req=guid(3),camera=guid(4),salinity=guid(5);
 const media=[10,11,12,13,14,15].map(n=>({id:guid(n),deviceId:camera,fileName:"fixture-"+n+".png",createdAt:"2026-01-01T00:00:00Z",contentType:"image/png",sizeBytes:100}));
 const batch={stationId:station,bootId:"0123456789abcdef",firmwareBatchId:"abcdef0123456789",createdAt:"2026-01-01T00:00:00Z",start:{mode:"manual"}};
 const p={requestId:req,action:"estimate",reason:"fixture",calibrationId:area,reagentLot:"lot",reactionSeconds:300,salinityPpt:15,sampleSource:"RAS_RETURN",operatorConditionsConfirmed:true};
-const assessment=(a,unit)=>({id:guid(a==="NO2"?20:21),status:"estimate_review_required",estimatedValue:1.2,unit,holdoutError:.1});
+
+const fixtureGuid=n=>"00000000-0000-0000-0000-"+String(n).padStart(12,"0");
+function estimateFixture(batch,analyte="NO2",unit="mg/L NO2"){
+  const nh=analyte==="NH3",n=nh?100:50,hash=x=>x.repeat(64);
+  const sessionId=nh?"n":"s",connectionId=fixtureGuid(42),captureId=nh?2:1;
+  const session={receiptId:fixtureGuid(n),eventId:fixtureGuid(n+1),connectionId,sessionId,analyte,kind:"batch",evidenceKind:"session",serverPayloadSha256:hash("a")};
+  const image={receiptId:fixtureGuid(n+2),eventId:fixtureGuid(n+3),connectionId,sessionId,analyte,kind:"media",evidenceKind:"jpeg",captureId,serverPayloadSha256:hash("b"),mediaId:fixtureGuid(n+4),sha256:hash("c"),privateMediaMetadataPresent:true};
+  const assessment={id:fixtureGuid(nh?21:20),requestId:fixtureGuid(3),calibrationId:fixtureGuid(1),sessionEvidenceId:session.receiptId,imageEvidenceId:image.receiptId,mediaId:image.mediaId,status:"estimate_review_required",estimatedValue:1.2,unit,holdoutError:.1};
+  const result={analyte,sessionId,captureId,status:"estimate_review_required",assessment};
+  const evidence={assessmentId:assessment.id,requestId:assessment.requestId,status:assessment.status,candidateValue:assessment.estimatedValue,unit,holdoutError:assessment.holdoutError,chemicalResultValidated:false,productionPublished:false,session,image,calibration:{id:assessment.calibrationId},provenanceStatus:"snapshot_verified",provenanceSha256:hash("f"),provenance:{
+    contract:"water-bench-ai-evidence-v1",assessmentId:assessment.id,requestId:assessment.requestId,requestSha256:hash("d"),
+    stationId:batch.stationId,bootId:batch.bootId,batchId:batch.firmwareBatchId,analyte,connectionId,sessionId,captureId,
+    sessionReceiptId:session.receiptId,imageReceiptId:image.receiptId,sessionPayloadSha256:session.serverPayloadSha256,imagePayloadSha256:image.serverPayloadSha256,imageSha256:image.sha256,mediaId:image.mediaId,calibrationId:assessment.calibrationId}};
+  return {result,evidence,session,image};
+}
+
+const no2=estimateFixture(batch),nh3=estimateFixture(batch,"NH3","mg/L TAN-N");
+let invalidEvidence=false;
+
 const base="http://127.0.0.1:5173";
 let sent=null,calibration=null,ammonia=null,review=null,publication=null,recoveryReads=0;
 let page,diagnosticPage;
@@ -48,13 +66,15 @@ try{
    else if(path.endsWith("/batches"))data=[batch];
    else if(path.endsWith("/ai-readiness"))data={channels:[{analyte:"NO2",status:sent?"already_assessed":"operator_confirmation_required",calibrationId:area,reagentLot:"lot",unit:"mg/L NO2",reactionSeconds:300,timingToleranceSeconds:20,minSalinityPpt:10,maxSalinityPpt:20},{analyte:"NH3",status:"already_assessed"}]};
    else if(path.endsWith("/retry-status"))data={channels:[{analyte:"NO2",status:sent?"estimate_review_required":"retry_available",requestId:req,attempts:1,maxAttempts:3},{analyte:"NH3",status:"estimate_review_required",attempts:1,maxAttempts:3}]};
-   else if(path.endsWith("/results"))data={channels:[{analyte:"NO2",sessionId:"s",status:sent?"estimate_review_required":"awaiting_assessment",assessment:sent?assessment("NO2","mg/L NO2"):null},{analyte:"NH3",sessionId:"n",status:"estimate_review_required",assessment:assessment("NH3","mg/L TAN-N")}]};
+   else if(path.endsWith("/results"))data={channels:[sent?no2.result:{...no2.result,status:"awaiting_assessment",assessment:null},nh3.result]};
    else if(path.endsWith("/receipts"))data={stationId:station,bootId:batch.bootId,batchId:batch.firmwareBatchId,
      inventoryComplete:true,receiptBasis:"persisted_backend_evidence",timelineStatus:"firmware_complete_reported",
-     total:2,timelineCount:1,mediaCount:1,nh3Count:0,items:[
+     total:5,timelineCount:3,mediaCount:2,nh3Count:0,items:[
        {receiptId:guid(40),eventId:guid(41),connectionId:guid(42),kind:"batch",evidenceKind:"batch_start",serverPayloadSha256:"a".repeat(64)},
-       {receiptId:guid(43),eventId:guid(44),connectionId:guid(42),kind:"media",mediaId:guid(45),serverPayloadSha256:"b".repeat(64),sha256:"c".repeat(64)}
+       no2.session,no2.image,nh3.session,nh3.image
      ]};
+   else if(path.endsWith("/NO2/evidence"))data=invalidEvidence?{...no2.evidence,candidateValue:9}:no2.evidence;
+   else if(path.endsWith("/NH3/evidence"))data=invalidEvidence?{...nh3.evidence,candidateValue:9}:nh3.evidence;
    else if(path.endsWith("/retry-request")){recoveryReads++;data=p;}
    else if(path.endsWith("/assessment")&&method==="POST"){sent=request.postDataJSON();data={status:"estimate_review_required"};}
    else if(path.endsWith("/admin-media")){
@@ -81,6 +101,16 @@ try{
  assert.equal(recoveryReads,1);assert.deepEqual(sent,p,"fresh tab must recover exact server body");
  await page.getByLabel("NO2 review decision").waitFor();
  console.log("PASS original retry recovery");
+ // An inconsistent estimate must clear the old snapshot and disable review controls.
+ invalidEvidence=true;
+ await page.getByRole("button",{name:"Refresh",exact:true}).click();
+ await page.getByRole("alert").filter({hasText:"WaterBench estimate provenance mismatch"}).waitFor();
+ assert.equal(await page.getByTestId("review-panel-NO2").count(),0);
+ invalidEvidence=false;
+ await page.getByRole("button",{name:"Refresh",exact:true}).click();
+ await page.getByLabel("NO2 review decision").waitFor();
+ console.log("PASS invalid provenance hides prior estimate and review; clean refresh restores");
+
  // Select a stored image and draw all three ROIs in image coordinates.
  const wizard=page.getByTestId("calibration-wizard");
  await wizard.locator("summary").click();

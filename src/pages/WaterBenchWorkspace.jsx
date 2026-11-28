@@ -3,7 +3,7 @@ import { FlaskConical,RefreshCw } from "lucide-react";
 import useSelectedArea from "../hooks/useSelectedArea";
 import useTranslation from "../hooks/useTranslation";
 import waterBench from "../services/waterBenchService";
-import { batchKey,channels,verifySnapshot } from "../services/waterBenchModel";
+import { batchKey,channels,verifySnapshot,verifyEstimates } from "../services/waterBenchModel";
 import { StationOperations, BatchOperations } from "./waterBench/Operations";
 
 const panel="rounded-xl border border-[#24382A] bg-[#0D1510] p-5";
@@ -54,9 +54,11 @@ function ScopeWorkspace({areaId,language}) {
     setDetail({loading:true,error:null,data:null});
     Promise.all([waterBench.detail(areaId,batch,controller.signal),waterBench.results(areaId,batch,controller.signal),
       waterBench.readiness(areaId,batch,controller.signal),waterBench.retry(areaId,batch,controller.signal),
-      waterBench.receipts(areaId,batch,controller.signal)]).then(([timeline,results,readiness,retry,receipts])=>{
+      waterBench.receipts(areaId,batch,controller.signal)]).then(async ([timeline,results,readiness,retry,receipts])=>{
         if(!active)return;
         verifySnapshot(batch,timeline?.timeline,receipts,[results,readiness,retry]);
+        await verifyEstimates(batch,results,receipts,(analyte,signal)=>waterBench.evidence(areaId,batch,analyte,signal),controller.signal);
+        if(!active)return;
         setDetail({loading:false,error:null,data:{timeline,results,readiness,retry,receipts,key:batchKey(batch),revision:batchRevision}});
       }).catch(error=>{if(active)setDetail({loading:false,error:error.message,data:null});});
     return ()=>{active=false;controller.abort();};

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {areaPath,batchPath,unwrap,channels,verifySnapshot,verifyReview} from "../src/services/waterBenchModel.js";
+import {areaPath,batchPath,unwrap,channels,verifySnapshot,verifyReview,verifyEstimate,verifyEstimates} from "../src/services/waterBenchModel.js";
 import {canUseWeb,FARM_PORTAL_ROLES} from "../src/constants/roles.js";
 const area="11111111-1111-1111-1111-111111111111";
 const batch={stationId:area,bootId:"0123456789abcdef",firmwareBatchId:"abcdef0123456789"};
@@ -42,4 +42,38 @@ test("review cannot refer to another assessment or ammonia measurand",()=>{
   assert.equal(verifyReview(review,area,"mg/L TAN-N").publication.value,0);
   assert.throws(()=>verifyReview(review,area,"mg/L NH3"));
   assert.throws(()=>verifyReview({...review,assessmentId:"other"},area,"mg/L TAN-N"));
+});
+
+const fixtureGuid=n=>"00000000-0000-0000-0000-"+String(n).padStart(12,"0");
+function estimateFixture(batch,analyte="NO2",unit="mg/L NO2"){
+  const nh=analyte==="NH3",n=nh?100:50,hash=x=>x.repeat(64);
+  const sessionId=nh?"n":"s",connectionId=fixtureGuid(42),captureId=nh?2:1;
+  const session={receiptId:fixtureGuid(n),eventId:fixtureGuid(n+1),connectionId,sessionId,analyte,kind:"batch",evidenceKind:"session",serverPayloadSha256:hash("a")};
+  const image={receiptId:fixtureGuid(n+2),eventId:fixtureGuid(n+3),connectionId,sessionId,analyte,kind:"media",evidenceKind:"jpeg",captureId,serverPayloadSha256:hash("b"),mediaId:fixtureGuid(n+4),sha256:hash("c"),privateMediaMetadataPresent:true};
+  const assessment={id:fixtureGuid(nh?21:20),requestId:fixtureGuid(3),calibrationId:fixtureGuid(1),sessionEvidenceId:session.receiptId,imageEvidenceId:image.receiptId,mediaId:image.mediaId,status:"estimate_review_required",estimatedValue:1.2,unit,holdoutError:.1};
+  const result={analyte,sessionId,captureId,status:"estimate_review_required",assessment};
+  const evidence={assessmentId:assessment.id,requestId:assessment.requestId,status:assessment.status,candidateValue:assessment.estimatedValue,unit,holdoutError:assessment.holdoutError,chemicalResultValidated:false,productionPublished:false,session,image,calibration:{id:assessment.calibrationId},provenanceStatus:"snapshot_verified",provenanceSha256:hash("f"),provenance:{
+    contract:"water-bench-ai-evidence-v1",assessmentId:assessment.id,requestId:assessment.requestId,requestSha256:hash("d"),
+    stationId:batch.stationId,bootId:batch.bootId,batchId:batch.firmwareBatchId,analyte,connectionId,sessionId,captureId,
+    sessionReceiptId:session.receiptId,imageReceiptId:image.receiptId,sessionPayloadSha256:session.serverPayloadSha256,imagePayloadSha256:image.serverPayloadSha256,imageSha256:image.sha256,mediaId:image.mediaId,calibrationId:assessment.calibrationId}};
+  return {result,evidence,session,image};
+}
+
+test("estimate must match selected receipt and verified snapshot",()=>{
+  const f=estimateFixture(batch), receipts={items:[f.session,f.image]};
+  verifyEstimate(batch,"NO2",f.result,receipts,f.evidence);
+  for(const patch of [{candidateValue:0},{provenanceStatus:"legacy_linkage_only"},{provenance:{...f.evidence.provenance,imageSha256:"bad"}}]){
+    assert.throws(()=>verifyEstimate(batch,"NO2",f.result,receipts,{...f.evidence,...patch}));
+  }
+  assert.throws(()=>verifyEstimate(batch,"NO2",f.result,{items:[f.session,{...f.image,privateMediaMetadataPresent:false}]},f.evidence));
+});
+test("cancelled evidence load rejects late data and prevents follow-up",async()=>{
+  const f=estimateFixture(batch), receipts={items:[f.session,f.image]},controller=new AbortController();
+  let release,calls=0;
+  const deferred=new Promise(resolve=>{release=resolve;});
+  const pending=verifyEstimates(batch,{channels:[f.result]},receipts,()=>{calls++;return deferred;},controller.signal);
+  controller.abort();release(f.evidence);
+  await assert.rejects(pending,/cancelled/);
+  await assert.rejects(verifyEstimates(batch,{channels:[f.result]},receipts,()=>{calls++;return deferred;},controller.signal),/cancelled/);
+  assert.equal(calls,1);
 });
