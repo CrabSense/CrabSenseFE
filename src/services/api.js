@@ -221,6 +221,19 @@ const fetchAPI = async (endpoint, options = {}, configOptions = {}) => {
   }
 };
 
+// Dedicated scoped read: pinned bearer, no refresh/retry/redirect/cache.
+export async function fetchQualifiedAreaLive(area,token,signal) {
+  requireApiBase();
+  const response=await fetch(API_BASE_URL+"/iot/live?"+new URLSearchParams({farmingAreaId:area}),{
+    method:"GET",signal,cache:"no-store",redirect:"error",credentials:"omit",
+    headers:{Authorization:"Bearer "+token,Accept:"application/json"},
+  });
+  if(response.status!==200)throw new Error("Không xác minh được dữ liệu nước.");
+  const body=await response.json();
+  if(body?.success!==true||!Array.isArray(body.data))throw new Error("Invalid scoped live envelope");
+  return body.data;
+}
+
 // Giữ compatibility với Monitoring.jsx hiện tại
 export const waterQualityAPI = {
   getLatestData: () => fetchAPI("/water-quality/latest"),
