@@ -170,7 +170,7 @@ function BoxMonitoringSection({ boxes = [] }) {
                     key={column}
                     className="h-12 px-4 text-[10px] font-bold uppercase tracking-wider text-[#8C9A90]"
                   >
-                    {t(`monitoring.${column}`)}
+                    {column==="columnWater"?"Nước RAS tham chiếu":t(`monitoring.${column}`)}
                   </TableHead>
                 ))}
               </TableRow>

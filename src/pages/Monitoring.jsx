@@ -1,4 +1,5 @@
 import useMonitoring from "../hooks/useMonitoring";
+import useRasWater from "../hooks/useRasWater";
 import useSelectedArea from "../hooks/useSelectedArea";
 import useTranslation from "../hooks/useTranslation";
 
@@ -16,7 +17,9 @@ import { RefreshCw } from "lucide-react";
 
 function Monitoring() {
   const { t } = useTranslation();
-  const { selectedAreaId } = useSelectedArea();
+  const { selectedAreaId, selectedArea, areasLoading } = useSelectedArea();
+  const waterArea=!areasLoading && selectedArea?.id===selectedAreaId ? selectedAreaId : null;
+  const ras=useRasWater(waterArea);
 
   const { data, loading, refreshing, error, reload, refreshInterval } =
     useMonitoring(selectedAreaId);
@@ -83,7 +86,7 @@ function Monitoring() {
 
       {/* WATER QUALITY & IoT DEVICES */}
       <PageReveal delay={140}>
-        <EnvironmentGrid water={data?.areaWater} devices={data?.areaDevices} />
+        <EnvironmentGrid readings={ras.readings} now={ras.now} areaId={waterArea} devices={data?.areaDevices} />
       </PageReveal>
 
       {/* BOX HEALTH SUMMARY */}

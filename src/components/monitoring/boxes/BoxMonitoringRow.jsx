@@ -226,19 +226,9 @@ function BoxMonitoringRow({
         </div>
       </TableCell>
 
-      {/* WATER QUALITY */}
-      <TableCell className="px-4 py-4">
-        <div className="flex flex-col gap-1 text-xs text-[#8C9A90]">
-          <span>
-            {displayValue(box.water?.temperature)}
-
-            {box.water?.temperature != null && box.water.temperature !== ""
-              ? "°C"
-              : ""}
-          </span>
-
-          <span>pH {displayValue(box.water?.ph)}</span>
-        </div>
+      {/* Water is referenced from the area's RAS, not measured per box. */}
+      <TableCell className="px-4 py-4 text-xs text-[#8C9A90]">
+        Tham chiếu nước chung khu
       </TableCell>
 
       {/* DEVICE */}
