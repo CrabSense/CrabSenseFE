@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {qualifiedAreaReadings,readingAssessment,visibleAreaReadings} from "../src/services/rasWaterModel.js";
 const guid=n=>"00000000-0000-0000-0000-"+String(n).padStart(12,"0");
 const area=guid(1),now=Date.parse("2026-11-27T10:00:00Z");
@@ -35,4 +36,20 @@ test("visibility, connectivity, area, identity and expiry gate the same snapshot
   for(const changed of [{area:guid(9)},{identity:"other"},{online:false},{visible:false},{now:now+15000},{now:now-1}]){
     assert.deepEqual(visibleAreaReadings(snapshot,{...context,...changed}),[]);
   }
+});
+
+// Wiring regression: the dashboard must not reintroduce the legacy health score.
+test("Farm Admin dashboard uses scoped RAS cards, not legacy health scores or absent device counts",()=>{
+  const source=path=>readFileSync(new URL(path,import.meta.url),"utf8");
+  const dashboard=source("../src/pages/Dashboard.jsx");
+  const hook=source("../src/hooks/useDashboard.js");
+  const grid=source("../src/components/monitoring/environment/EnvironmentGrid.jsx");
+  assert.match(dashboard,/!areasLoading\s*&&\s*selectedArea\?\.id\s*===\s*selectedAreaId\s*\?\s*selectedAreaId\s*:\s*null/);
+  assert.match(dashboard,/useRasWater\(waterArea\)/);
+  assert.match(dashboard,/<EnvironmentGrid\s+readings=\{ras\.readings\}\s+now=\{ras\.now\}\s+areaId=\{waterArea\}\s+showDevices=\{false\}/);
+  assert.doesNotMatch(dashboard,/FarmHealthCard|HealthBreakdown|waterQualityScore/);
+  assert.match(hook,/dashboardService\.getOverview\(areaId\)/);
+  assert.doesNotMatch(hook,/getMetrics\(|setMetrics\(/);
+  assert.match(grid,/showDevices=true/);
+  assert.match(grid,/\{showDevices && <EnvironmentCard/);
 });

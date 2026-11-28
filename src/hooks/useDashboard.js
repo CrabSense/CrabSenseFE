@@ -4,7 +4,6 @@ import dashboardService from "../services/dashboardService";
 
 export default function useDashboard(farmingAreaId = null) {
   const [overview, setOverview] = useState(null);
-  const [metrics, setMetrics] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -28,21 +27,16 @@ export default function useDashboard(farmingAreaId = null) {
         setLoading(true);
         setRefreshing(false);
         setOverview(null);
-        setMetrics(null);
       }
 
       setError(null);
 
       try {
-        const [overviewData, metricsData] = await Promise.all([
-          dashboardService.getOverview(areaId),
-          dashboardService.getMetrics(areaId),
-        ]);
+        const overviewData = await dashboardService.getOverview(areaId);
 
         if (requestId !== requestIdRef.current) return;
 
         setOverview(overviewData);
-        setMetrics(metricsData);
         loadedAreaRef.current = areaId;
       } catch (err) {
         if (requestId !== requestIdRef.current) return;
@@ -51,7 +45,6 @@ export default function useDashboard(farmingAreaId = null) {
         setError(err?.message || "Unable to load dashboard.");
 
         setOverview(null);
-        setMetrics(null);
         loadedAreaRef.current = undefined;
       } finally {
         if (requestId === requestIdRef.current) {
@@ -78,7 +71,6 @@ export default function useDashboard(farmingAreaId = null) {
 
   return {
     overview,
-    metrics,
     loading,
     refreshing,
     error,
