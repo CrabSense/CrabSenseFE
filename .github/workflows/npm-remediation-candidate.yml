@@ -1,0 +1,57 @@
+name: NPM Remediation Candidate
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/npm-remediation-candidate.yml'
+      - 'scripts/npm-remediation-candidate.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve compatible candidate and audit
+        run: node scripts/npm-remediation-candidate.mjs
+      - name: Install candidate from regenerated lock
+        run: npm ci
+      - name: Node contract tests and production build
+        env:
+          VITE_GITHUB_PAGES: 'true'
+          VITE_PAGES_BASE_PATH: /CrabSenseFE/
+          VITE_API_BASE_URL: https://api.example.com/api
+        run: |
+          node --test tests/*.test.js
+          npm run build
+          grep -Fq '/CrabSenseFE/assets/' dist/index.html
+      - name: Install isolated browser test dependencies
+        run: npm install --prefix tests/browser --ignore-scripts --no-package-lock
+      - run: node tests/browser/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Browser contract tests on candidate
+        env:
+          VITE_API_BASE_URL: http://127.0.0.1:5173/api
+          VITE_GITHUB_PAGES: 'false'
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 5173 > "$RUNNER_TEMP/npm-candidate-vite.log" 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5173/ >/dev/null
+          node tests/browser/waterBench.mjs
+      - name: Upload candidate and audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-remediation-candidate
+          path: |
+            candidate-output/
+            tests/browser/artifacts/
+            ${{ runner.temp }}/npm-candidate-vite.log
+          if-no-files-found: error
+          retention-days: 14

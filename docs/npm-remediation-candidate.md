@@ -1,0 +1,5 @@
+# Compatible npm remediation candidate — 28/11/2026
+
+Main 556c06f, NPM Audit #2: 19 affected packages full (10 high, 9 moderate), 17 omit-dev (8 high, 9 moderate). Node 28/28 passed, deploy #127 passed. shadcn is a build dependency because globals.css imports shadcn/tailwind.css. Vite 5.4.21 and esbuild require a separately validated major migration; installed React plugin 4.7.0 declares peer support only up to Vite 7.
+
+The candidate workflow resolves a stable shadcn 4 version >=4.23.1 within major 4, pins it, applies non-force npm audit fix to a temporary lockfile, rejects other direct range changes and Vite major change, produces full/omit-dev audit evidence, performs npm ci, Node tests, Pages build and existing Chromium role/WaterBench tests. No repository write credentials. The candidate is not deployed or automatically committed. Review package/lock delta, actual residual vulnerabilities and compatibility before adopting. This does not establish production JWT or hardware safety. No dependency changes in this PR itself; no forced upgrades or hand-edited integrity values.
