@@ -91,7 +91,7 @@ function Monitoring() {
 
       {/* BOX HEALTH SUMMARY */}
       <PageReveal delay={220}>
-        <MonitoringSummaryGrid summary={data?.summary} />
+        <MonitoringSummaryGrid summary={data?.summary} boxes={data?.items} scoped={Boolean(waterArea && data?.farmingAreaId === waterArea)} />
       </PageReveal>
 
       {/* BOX MONITORING TABLE */}

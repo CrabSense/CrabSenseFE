@@ -46,9 +46,8 @@ function MonitoringSummaryCard({
 }) {
   const isRevealActive = useRevealActive();
 
-  const styles = toneStyles[tone] ?? toneStyles.default;
-
   const hasValidValue = validCount(value);
+  const styles = hasValidValue ? (toneStyles[tone] ?? toneStyles.default) : toneStyles.offline;
   const displayValue = hasValidValue ? value : "—";
 
   const cardDelay = 100 + index * 65;

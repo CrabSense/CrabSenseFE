@@ -58,11 +58,7 @@ function MonitoringFilters({ search, status, onSearchChange, onStatusChange }) {
         <SelectContent className="border-[#24382A] bg-[#111C15] text-[#F4F7F4]">
           <SelectItem value="all">{t("monitoring.allStatus")}</SelectItem>
 
-          <SelectItem value="healthy">{t("monitoring.healthy")}</SelectItem>
-
-          <SelectItem value="warning">{t("monitoring.warning")}</SelectItem>
-
-          <SelectItem value="critical">{t("monitoring.critical")}</SelectItem>
+          <SelectItem value="alerts">{t("monitoring.recordedAlerts")}</SelectItem>
 
           <SelectItem value="offline">{t("monitoring.offline")}</SelectItem>
         </SelectContent>

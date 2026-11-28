@@ -21,33 +21,7 @@ import BoxMonitoringRow from "./BoxMonitoringRow";
 
 import useTranslation from "@/hooks/useTranslation";
 
-// ============================================
-// HEALTH GROUP HELPER
-// ============================================
-
-function getHealthGroup(box) {
-  const raw = box.health?.statusLevel ?? box.healthStatus ?? "";
-
-  const level = String(raw).toLowerCase().trim();
-
-  if (["healthy", "good", "excellent"].includes(level)) {
-    return "healthy";
-  }
-
-  if (["critical", "danger"].includes(level)) {
-    return "critical";
-  }
-
-  if (level === "warning") {
-    return "warning";
-  }
-
-  if (level === "offline") {
-    return "offline";
-  }
-
-  return "unknown";
-}
+import { hasRecordedAlerts } from "../../../services/monitoringAssessment";
 
 // ============================================
 // BOX MONITORING SECTION
@@ -77,11 +51,9 @@ function BoxMonitoringSection({ boxes = [] }) {
     const keyword = search.trim().toLowerCase();
 
     return safeBoxes.filter((box) => {
-      const healthGroup = getHealthGroup(box);
-
       const matchesStatus =
         status === "all" ||
-        (status === "offline" ? deviceInventory(box.devices).isOnline === false : healthGroup === status);
+        (status === "offline" ? deviceInventory(box.devices).isOnline === false : status === "alerts" && hasRecordedAlerts(box));
 
       const matchesSearch =
         !keyword ||
@@ -100,7 +72,6 @@ function BoxMonitoringSection({ boxes = [] }) {
   const columns = [
     "columnBox",
     "columnHealth",
-    "columnScore",
     "columnWater",
     "columnDevice",
     "columnAlerts",
@@ -181,7 +152,7 @@ function BoxMonitoringSection({ boxes = [] }) {
               {filteredBoxes.length === 0 ? (
                 // EMPTY STATE
                 <TableRow className="border-0 hover:bg-transparent">
-                  <TableCell colSpan={6} className="py-14 text-center">
+                  <TableCell colSpan={5} className="py-14 text-center">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <Inbox
                         size={28}
