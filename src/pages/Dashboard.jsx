@@ -1,7 +1,7 @@
 
 import useSelectedArea from "../hooks/useSelectedArea";
 import useDashboard from "../hooks/useDashboard";
-import useTranslation from "../hooks/useTranslation";
+import useRasWater from "../hooks/useRasWater";
 
 import PageReveal from "../components/ui/PageReveal";
 
@@ -12,16 +12,15 @@ import DashboardError from "../components/dashboard/DashboardError";
 import StatsGrid from "../components/dashboard/stats/StatsGrid";
 import KpiSummary from "../components/dashboard/stats/KpiSummary";
 
-import FarmHealthCard from "../components/dashboard/health/FarmHealthCard";
-import HealthBreakdown from "../components/dashboard/health/HealthBreakdown";
+import EnvironmentGrid from "../components/monitoring/environment/EnvironmentGrid";
 
 function Dashboard() {
-  const { t } = useTranslation();
-  const { selectedAreaId } = useSelectedArea();
+  const { selectedAreaId, selectedArea, areasLoading } = useSelectedArea();
+  const waterArea = !areasLoading && selectedArea?.id === selectedAreaId ? selectedAreaId : null;
+  const ras = useRasWater(waterArea);
 
   const {
     overview,
-    metrics,
     loading,
     refreshing,
     error,
@@ -68,25 +67,13 @@ function Dashboard() {
         <KpiSummary summary={overview?.kpiSummary} />
       </PageReveal>
 
-      {/* 4. FARM HEALTH */}
-      <section
-        aria-label={t("dashboard.farmHealthAria")}
-        className={[
-          "mb-5 grid min-w-0 grid-cols-1 gap-5",
-          "min-[1100px]:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]",
-        ].join(" ")}
-      >
-        <PageReveal delay={170} className="h-full">
-          <FarmHealthCard metrics={metrics} />
-        </PageReveal>
-
-        <PageReveal delay={230} className="h-full">
-          <HealthBreakdown
-            metrics={metrics}
-            iotOnlinePercentage={overview?.iotOnlinePercentage}
-          />
-        </PageReveal>
-      </section>
+      {/* Actual scoped readings, never the legacy operational health score. */}
+      <PageReveal delay={170}>
+        <EnvironmentGrid readings={ras.readings} now={ras.now} areaId={waterArea} showDevices={false} />
+        <p className="mb-5 text-xs text-[#8C9A90]">
+          Điểm sức khỏe tổng hợp tạm không hiển thị vì chưa có hợp đồng xác minh chất lượng nước.
+        </p>
+      </PageReveal>
     </main>
   );
 }

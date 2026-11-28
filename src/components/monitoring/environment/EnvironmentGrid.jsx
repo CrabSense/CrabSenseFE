@@ -5,7 +5,7 @@ import EnvironmentCard from "./EnvironmentCard";
 
 import useTranslation from "@/hooks/useTranslation";
 
-function EnvironmentGrid({ readings=[], now, areaId, devices }) {
+function EnvironmentGrid({ readings=[], now, areaId, devices, showDevices=true }) {
   const { t } = useTranslation();
 
   const rawTotal = Number(devices?.totalCount);
@@ -62,7 +62,7 @@ function EnvironmentGrid({ readings=[], now, areaId, devices }) {
       </article>)}
 
       {/* IOT DEVICES ONLINE */}
-      <EnvironmentCard
+      {showDevices && <EnvironmentCard
         index={3}
         icon={Wifi}
         label={t("monitoring.devicesOnline")}
@@ -72,7 +72,7 @@ function EnvironmentGrid({ readings=[], now, areaId, devices }) {
         decimals={0}
         description={deviceCountDescription}
         status={deviceStatus}
-      />
+      />}
     </section>
   );
 }
