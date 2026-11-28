@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import analyticsService from "../services/analyticsService";
 
@@ -17,9 +17,14 @@ export default function useAnalytics({
   const [refreshing, setRefreshing] = useState(false);
 
   const [error, setError] = useState(null);
+  const generation = useRef(0);
+  const scopeKey = JSON.stringify([farmingAreaId, fromDate, toDate]);
+  const [loadedScope, setLoadedScope] = useState(null);
 
   const loadAnalytics = useCallback(
     async (manualRefresh = false) => {
+      const request = ++generation.current;
+      setLoadedScope(null);
       try {
         if (manualRefresh) {
           setRefreshing(true);
@@ -49,38 +54,45 @@ export default function useAnalytics({
           analyticsService.getMoltingReport(),
 
           analyticsService.getOperationalEfficiency({
+            farmingAreaId,
             fromDate,
             toDate,
           }),
         ]);
 
+        if (request !== generation.current) return;
         setHarvest(harvestData);
         setInventory(inventoryData);
         setSurvival(survivalData);
         setMolting(moltingData);
         setEfficiency(efficiencyData);
+        setLoadedScope(scopeKey);
       } catch (err) {
+        if (request !== generation.current) return;
         console.error("Analytics load failed:", err);
 
         setError(err.message || "Unable to load analytics.");
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (request === generation.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
-    [farmingAreaId, fromDate, toDate],
+    [farmingAreaId, fromDate, toDate, scopeKey],
   );
 
   useEffect(() => {
     loadAnalytics(false);
+    return () => { generation.current += 1; };
   }, [loadAnalytics]);
 
   return {
-    harvest,
-    inventory,
-    survival,
-    molting,
-    efficiency,
+    harvest: loadedScope === scopeKey ? harvest : null,
+    inventory: loadedScope === scopeKey ? inventory : null,
+    survival: loadedScope === scopeKey ? survival : null,
+    molting: loadedScope === scopeKey ? molting : null,
+    efficiency: loadedScope === scopeKey ? efficiency : null,
 
     loading,
     refreshing,

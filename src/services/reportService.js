@@ -1,5 +1,6 @@
 
 import fetchAPI from "./api";
+import { verifyEfficiency } from "./efficiencyContract.js";
 
 function unwrap(response) {
   if (response == null) {
@@ -86,11 +87,13 @@ const reportService = {
     });
   },
 
-  getOperationalEfficiency(filters = {}) {
-    return get("/reports/operational-efficiency", {
-      fromDate: filters.fromDate,
-      toDate: filters.toDate,
-    });
+  async getOperationalEfficiency(filters = {}) {
+    const areaId = filters.farmingAreaId || null;
+    const response = await fetchAPI(`/reports/operational-efficiency${toQuery({
+      fromDate: filters.fromDate, toDate: filters.toDate, farmingAreaId: areaId,
+    })}`);
+    if (response?.success !== true) throw new Error("Unable to load efficiency report.");
+    return verifyEfficiency(response.data, areaId);
   },
 };
 

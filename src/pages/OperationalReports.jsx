@@ -48,10 +48,8 @@ import {
   ];
   
   const formatNumber = (value, digits = 0) => {
-    if (value === null || value === undefined) return "—";
-  
-    const n = Number(value);
-    if (!Number.isFinite(n)) return "—";
+    if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+    const n = value;
   
     return n.toLocaleString("en-US", {
       minimumFractionDigits: digits,
@@ -71,8 +69,8 @@ import {
       : String(value);
   };
   
-  const percent = (value) => `${formatNumber(value, 2)}%`;
-  const kg = (value) => `${formatNumber(value, 2)} kg`;
+  const percent = (value) => typeof value === "number" && Number.isFinite(value) ? `${formatNumber(value, 2)}%` : "—";
+  const kg = (value) => typeof value === "number" && Number.isFinite(value) ? `${formatNumber(value, 2)} kg` : "—";
   
   function KpiCard({ title, value, icon: Icon }) {
     return (
@@ -548,11 +546,11 @@ import {
       ["Harvest Rate", data.harvestRate],
       ["Mortality Rate", data.mortalityRate],
       ["Alive Rate", data.aliveRate],
-      ["Health Score", data.healthScore],
     ];
   
     return (
       <div className="space-y-5">
+        <p className="text-sm text-[#91A394]">Current recorded status of the stocked cohort, not a historical as-of or health assessment. Scope: {data.farmingAreaId ? "Selected area" : "Assigned areas"}.</p>
         <Stats
           items={[
             {
@@ -568,8 +566,8 @@ import {
               value: percent(data.harvestRate),
             },
             {
-              title: "Health Score",
-              value: formatNumber(data.healthScore, 2),
+              title: "Health Assessment",
+              value: "—",
             },
           ]}
         />
@@ -605,11 +603,7 @@ import {
                   className="flex justify-between gap-3 border-b border-[#24382A] pb-3 text-sm last:border-0"
                 >
                   <span className="text-[#91A394]">{label}</span>
-                  <strong className="text-[#77FF00]">
-                    {label === "Health Score"
-                      ? formatNumber(value, 2)
-                      : percent(value)}
-                  </strong>
+                  <strong className="text-[#B3C0B6]">{percent(value)}</strong>
                 </div>
               ))}
             </div>
@@ -645,6 +639,10 @@ import {
   
   export default function OperationalReports() {
     const { areas = [], selectedAreaId } = useSelectedArea();
+    return <ScopedOperationalReports key={selectedAreaId || "assigned"} areas={areas} selectedAreaId={selectedAreaId} />;
+  }
+
+  function ScopedOperationalReports({ areas, selectedAreaId }) {
   
     const [tab, setTab] = useState("harvest");
   
@@ -666,13 +664,7 @@ import {
   
     const requestRef = useRef(0);
   
-    useEffect(() => {
-      setFilters((current) => ({
-        ...current,
-        areaId: selectedAreaId || "",
-      }));
-    }, [selectedAreaId]);
-  
+
     const runReport = useCallback(async (kind, filter) => {
       switch (kind) {
         case "harvest":
@@ -707,6 +699,7 @@ import {
           return reportService.getOperationalEfficiency({
             fromDate: filter.fromDate,
             toDate: filter.toDate,
+            farmingAreaId: filter.areaId || null,
           });
   
         default:
@@ -763,7 +756,17 @@ import {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tab, loadReport]);
   
+    const clearReport = () => {
+      requestRef.current += 1;
+      setData(null);
+      setAppliedFilters(null);
+      setLoadedAt(null);
+      setLoading(false);
+      setError("");
+    };
+
     const changeFilter = (name, value) => {
+      if (name === "areaId") clearReport();
       setFilters((current) => ({
         ...current,
         [name]: value,
@@ -788,7 +791,9 @@ import {
     };
   
     const refresh = () => {
-      loadReport(tab, appliedFilters || filters);
+      const snapshot = appliedFilters || { ...filters };
+      setAppliedFilters(snapshot);
+      loadReport(tab, snapshot);
     };
   
     const exportJson = () => {
@@ -820,7 +825,7 @@ import {
       URL.revokeObjectURL(url);
     };
   
-    const supportsArea = ["harvest", "survival", "molting"].includes(tab);
+    const supportsArea = ["harvest", "survival", "molting", "efficiency"].includes(tab);
     const supportsDateRange = tab !== "inventory";
   
     return (
@@ -881,7 +886,7 @@ import {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setTab(item.id)}
+                onClick={() => { if (item.id !== tab) { clearReport(); setTab(item.id); } }}
                 className={
                   "inline-flex items-center gap-2 rounded-lg border px-4 py-3 text-sm " +
                   (active
@@ -918,7 +923,7 @@ import {
                     changeFilter("areaId", event.target.value)
                   }
                 >
-                  <option value="">All Areas</option>
+                  <option value="">All Assigned Areas</option>
   
                   {areas.map((area) => (
                     <option key={area.id} value={area.id}>
