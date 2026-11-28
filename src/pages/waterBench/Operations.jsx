@@ -176,7 +176,7 @@ export function BatchOperations({areaId,batch,data,language,onChanged}){
     <label className="flex gap-2 text-sm"><input data-testid="ammonia-confirm-basis" type="checkbox" checked={ammonia.basis} onChange={e=>setAmmonia(x=>({...x,basis:e.target.checked}))}/>{t("Xác nhận đại lượng và đơn vị thực tế","Confirm actual measurand and unit")}</label></>}
     <button data-testid="ammonia-submit" className={btn} type="button" onClick={submitAmmonia}>{ammoniaSaved?t("Gửi lại yêu cầu gốc","Resend original request"):t("Tạo tham chiếu NH3","Create NH3 reference")}</button>
    </div>}
-   {actual.filter(a=>get(data.results,a)?.assessment?.status==="estimate_review_required").map(a=><ReviewPanel key={a} areaId={areaId} batch={batch} analyte={a} unit={get(data.results,a).assessment.unit} language={language}/>)}
+   {actual.filter(a=>get(data.results,a)?.assessment?.status==="estimate_review_required").map(a=><ReviewPanel key={a+":"+get(data.results,a).assessment.id} areaId={areaId} batch={batch} analyte={a} assessmentId={get(data.results,a).assessment.id} unit={get(data.results,a).assessment.unit} language={language}/>)}
    <JsonView value={proof}/>
   </fieldset><Feedback action={action}/>
  </section>;

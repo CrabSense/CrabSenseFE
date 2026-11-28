@@ -49,7 +49,12 @@ try{
    else if(path.endsWith("/ai-readiness"))data={channels:[{analyte:"NO2",status:sent?"already_assessed":"operator_confirmation_required",calibrationId:area,reagentLot:"lot",unit:"mg/L NO2",reactionSeconds:300,timingToleranceSeconds:20,minSalinityPpt:10,maxSalinityPpt:20},{analyte:"NH3",status:"already_assessed"}]};
    else if(path.endsWith("/retry-status"))data={channels:[{analyte:"NO2",status:sent?"estimate_review_required":"retry_available",requestId:req,attempts:1,maxAttempts:3},{analyte:"NH3",status:"estimate_review_required",attempts:1,maxAttempts:3}]};
    else if(path.endsWith("/results"))data={channels:[{analyte:"NO2",sessionId:"s",status:sent?"estimate_review_required":"awaiting_assessment",assessment:sent?assessment("NO2","mg/L NO2"):null},{analyte:"NH3",sessionId:"n",status:"estimate_review_required",assessment:assessment("NH3","mg/L TAN-N")}]};
-   else if(path.endsWith("/receipts"))data={total:1,mediaCount:1};
+   else if(path.endsWith("/receipts"))data={stationId:station,bootId:batch.bootId,batchId:batch.firmwareBatchId,
+     inventoryComplete:true,receiptBasis:"persisted_backend_evidence",timelineStatus:"firmware_complete_reported",
+     total:2,timelineCount:1,mediaCount:1,nh3Count:0,items:[
+       {receiptId:guid(40),eventId:guid(41),connectionId:guid(42),kind:"batch",evidenceKind:"batch_start",serverPayloadSha256:"a".repeat(64)},
+       {receiptId:guid(43),eventId:guid(44),connectionId:guid(42),kind:"media",mediaId:guid(45),serverPayloadSha256:"b".repeat(64),sha256:"c".repeat(64)}
+     ]};
    else if(path.endsWith("/retry-request")){recoveryReads++;data=p;}
    else if(path.endsWith("/assessment")&&method==="POST"){sent=request.postDataJSON();data={status:"estimate_review_required"};}
    else if(path.endsWith("/admin-media")){
@@ -62,9 +67,9 @@ try{
    else if(path.endsWith("/ammonia-reference")&&method==="POST"){ammonia=request.postDataJSON();data={status:"estimated"};}
    else if(path.endsWith("/NO2/review")&&method==="POST"){review=request.postDataJSON();data=review;}
    else if(path.endsWith("/NO2/publish")&&method==="POST"){publication=request.postDataJSON();data={value:review.referenceValue,unit:review.referenceUnit};}
-   else if(path.endsWith("/NO2/review"))data={status:publication?"published":review?"approved":"pending_review",review,publication:publication?{value:review.referenceValue,unit:review.referenceUnit}:null};
-   else if(path.endsWith("/NH3/review"))data={status:"pending_review"};
-   else if(path.endsWith("/"+batch.firmwareBatchId))data={timeline:{status:"firmware_complete_reported",mode:"manual"}};
+   else if(path.endsWith("/NO2/review"))data={assessmentId:guid(20),publicationScope:"water_bench_reviewed_record",productionSensorPublished:false,status:publication?"published":review?"approved":"pending_review",review:review?{...review,assessmentId:guid(20)}:null,publication:publication?{assessmentId:guid(20),source:"operator_attested_independent_reference",productionSensorPublished:false,value:review.referenceValue,unit:review.referenceUnit}:null};
+   else if(path.endsWith("/NH3/review"))data={assessmentId:guid(21),publicationScope:"water_bench_reviewed_record",productionSensorPublished:false,status:"pending_review"};
+   else if(path.endsWith("/"+batch.firmwareBatchId))data={timeline:{stationId:station,bootId:batch.bootId,batchId:batch.firmwareBatchId,connectionId:guid(42),status:"firmware_complete_reported",mode:"manual",channels:[{analyte:"NO2"},{analyte:"NH3"}]}};
    else if(method!=="GET")throw new Error("Unexpected mutation: "+method+" "+path);
    await route.fulfill({json:{success:true,data}});
  });

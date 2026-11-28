@@ -29,3 +29,55 @@ export function channels(results,readiness,retry) {
       holdoutError:estimate&&typeof a.holdoutError==="number"?a.holdoutError:null};
   });
 }
+
+const digest=/^[0-9a-f]{64}$/;
+const validId=v=>typeof v==="string"&&guid.test(v)&&v!=="00000000-0000-0000-0000-000000000000";
+export function verifySnapshot(batch,timeline,receipts,channelSets){
+  const matches=r=>r?.stationId===batch.stationId&&r?.bootId===batch.bootId&&r?.batchId===batch.firmwareBatchId;
+  if(!matches(timeline)||!matches(receipts)||receipts.inventoryComplete!==true||
+      receipts.receiptBasis!=="persisted_backend_evidence"||receipts.timelineStatus!==timeline.status||
+      !validId(timeline.connectionId))throw new Error("WaterBench batch or receipt identity mismatch");
+  const rows=receipts.items;
+  if(!Array.isArray(rows)||rows.length<1||rows.length>517||receipts.total!==rows.length)
+    throw new Error("Incomplete receipt inventory");
+  const ids=new Set(),events=new Set(),media=new Set();
+  for(const row of rows){
+    if(!row||!validId(row.receiptId)||ids.has(row.receiptId)||!validId(row.eventId)||events.has(row.eventId)||
+      row.connectionId!==timeline.connectionId||typeof row.serverPayloadSha256!=="string"||
+      !digest.test(row.serverPayloadSha256)||!["batch","media","nh3"].includes(row.kind))
+      throw new Error("Invalid or duplicate receipt");
+    ids.add(row.receiptId);events.add(row.eventId);
+    if(row.kind==="media"){
+      if(!validId(row.mediaId)||media.has(row.mediaId)||typeof row.sha256!=="string"||!digest.test(row.sha256))
+        throw new Error("Invalid media receipt");
+      media.add(row.mediaId);
+    }
+  }
+  if(!rows.some(r=>r.kind==="batch"&&r.evidenceKind==="batch_start")||
+      receipts.timelineCount!==rows.filter(r=>r.kind==="batch").length||
+      receipts.mediaCount!==media.size||media.size>3||
+      receipts.nh3Count!==rows.filter(r=>r.kind==="nh3").length||receipts.nh3Count>2)
+    throw new Error("Receipt counts disagree");
+  for(const set of [timeline,...channelSets]){
+    const rows=set?.channels;
+    if(!Array.isArray(rows)||rows.some(r=>!analytes.includes(r?.analyte))||
+      new Set(rows.map(r=>r.analyte)).size!==rows.length)throw new Error("Invalid or duplicate channels");
+  }
+}
+export function verifyReview(value,assessmentId,unit){
+  if(!validId(assessmentId)||value?.assessmentId!==assessmentId||
+      value.publicationScope!=="water_bench_reviewed_record"||value.productionSensorPublished!==false||
+      !["pending_review","approved","rejected","published"].includes(value.status))
+    throw new Error("Review assessment identity mismatch");
+  if(value.review&&(value.review.assessmentId!==assessmentId||
+      (value.review.decision==="approved"&&value.review.referenceUnit!==unit)))
+    throw new Error("Review measurand or identity mismatch");
+  if(value.status==="published"){
+    const p=value.publication;
+    if(!p||p.assessmentId!==assessmentId||p.unit!==unit||
+      p.source!=="operator_attested_independent_reference"||p.productionSensorPublished!==false||
+      typeof p.value!=="number"||!Number.isFinite(p.value)||p.value<0)
+      throw new Error("Invalid published reference");
+  }
+  return value;
+}
