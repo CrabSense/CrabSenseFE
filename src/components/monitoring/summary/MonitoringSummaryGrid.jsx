@@ -1,16 +1,15 @@
 import {
   Boxes,
-  CircleCheck,
-  TriangleAlert,
-  ShieldAlert,
+  CircleHelp,
   WifiOff,
 } from "lucide-react";
 
+import { offlineBoxCount } from "../../../services/monitoringAssessment";
 import MonitoringSummaryCard from "./MonitoringSummaryCard";
 
 import useTranslation from "@/hooks/useTranslation";
 
-function MonitoringSummaryGrid({ summary }) {
+function MonitoringSummaryGrid({ summary, boxes, scoped }) {
   const { t } = useTranslation();
 
   if (!summary) return null;
@@ -23,26 +22,14 @@ function MonitoringSummaryGrid({ summary }) {
       icon: Boxes,
     },
     {
-      key: "healthy",
-      value: summary.healthy,
-      tone: "healthy",
-      icon: CircleCheck,
+      key: "assessmentUnavailable",
+      value: null,
+      tone: "offline",
+      icon: CircleHelp,
     },
     {
-      key: "warning",
-      value: summary.warning,
-      tone: "warning",
-      icon: TriangleAlert,
-    },
-    {
-      key: "critical",
-      value: summary.critical,
-      tone: "critical",
-      icon: ShieldAlert,
-    },
-    {
-      key: "offline",
-      value: summary.offline,
+      key: "offlineBoxCount",
+      value: offlineBoxCount(boxes, scoped, summary.total),
       tone: "offline",
       icon: WifiOff,
     },
@@ -56,7 +43,7 @@ function MonitoringSummaryGrid({ summary }) {
         "grid-cols-1",
         "sm:grid-cols-2",
         "xl:grid-cols-3",
-        "2xl:grid-cols-5",
+        "2xl:grid-cols-3",
       ].join(" ")}
     >
       {summaryItems.map((item, index) => (

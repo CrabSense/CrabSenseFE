@@ -12,65 +12,7 @@ import useTranslation from "@/hooks/useTranslation";
 
 import { useRevealActive } from "@/components/ui/PageReveal";
 
-// ============================================
-// HEALTH STYLES
-// ============================================
-
-const healthStyles = {
-  healthy: "border-[#77FF00]/20 bg-[#77FF00]/10 text-[#77FF00]",
-
-  warning: "border-amber-500/20 bg-amber-500/10 text-[#FBBF24]",
-
-  critical: "border-red-500/20 bg-red-500/10 text-[#FF7777]",
-
-  offline: "border-white/10 bg-white/5 text-[#8C9A90]",
-
-  unknown: "border-white/10 bg-white/5 text-[#8C9A90]",
-};
-
-// ============================================
-// HELPERS
-// ============================================
-
-function getHealthTone(level) {
-  const normalized = String(level ?? "")
-    .trim()
-    .toLowerCase();
-
-  if (["healthy", "good", "excellent"].includes(normalized)) {
-    return "healthy";
-  }
-
-  if (normalized === "warning") {
-    return "warning";
-  }
-
-  if (["critical", "danger"].includes(normalized)) {
-    return "critical";
-  }
-
-  if (normalized === "offline") {
-    return "offline";
-  }
-
-  return "unknown";
-}
-
-const healthTranslationKeys = {
-  healthy: "healthy",
-  good: "good",
-  excellent: "excellent",
-  warning: "warning",
-  critical: "critical",
-  danger: "danger",
-  offline: "offline",
-  unknown: "unknown",
-  normal: "normal",
-};
-
-function displayValue(value) {
-  return value === null || value === undefined || value === "" ? "—" : value;
-}
+import { operationalBoxStatus } from "../../../services/monitoringAssessment";
 
 // ============================================
 // BOX MONITORING ROW
@@ -139,21 +81,8 @@ function BoxMonitoringRow({
   // HEALTH STATUS
   // ==========================================
 
-  const rawHealth = box.health?.statusLevel ?? box.healthStatus;
-
-  const healthTone = getHealthTone(rawHealth);
-
-  const rawHealthLabel = String(
-    box.health?.statusLabel ?? box.healthStatus ?? "",
-  ).trim();
-
-  const normalizedHealthLabel = rawHealthLabel.toLowerCase();
-
-  const healthKey = healthTranslationKeys[normalizedHealthLabel];
-
-  const healthLabel = healthKey
-    ? t(`monitoring.${healthKey}`)
-    : rawHealthLabel || t("monitoring.unknown");
+  const statusKey = operationalBoxStatus(box);
+  const statusLabel = t(`monitoring.${statusKey}`);
 
   // ==========================================
   // DEVICE AND ALERTS
@@ -210,22 +139,11 @@ function BoxMonitoringRow({
           className={[
             "w-fit rounded-full px-2.5 py-1",
             "text-[10px] font-semibold",
-            healthStyles[healthTone],
+            "border-white/10 bg-white/5 text-[#8C9A90]",
           ].join(" ")}
         >
-          {healthLabel}
+          {statusLabel}
         </Badge>
-      </TableCell>
-
-      {/* SCORE */}
-      <TableCell className="px-4 py-4">
-        <div className="flex items-baseline gap-1">
-          <strong className="text-sm font-semibold text-[#F4F7F4] tabular-nums">
-            {displayValue(box.health?.score)}
-          </strong>
-
-          <span className="text-xs text-[#647466]">/100</span>
-        </div>
       </TableCell>
 
       {/* Water is referenced from the area's RAS, not measured per box. */}
