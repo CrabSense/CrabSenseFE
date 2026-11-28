@@ -28,6 +28,7 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
           curl -fsS http://127.0.0.1:5173/ >/dev/null
           node tests/browser/waterBench.mjs
+          node tests/browser/rasWater.mjs
       - name: Upload browser failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
