@@ -1,6 +1,7 @@
 import {useEffect,useId,useRef,useState} from "react";
 import waterBench from "../../services/waterBenchService";
 import {requireId} from "./operationModel";
+import {verifyReview} from "../../services/waterBenchModel";
 const field="w-full rounded-lg border border-[#38513B] bg-[#050806] px-3 py-2 text-sm";
 const btn="rounded-lg border border-[#38513B] px-3 py-2 text-sm disabled:opacity-40";
 const items=v=>Array.isArray(v)?v:[];
@@ -116,14 +117,14 @@ export function SalinityPicker({areaId,batch,language,value,onChange}){
  return <div><label>{language==="en"?"Qualified salinity readings":"Bản đo độ mặn đủ điều kiện"}<select data-testid="salinity-measurement" aria-label="Salinity measurement" className={field} value={value} onChange={e=>onChange(e.target.value)} disabled={q.loading||!!q.error}><option value="">—</option>{items(q.value?.items).map(m=><option key={m.measurementId} value={m.measurementId}>{m.value} ppt · {m.sensorCode} · {m.installationLocation} · Δ{m.differenceSeconds}s</option>)}</select></label>
  {q.error&&<p role="alert">{q.error}</p>}{!q.loading&&!q.error&&!items(q.value?.items).length&&<p className="text-amber-300">{language==="en"?"No qualified reading; no conversion.":"Không có bản đo hợp lệ; không chuyển đổi."}</p>}</div>;
 }
-export function ReviewPanel({areaId,batch,analyte,unit,language}){
+export function ReviewPanel({areaId,batch,analyte,assessmentId,unit,language}){
  const t=(vi,en)=>language==="en"?en:vi;
  const [revision,setRevision]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState("");
- const q=useQuery(signal=>waterBench.review(areaId,batch,analyte,signal),[areaId,batch,analyte,revision]);
+ const q=useQuery(async signal=>verifyReview(await waterBench.review(areaId,batch,analyte,signal),assessmentId,unit),[areaId,batch,analyte,assessmentId,unit,revision]);
  const [f,setF]=useState({decision:"",reason:"",media:"",value:"",method:"",same:false}),[publishReason,setPublishReason]=useState("");
  const lock=useRef(false),pending=useRef(null);
  const patch=(k,v)=>setF(x=>({...x,[k]:v}));
- const run=async(kind,make,send)=>{if(lock.current)return;lock.current=true;setBusy(true);setError("");try{
+ const run=async(kind,make,send)=>{if(lock.current||q.loading||q.error||q.value?.assessmentId!==assessmentId)return;lock.current=true;setBusy(true);setError("");try{
  const p=pending.current?.kind===kind?pending.current.p:make();pending.current={kind,p};await send(p);pending.current=null;setRevision(x=>x+1);
  }catch(e){if(Number.isInteger(e.status)&&e.status>=400&&e.status<500&&e.status!==408&&e.status!==409&&e.status!==429)pending.current=null;setError(e.message);}finally{lock.current=false;setBusy(false);}};
  const review=()=>run("review",()=>{
