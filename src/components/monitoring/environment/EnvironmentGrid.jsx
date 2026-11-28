@@ -1,4 +1,5 @@
 import { Wifi } from "lucide-react";
+import { deviceInventory } from "../../../services/monitoringInventory";
 import { readingAssessment } from "../../../services/rasWaterModel";
 
 import EnvironmentCard from "./EnvironmentCard";
@@ -8,31 +9,12 @@ import useTranslation from "@/hooks/useTranslation";
 function EnvironmentGrid({ readings=[], now, areaId, devices, showDevices=true }) {
   const { t } = useTranslation();
 
-  const rawTotal = Number(devices?.totalCount);
-  const rawOnline = Number(devices?.onlineCount);
-
-  const totalDevices = Number.isFinite(rawTotal) ? Math.max(0, rawTotal) : 0;
-
-  const onlineDevices = Number.isFinite(rawOnline) ? Math.max(0, rawOnline) : 0;
-
-  const devicePercentage =
-    totalDevices > 0
-      ? Math.min(100, Math.round((onlineDevices / totalDevices) * 100))
-      : null;
-
-  const deviceStatus =
-    totalDevices === 0
-      ? "offline"
-      : onlineDevices < totalDevices
-        ? "warning"
-        : "normal";
-
-  const deviceCountDescription =
-    totalDevices === 0
-      ? t("monitoring.noRegisteredDevices")
-      : t("monitoring.devicesOnlineCount")
-          .replace("{online}", String(onlineDevices))
-          .replace("{total}", String(totalDevices));
+  const inventory = deviceInventory(areaId ? devices : null);
+  const devicePercentage=inventory.percentage;
+  const deviceStatus=inventory.kind==="empty"?"unknown":inventory.kind;
+  const deviceCountDescription=inventory.kind==="unknown"?t("monitoring.unknown"):
+    inventory.kind==="empty"?t("monitoring.noRegisteredDevices"):
+    t("monitoring.devicesOnlineCount").replace("{online}",String(inventory.online)).replace("{total}",String(inventory.total));
 
   return (
     <section

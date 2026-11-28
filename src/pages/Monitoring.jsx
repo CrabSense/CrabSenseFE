@@ -86,7 +86,7 @@ function Monitoring() {
 
       {/* WATER QUALITY & IoT DEVICES */}
       <PageReveal delay={140}>
-        <EnvironmentGrid readings={ras.readings} now={ras.now} areaId={waterArea} devices={data?.areaDevices} />
+        <EnvironmentGrid readings={ras.readings} now={ras.now} areaId={waterArea} devices={data?.farmingAreaId === waterArea && waterArea ? data.areaDevices : null} />
       </PageReveal>
 
       {/* BOX HEALTH SUMMARY */}

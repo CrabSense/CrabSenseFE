@@ -355,8 +355,8 @@ export const translations = {
       boxDescription:
         "Health, water, device and alert status for monitored boxes.",
       columnBox: "Box",
-      columnHealth: "Health",
-      columnScore: "Score",
+      columnHealth: "Legacy status (heuristic)",
+      columnScore: "Legacy score",
       columnWater: "Water",
       columnDevice: "Device",
       columnAlerts: "Alerts",
@@ -1117,8 +1117,8 @@ export const translations = {
       boxDescription:
         "Theo dõi sức khỏe, chất lượng nước, thiết bị và cảnh báo của các hộp nuôi.",
       columnBox: "Hộp nuôi",
-      columnHealth: "Sức khỏe",
-      columnScore: "Điểm",
+      columnHealth: "Trạng thái quy tắc cũ",
+      columnScore: "Điểm quy tắc cũ",
       columnWater: "Nước",
       columnDevice: "Thiết bị",
       columnAlerts: "Cảnh báo",

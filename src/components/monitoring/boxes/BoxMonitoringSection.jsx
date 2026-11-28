@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Inbox } from "lucide-react";
+import { deviceInventory } from "../../../services/monitoringInventory";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -80,8 +81,7 @@ function BoxMonitoringSection({ boxes = [] }) {
 
       const matchesStatus =
         status === "all" ||
-        healthGroup === status ||
-        (status === "offline" && box.devices?.isOnline === false);
+        (status === "offline" ? deviceInventory(box.devices).isOnline === false : healthGroup === status);
 
       const matchesSearch =
         !keyword ||
