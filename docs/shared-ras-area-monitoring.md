@@ -6,3 +6,6 @@ Dedicated bearer read without retry/redirect/cache, strict success and area, for
 
 ## Dashboard containment
 Backend DashboardService waterQualityScore measures active sensor last-seen coverage (2h) minus alert penalties, not validated water quality. The overall score can also omit missing components. Farm Admin Dashboard now displays the existing qualified per-sensor RAS cards, only for an explicitly selected verified area; no All Areas aggregation. Legacy combined health score/breakdown and metrics request are removed from this route. Preserve overview and business KPIs; do not infer missing device counts in the reused card grid. One source-wiring regression plus existing four model regressions; browser lifecycle/production JWT and other KPI semantics remain open. No BE or schema change.
+
+## Chromium lifecycle regression
+Mandatory browser workflow now also runs rasWater.mjs with isolated synthetic APIs and real Chromium UI. Covers separate sensors/zero, invalid scope and chemistry, delayed previous-area response, All Areas no query, offline/reconnect, token rotation/403 and Monitoring parity. No production JWT, physical sensor, or native lifecycle claims. No package or application logic changes.
