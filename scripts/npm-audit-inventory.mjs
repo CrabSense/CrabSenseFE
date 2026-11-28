@@ -1,7 +1,7 @@
 import {spawnSync} from "node:child_process";
 import {mkdirSync,readFileSync,writeFileSync} from "node:fs";
 import {createHash} from "node:crypto";
-import {summarizeAudit} from "./npm-audit-report.mjs";
+import {summarizeAudit,requireCleanAudits} from "./npm-audit-report.mjs";
 
 const dir="audit-output";
 mkdirSync(dir,{recursive:true});
@@ -35,5 +35,12 @@ for(const [scope,flags] of [["full",["--include=dev"]],["omit-dev",["--omit=dev"
 writeFileSync(dir+"/summary.json",JSON.stringify(evidence,null,2)+"\n");
 if(!readFileSync("package-lock.json").equals(lockBytes))throw new Error("Audit mutated the lockfile");
 if(failed)process.exitCode=1;
-else if(evidence.reports.full.counts.total||evidence.reports["omit-dev"].counts.total)
-  console.log("::warning::Dependency vulnerabilities remain. Inventory success is not security clearance.");
+else {
+  try {
+    requireCleanAudits(evidence.reports);
+    console.log("NPM_SECURITY_GATE_PASS full=0 omit-dev=0");
+  }catch(error){
+    console.error("::error::"+error.message);
+    process.exitCode=1;
+  }
+}

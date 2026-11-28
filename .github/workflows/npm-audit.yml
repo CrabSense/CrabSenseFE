@@ -6,16 +6,16 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
+  schedule:
+    - cron: '23 2 * * *'
 
 permissions:
   contents: read
 
-concurrency:
-  group: npm-audit-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   inventory:
+    name: Dependency Security Gate
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -27,13 +27,13 @@ jobs:
           node-version: '22'
       - name: Test report validation
         run: node --test tests/npmAuditReport.test.js
-      - name: Inventory full and omit-dev lockfile
+      - name: Enforce zero affected packages in full and omit-dev audits
         run: node scripts/npm-audit-inventory.mjs
       - name: Upload dependency audit evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: npm-audit-inventory
+          name: npm-audit-evidence
           path: audit-output/
           if-no-files-found: error
           retention-days: 14

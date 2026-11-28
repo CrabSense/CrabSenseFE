@@ -29,3 +29,13 @@ export function summarizeAudit(report,lock,exitCode){
   affected.sort((a,b)=>levels.indexOf(b.severity)-levels.indexOf(a.severity)||a.name.localeCompare(b.name));
   return {counts,affected};
 }
+
+// The gate accepts only validated reports for both scopes, with zero affected packages.
+export function requireCleanAudits(reports){
+  for(const scope of ["full","omit-dev"]){
+    const summary=reports?.[scope];
+    if(!summary||summary.error||!Array.isArray(summary.affected)||summary.affected.length!==0||
+      ![...levels,"total"].every(key=>summary.counts?.[key]===0))
+      throw new Error("Security gate rejected npm audit scope: "+scope);
+  }
+}
