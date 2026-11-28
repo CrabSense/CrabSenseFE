@@ -23,6 +23,11 @@ const statusStyles = {
     accent: "bg-[#FF7777]",
   },
 
+  unknown: {
+    icon: "text-[#8C9A90]",
+    iconBackground: "border-white/10 bg-white/5",
+    accent: "bg-[#8C9A90]",
+  },
   offline: {
     icon: "text-[#8C9A90]",
     iconBackground: "border-white/10 bg-white/5",

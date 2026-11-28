@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { AlertTriangle, Wifi, WifiOff, CircleHelp } from "lucide-react";
 
+import { deviceInventory, validCount } from "../../../services/monitoringInventory";
+
 import { Badge } from "@/components/ui/badge";
 
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -157,9 +159,9 @@ function BoxMonitoringRow({
   // DEVICE AND ALERTS
   // ==========================================
 
-  const deviceOnline = box.devices?.isOnline;
+  const deviceOnline = deviceInventory(box.devices).isOnline;
 
-  const alertCount = box.alertCount ?? 0;
+  const alertCount = validCount(box.alertCount) ? box.alertCount : null;
 
   const isVisible = alreadyRevealed || isRowVisible;
 
@@ -263,7 +265,7 @@ function BoxMonitoringRow({
         >
           {alertCount > 0 && <AlertTriangle size={15} aria-hidden="true" />}
 
-          <span>{alertCount}</span>
+          <span>{alertCount ?? "—"}</span>
         </div>
       </TableCell>
     </TableRow>

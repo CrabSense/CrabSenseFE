@@ -1,3 +1,4 @@
+import { validCount } from "../../../services/monitoringInventory";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { useRevealActive } from "@/components/ui/PageReveal";
@@ -47,14 +48,8 @@ function MonitoringSummaryCard({
 
   const styles = toneStyles[tone] ?? toneStyles.default;
 
-  const hasValidValue =
-    value !== null &&
-    value !== undefined &&
-    value !== "" &&
-    Number.isFinite(Number(value));
-
-  // Preserve original fallback behavior.
-  const displayValue = value ?? 0;
+  const hasValidValue = validCount(value);
+  const displayValue = hasValidValue ? value : "—";
 
   const cardDelay = 100 + index * 65;
   const numberDelay = 230 + index * 65;
